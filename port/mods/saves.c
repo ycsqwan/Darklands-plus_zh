@@ -64,7 +64,7 @@ static int in_save;
 static char iron[16];            /* the running game's save comment when it is an Ironman game ("Ironman 3f2a"), else "" */
 static int close_due;            /* Ironman: the window was closed: save at the next chance, then quit */
 static int loaded_since_title, iron_check;   /* a save read since the start screen; a save read (is it an Ironman game's?) */
-static const char *IRON_NO_LOAD = "An Ironman game cannot go back to a save. To load another game, quit to the start screen.";
+static const char *IRON_NO_LOAD = "Ironman 游戏无法返回到之前的存档。要加载其他游戏，需退出至主菜单。";
 int saves_ironman(void) { return iron[0] != 0; }
 
 /* ---------------------------------------------------------------- files */
@@ -179,13 +179,13 @@ static int do_save(const char *comment)
     answer = comment; in_save = 1;
     int r = game_call_far(GF_save_game, 0, 0);
     answer = 0; in_save = 0;
-    if (r < 0) { ui_notice("Could not save."); return 0; }
+    if (r < 0) { ui_notice("无法保存。"); return 0; }
     char name[16]; g_str(G_DGROUP, D_SAVENAME, name, sizeof name);
     if (getenv("DL_SAVES_LOG")) fprintf(stderr, "saves: %s -> %s\n", comment, name);
-    if (iron[0]) { prune(iron, 1); if (asked) ui_notice("Saved (an Ironman game keeps one save, saved over as you go)"); return 1; }
-    if (!strncmp(comment, "Quicksave", 9)) prune("Quicksave", saves_keep_quick);
-    else if (!strncmp(comment, "Autosave", 8)) prune("Autosave", saves_keep_auto);
-    char m[80]; snprintf(m, sizeof m, "%s (%s)", asked ? "Game saved" : "Autosaved", name);
+    if (iron[0]) { prune(iron, 1); if (asked) ui_notice("已保存（Ironman 游戏仅保留一个存档，随玩随存）。"); return 1; }
+    if (!strncmp(comment, "Quicksave", 9)) prune("快速存档。", saves_keep_quick);
+    else if (!strncmp(comment, "Autosave", 8)) prune("自动存档。", saves_keep_auto);
+    char m[80]; snprintf(m, sizeof m, "%s (%s)", asked ? "游戏已保存" : "自动保存", name);
     ui_notice(m);
     return 1;
 }
@@ -224,10 +224,10 @@ static void menubar_hook(void)             /* menu_bar_run(menu, once): with onc
     if ((s16)rw(SS, (u16)(SP + 6)) != 0) { hook_call_original(); return; }
     if (quick_due) {
         quick_due = 0;
-        if (g_rb(D_SAVE_OK) == 1) do_save("Quicksave");
-        else ui_notice(ns_screen == NS_LODGE ? "The game does not allow saving while staying at an inn or camping: leave first (the days already spent are not given back)." :
-                       g_rb(D_IN_BATTLE) == 1 ? "The game does not allow saving during a battle." :
-                       "The game does not allow saving on this screen: leave it first (saving works on a card, in the overland view or in a town).");
+        if (g_rb(D_SAVE_OK) == 1) do_save("快速存档。");
+        else ui_notice(ns_screen == NS_LODGE ? "游戏不允许在旅店或露营时保存：请先离开（已度过的天数不予返还）。" :
+                       g_rb(D_IN_BATTLE) == 1 ? "游戏不允许在战斗中保存。" :
+                       "游戏不允许在此界面保存：请先离开（保存可在卡牌、野外视图或城镇中进行）。");
     } else if (auto_due[0] && g_rb(D_SAVE_OK) == 1 && g_rb(D_IN_BATTLE) != 1) {
         char c[24]; snprintf(c, sizeof c, "%s", auto_due);
         auto_due[0] = 0;
@@ -235,7 +235,7 @@ static void menubar_hook(void)             /* menu_bar_run(menu, once): with onc
     }
     if (close_due && iron[0] && g_rb(D_SAVE_OK) == 1 && g_rb(D_IN_BATTLE) != 1) {   /* (the window closed: saved, then gone) */
         void plat_quit(int code);
-        do_save("Autosave");
+        do_save("自动存档。");
         fprintf(stderr, "program exit: window closed (Ironman: saved first)\n");
         plat_quit(0);
     }
@@ -245,7 +245,7 @@ static void menubar_hook(void)             /* menu_bar_run(menu, once): with onc
             if (getenv("DL_SAVES_LOG")) fprintf(stderr, "saves: loading %s\n", load_name);
             if (call_load_game()) return;                  /* back in the main loop with the save */
             load_stage = 0;
-        } else { load_stage = 0; ui_notice("The game does not allow loading here."); }
+        } else { load_stage = 0; ui_notice("游戏不允许在此处加载。"); }
     }
     hook_call_original();
 }
@@ -310,7 +310,7 @@ static void loadscreen_hook(void)
         ok = (u16)game_call_live(key, 1, &k) == 0x11b;
     }
     game_call_live(show, 0, 0);
-    if (!ok) ui_notice("That save could not be read.");
+    if (!ok) ui_notice("该存档无法读取。");
     load_stage = 0;
     u16 a = (u16)ok;
     AX = (u16)game_call_live(close, 1, &a);
@@ -325,7 +325,7 @@ static void loaded_hook(void)              /* the save is read (s037 1c7d:0d24) 
     }
     hook_call_original();
     if (load_name[0] && load_stage) {
-        char m[80]; snprintf(m, sizeof m, g_rb(D_IN_BATTLE) == 1 ? "Loaded %s: a battle, paused (Space resumes it)" : "Loaded %s", load_name);
+        char m[80]; snprintf(m, sizeof m, g_rb(D_IN_BATTLE) == 1 ? "已加载 %s：一场战斗，已暂停（按空格键可继续）" : "已加载 %s", load_name);
         ui_notice(m);
     }
     load_stage = 0;
@@ -344,7 +344,7 @@ static void save_hook(void)                /* save_game () */
         answer = 0; in_save = 0;
         if (unw_active) return;
         prune(iron, 1);
-        ui_notice("Saved (an Ironman game keeps one save, saved over as you go)");
+        ui_notice("已保存（Ironman 游戏仅保留一个存档，随玩随存）。");
         return;
     }
     char c[48], old[16], before[16];
@@ -360,8 +360,8 @@ static void save_hook(void)                /* save_game () */
     SaveInfo now;
     int written = (s16)AX >= 0 && saves_read(name, &now) && strcasecmp(name, old) && (strcasecmp(name, before) || !before[0]);
     char m[128];
-    if (old[0] && written && saves_delete(old)) snprintf(m, sizeof m, "Saved: %s (%s), in place of the old save", c, name);   /* (the save chosen to replace) */
-    else snprintf(m, sizeof m, "Saved: %s (%s)", c, name);
+    if (old[0] && written && saves_delete(old)) snprintf(m, sizeof m, "已保存：%s（%s），替换旧存档", c, name);   /* (the save chosen to replace) */
+    else snprintf(m, sizeof m, "已保存：%s（%s）", c, name);
     fprintf(stderr, "saves: %s\n", m);
     ui_notice(m);
 }
@@ -401,7 +401,7 @@ static void battle_hook(void)              /* run_battle (s029 0e76:2278) */
         char cn[16]; g_str(G_DGROUP, GV_card_name, cn, sizeof cn);
         u16 now[10]; int swap = menu_card[0] && !strcmp(cn, menu_card);
         for (int k = 0; k < 10; k++) { now[k] = g_rw((u16)(GV_opt_flag_0 + 2 * k)); if (swap) g_ww((u16)(GV_opt_flag_0 + 2 * k), menu_flags[k]); }
-        do_save("Autosave: battle");
+        do_save("自动保存：战斗");
         for (int k = 0; k < 10; k++) g_ww((u16)(GV_opt_flag_0 + 2 * k), now[k]);
     }
     hook_call_original();
@@ -433,9 +433,9 @@ static void new_game_begins(void)
 {
     iron[0] = 0; close_due = 0;
     if (!config_get_int("saves.ironman", 0)) return;
-    snprintf(iron, sizeof iron, "Ironman %04x", (unsigned)((plat_ticks_ms() * 2654435761u) ^ (unsigned)time(0)) & 0xffff);
-    snprintf(auto_due, sizeof auto_due, "Autosave");     /* (its save, made at once) */
-    ui_notice("An Ironman game: it saves itself as you go, over one save. There is no going back.");
+    snprintf(iron, sizeof iron, "铁人模式 %04x", (unsigned)((plat_ticks_ms() * 2654435761u) ^ (unsigned)time(0)) & 0xffff);
+    snprintf(auto_due, sizeof auto_due, "自动存档。");     /* (its save, made at once) */
+    ui_notice("铁人模式游戏：每进行一次保存，都会自动覆盖上一个存档。无法撤销。");
     fprintf(stderr, "saves: a new Ironman game (%s)\n", iron);
     hooks_set(1); assist_watch_cards();
 }
@@ -451,13 +451,13 @@ void saves_frame(void)
     if (iron_check && !at_title && game_mode() != GM_OTHER) { iron_check = 0; iron_from_save(); }
     if ((!saves_on && !iron[0]) || game_mode() == GM_OTHER) { last_loc = -2; return; }
     int loc = (s16)g_rw(G_CUR_LOC);
-    if ((saves_auto_arrive || iron[0]) && last_loc == -1 && loc >= 0 && loc < G_NLOC && plat_ticks_ms() - loaded_t > 3000) snprintf(auto_due, sizeof auto_due, "Autosave");
+    if ((saves_auto_arrive || iron[0]) && last_loc == -1 && loc >= 0 && loc < G_NLOC && plat_ticks_ms() - loaded_t > 3000) snprintf(auto_due, sizeof auto_due, "自动存档。");
     last_loc = loc;
     if (iron[0]) {                                     /* every card, once the last option's outcome has come: saved over (at most every 3 seconds) */
         int menu = assist_in_card_menu();
         if (menu && !was_menu) card_due = 1;
         was_menu = menu;
-        if (card_due && now - loaded_t > 3000 && now - card_saved > 3000) { card_due = 0; card_saved = now; snprintf(auto_due, sizeof auto_due, "Autosave"); }
+        if (card_due && now - loaded_t > 3000 && now - card_saved > 3000) { card_due = 0; card_saved = now; snprintf(auto_due, sizeof auto_due, "自动存档。"); }
     }
 }
 
@@ -467,8 +467,8 @@ int saves_close_requested(void)
 {
     if (!iron[0] || game_mode() == GM_OTHER || close_due) return 0;
     close_due = 1;
-    ui_notice(g_rb(D_IN_BATTLE) == 1 ? "Ironman: the game closes once it can save, after this battle. Close again to quit at once (the game then goes back to the last save)."
-                                      : "Ironman: saving, then closing. Close again to quit at once (the game then goes back to the last save).");
+    ui_notice(g_rb(D_IN_BATTLE) == 1 ? "铁人模式：本场战斗结束后，若能保存则自动关闭。再次关闭即可立即退出（此时游戏将恢复到上次的存档）。"
+                                      : "铁人模式：先保存，再关闭。再次关闭即可立即退出（此时游戏将恢复到上次的存档）。");
     return 1;
 }
 
@@ -489,18 +489,18 @@ void saves_journey_over(void)
 /* ---------------------------------------------------------------- requests */
 void saves_quick_save(void)
 {
-    if (game_mode() == GM_OTHER) { ui_notice("Start or load a game first."); return; }
+    if (game_mode() == GM_OTHER) { ui_notice("请先开始或加载游戏。"); return; }
     quick_due = 1;
 }
 
 int saves_load(const char *name)
 {
     if (iron[0]) { ui_notice(IRON_NO_LOAD); return 0; }
-    if (game_mode() == GM_OTHER) { ui_notice("Loading from here works once a game is running; until then, load from the start screen."); return 0; }
+    if (game_mode() == GM_OTHER) { ui_notice("只有在游戏运行时才能从此处加载；在此之前，请从主菜单加载。"); return 0; }
     /* only a save that is there and can be read: once the game's load_game has torn the game down,
        a load that fails has nothing to go back to (the game stopped: "Buffer dealloc error") */
     SaveInfo si;
-    if (!saves_read(name, &si)) { ui_notice("That save could not be read."); return 0; }
+    if (!saves_read(name, &si)) { ui_notice("该存档无法读取。"); return 0; }
     snprintf(load_name, sizeof load_name, "%s", name);
     load_stage = 1; load_t = plat_ticks_ms();
     return 1;
@@ -519,8 +519,8 @@ void saves_quick_load(void)
 {
     if (iron[0]) { ui_notice(IRON_NO_LOAD); return; }
     SaveInfo *v; int n = saves_list(&v), found = -1;
-    for (int i = 0; i < n && found < 0; i++) if (is_kind(&v[i], "Quicksave")) found = i;
-    if (found < 0) ui_notice("No quicksave yet (Ctrl+S makes one).");
+    for (int i = 0; i < n && found < 0; i++) if (is_kind(&v[i], "快速存档。")) found = i;
+    if (found < 0) ui_notice("尚无快速保存功能（按 Ctrl+S 可进行快速保存）。");
     else saves_load(v[found].file);
     free(v);
 }
@@ -563,7 +563,7 @@ static int user_quit, game_seen;
 static void quit_hook(void)
 {
     fprintf(stderr, "quit_to_dos asked\n");
-    if (iron[0] && g_rb(D_SAVE_OK) == 1 && g_rb(D_IN_BATTLE) != 1) do_save("Autosave");   /* (an Ironman game: saved as it is left) */
+    if (iron[0] && g_rb(D_SAVE_OK) == 1 && g_rb(D_IN_BATTLE) != 1) do_save("自动存档。");   /* (an Ironman game: saved as it is left) */
     user_quit = 1; hook_call_original(); user_quit = 0;
 }
 int saves_restart_on_exit(void)
@@ -602,7 +602,7 @@ void saves_backup_once(void)
     if (!strcmp(config_get("saves.backed_up", ""), ver)) return;
     FindEnt *l = 0; int n = dos_list_dos("SAVES", "*.*", &l), done = 0, failed = 0;
     time_t t = time(0); struct tm *tm = localtime(&t);
-    char dir[1400]; snprintf(dir, sizeof dir, "%s/Darklands+ save backups/%s, %04d-%02d-%02d", dlp_user_dir, ver, tm ? tm->tm_year + 1900 : 0, tm ? tm->tm_mon + 1 : 0, tm ? tm->tm_mday : 0);
+    char dir[1400]; snprintf(dir, sizeof dir, "%s/Darklands+ 存档备份/%s，%04d-%02d-%02d", dlp_user_dir, ver, tm ? tm->tm_year + 1900 : 0, tm ? tm->tm_mon + 1 : 0, tm ? tm->tm_mday : 0);
     for (int i = 0; i < n; i++) {
         char dn[64], src[1100], dst[1700]; snprintf(dn, sizeof dn, "SAVES\\%s", l[i].name);
         dos_host_path(dn, src, sizeof src);

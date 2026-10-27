@@ -35,7 +35,7 @@ extern "C" void prayview_draw(void)
     }
     float tw = 316 - tx, y = 4;
     std::string who = ns_gtext(p.names[p.who < 0 || p.who > 4 ? 0 : p.who]);
-    y += P.para(fo, NsDraw::FS_SMALL, tx, y, tw, soft, who + (p.party ? " calls on the saint for the whole party:" : " calls on the saint:")) + 0.5f;
+    y += P.para(fo, NsDraw::FS_SMALL, tx, y, tw, soft, who + (p.party ? "为全队召唤圣人：" : "召唤圣人：")) + 0.5f;
     {   /* the name, and after it the Virtue the saint asks (greyed when the one who prays has less) */
         std::string nm = known ? gamedata.saints[p.saint].name : "?", vt = std::to_string(p.vmin);
         const float VIS = 5.4f, VGS = NsDraw::FS_BODY;
@@ -49,21 +49,21 @@ extern "C" void prayview_draw(void)
             float bw = P.shield_value(bx, by, VIS, UI_KEY_SKILL + SKILL_VIRTUE, vt, VGS, soft);
             if (p.virtue < p.vmin) ui_dim_since(P.dl, v0, 0.38f);
             if (P.over(bx, by - 3.5f, bx + bw, by + 3.5f)) {
-                char t[200]; snprintf(t, sizeof t, "This saint asks a {Virtue} of %d of the one who prays. %s's: %d%s", p.vmin, who.c_str(), p.virtue,
-                                      p.virtue < p.vmin ? ", too low: more Divine Favor will not help." : ".");
+                char t[200]; snprintf(t, sizeof t, "此圣人向祈祷者索取 {美德} %d。%s 的：%d%s", p.vmin, who.c_str(), p.virtue,
+                                      p.virtue < p.vmin ? "，太低：再多的神恩也无济于事。" : ".");
                 ns_tip(t, 22);
             }
             if (!beside) h += 7;
         }
         y += h + 0.5f;
     }
-    if (p.day[0]) y += P.para(fo, NsDraw::FS_SMALL, tx, y, tw, dim, std::string("Saint's day: ") + p.day) + 1.5f;
+    if (p.day[0]) y += P.para(fo, NsDraw::FS_SMALL, tx, y, tw, dim, std::string("圣人之日：") + p.day) + 1.5f;
     if (known) {
         /* what the help really does (mods/saintinfo.h), where the text says otherwise, then the text */
         y += P.para(fo, NsDraw::FS_BODY, tx, y, tw, IM_COL32(26, 64, 132, 255), saint_effects_text(p.saint)) + 0.5f;
         if (*saint_info_note(p.saint)) y += P.para(fo, 4.2f, tx, y, tw, dim, saint_info_note(p.saint)) + 1.5f;
         const char *un = saint_info_unlike(p.saint);
-        if (*un) y += P.para(fo, 4.4f, tx, y, tw, IM_COL32(140, 50, 30, 255), "Differs from the description: " + rich_auto(un)) + 1.5f;
+        if (*un) y += P.para(fo, 4.4f, tx, y, tw, IM_COL32(140, 50, 30, 255), "与描述不符：" + rich_auto(un)) + 1.5f;
         y += P.para(fo, 4.4f, tx, y, tw, soft, gamedata.saints[p.saint].text) + 2;
     }
 
@@ -71,7 +71,7 @@ extern "C" void prayview_draw(void)
     float by = fmaxf(y + 2, 128);
     P.rect(tx - 1.5f, by, 317, 196, IM_COL32(236, 224, 196, 255), 1.5f);
     float x = tx + 1.5f, yy = by + 2.5f;
-    P.text(f, NsDraw::FS_HEAD, x, yy, ink, "{Divine Favor} to spend");
+    P.text(f, NsDraw::FS_HEAD, x, yy, ink, "可消耗的 {神恩}");
     char b[200]; snprintf(b, sizeof b, "%d", p.df);
     float bx = 316 - 2;
     if (p.why != 1 && P.button(bx - 9, yy, bx, yy + 8.5f, "+", IM_COL32(40, 92, 34, 235), NsDraw::FS_BODY)) ns_push(PV_MORE, 0, 0, 0);
@@ -110,21 +110,21 @@ extern "C" void prayview_draw(void)
         }
         yy += 8;
     }
-    snprintf(b, sizeof b, p.df99 >= 0 && p.df99 < p.maxdf ? "%s has {Divine Favor:%d}; %d will be left. Past the green mark the chance rises no more." : "%s has {Divine Favor:%d}; %d will be left.", who.c_str(), p.maxdf, p.maxdf - p.df);
+    snprintf(b, sizeof b, p.df99 >= 0 && p.df99 < p.maxdf ? "%s 拥有 {神恩：%d}；还剩 %d。超过绿色标记后，几率不再提升。" : "%s 拥有 {神恩：%d}；还剩 %d。", who.c_str(), p.maxdf, p.maxdf - p.df);
     P.text(fo, NsDraw::FS_SMALL, x, yy, soft, b);
     yy += 7.5f;
-    snprintf(b, sizeof b, "Chance the saint hears: %d%%", p.chance);
+    snprintf(b, sizeof b, "圣人听到的几率：%d%%", p.chance);
     P.text(f, NsDraw::FS_HEAD, x, yy, p.chance >= 50 ? NsDraw::GREEN : p.chance > 0 ? ink : NsDraw::RED, b);
     yy += 9;
-    if (p.why != 1) P.text(fo, NsDraw::FS_SMALL, x, yy, dim, "More {Divine Favor} gives a better chance (up to 99%); it is spent either way.");
+    if (p.why != 1) P.text(fo, NsDraw::FS_SMALL, x, yy, dim, "更多 {神恩} 能带来更高几率（最高达 99%）；无论如何都会被消耗。");
     yy += 8;
     float bw = 40;
-    if (P.button(316 - bw, 184, 316, 194, "Don't pray", IM_COL32(112, 40, 22, 235), NsDraw::FS_SMALL, PB_Y)) ns_push(PV_CANCEL, 0, 0, 0);
+    if (P.button(316 - bw, 184, 316, 194, "不要祈祷", IM_COL32(112, 40, 22, 235), NsDraw::FS_SMALL, PB_Y)) ns_push(PV_CANCEL, 0, 0, 0);
     if (p.chance > 0) {
-        if (!p.choose) { if (P.button(316 - 2 * bw - 3, 184, 316 - bw - 3, 194, "Pray now", IM_COL32(40, 92, 34, 235))) ns_push(PV_PRAY, -1, 0, 0); }
+        if (!p.choose) { if (P.button(316 - 2 * bw - 3, 184, 316 - bw - 3, 194, "现在祈祷", IM_COL32(40, 92, 34, 235))) ns_push(PV_PRAY, -1, 0, 0); }
         else {
-            P.text(fo, NsDraw::FS_SMALL, x, yy, soft, "Pray for:");
-            float px = x + P.width(fo, NsDraw::FS_SMALL, "Pray for:") + 3, py = yy - 1.5f;
+            P.text(fo, NsDraw::FS_SMALL, x, yy, soft, "为……祈祷：");
+            float px = x + P.width(fo, NsDraw::FS_SMALL, "为……祈祷：") + 3, py = yy - 1.5f;
             for (int m = 0; m < 5; m++) {
                 if (!p.present[m]) continue;
                 std::string nm = ns_gtext(p.names[m]);
@@ -136,10 +136,10 @@ extern "C" void prayview_draw(void)
         }
     } else {
         char b[160];
-        if (p.why == 1) snprintf(b, sizeof b, "%s's {Virtue:%d} is below the %d this saint asks: more {Divine Favor} will not help.", who.c_str(), p.virtue, p.vmin);
-        else if (p.why == 2 && p.maxdf < p.xmin) snprintf(b, sizeof b, "This saint asks at least {Divine Favor:%d}; %s has only %d.", p.xmin, who.c_str(), p.maxdf);
-        else if (p.why == 2) snprintf(b, sizeof b, "This saint asks at least {Divine Favor:%d}: spend more.", p.xmin);
-        else snprintf(b, sizeof b, "No chance as it is: spend more {Divine Favor} (or the saint does not help here).");
+        if (p.why == 1) snprintf(b, sizeof b, "%s 的 {美德：%d} 低于此圣人要求的 %d：再多的 {神恩} 也无济于事。", who.c_str(), p.virtue, p.vmin);
+        else if (p.why == 2 && p.maxdf < p.xmin) snprintf(b, sizeof b, "此圣人至少要求 {神恩：%d}；而 %s 只有 %d。", p.xmin, who.c_str(), p.maxdf);
+        else if (p.why == 2) snprintf(b, sizeof b, "此圣人至少要求 {神恩：%d}：请多消耗一些。", p.xmin);
+        else snprintf(b, sizeof b, "现状无望：请多消耗 {神恩}（否则圣人将无法提供帮助）。");
         P.text(fo, NsDraw::FS_SMALL, x, 186.5f, NsDraw::RED, b);
     }
 }

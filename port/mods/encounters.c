@@ -273,7 +273,7 @@ static void exit_to_map(void) { g_ww(G_CUR_LOC, 0xffff); g_ww(V_NEXT_CARD, 0x0c)
 static void script_error_at(const char *file)     /* a script error while it runs: the encounter ends, the player is never stuck in it */
 {
     fprintf(stderr, "encounters: %s: an error while running: back to the map\n", file);
-    ui_notice("A new encounter stopped because of a mistake in its file (see darklands_port.log); the party is back in the overland view.");
+    ui_notice("一次新的遭遇因文件中的错误而停止（参见 darklands_port.log）；队伍已返回陆地视图。");
     exit_to_map();
 }
 #define script_error(e) script_error_at((e)->file)
@@ -323,7 +323,7 @@ static void nx(P *p)
 static int is_op(P *p, const char *o) { return p->tt == TOP && !strcmp(p->id, o); }
 static int is_word(P *p, const char *w) { return p->tt == TID && !strcasecmp(p->id, w); }
 static int accept_op(P *p, const char *o) { if (is_op(p, o)) { nx(p); return 1; } return 0; }
-static void expect_op(P *p, const char *o) { if (!accept_op(p, o)) perr(p, "'%s' expected", o); }
+static void expect_op(P *p, const char *o) { if (!accept_op(p, o)) perr(p, "预期 '%s'", o); }
 
 /* ---- names */
 static const char *SKILLS[19] = { "edged", "impact", "flails", "polearms", "thrown", "bows", "missile", "alchemy", "religion",
@@ -426,7 +426,7 @@ static int value_of(P *p, const char *n, long *v)
 
 static int nargs_ok(P *p, const char *f, int n, int lo, int hi)
 {
-    if (n < lo || n > hi) { perr(p, "%s takes %d argument%s", f, lo, lo == 1 ? "" : "s"); return 0; }
+    if (n < lo || n > hi) { perr(p, "%s 接受 %d 个参数%s", f, lo, lo == 1 ? "" : "s"); return 0; }
     return 1;
 }
 
@@ -458,7 +458,7 @@ static long call_fn(P *p, const char *f, const long *a, int n)
     if (!strcasecmp(f, "has") || !strcasecmp(f, "count") || !strcasecmp(f, "quality")) {
         if (!nargs_ok(p, f, n, 2, 2) || p->dry) return 0;
         int w = (int)a[0], code = (int)a[1];
-        if (code < 0 || code > 199 || !((w >= -1 && w < 5) || (w == -2 && f[0] != 'q'))) { perr(p, "%s: who, then an item (0 to 199)", f); return 0; }
+        if (code < 0 || code > 199 || !((w >= -1 && w < 5) || (w == -2 && f[0] != 'q'))) { perr(p, "%s：谁，然后一件物品（0 到 199）", f); return 0; }
         if (f[0] == 'q') return g_item_quality(resolve_who(w), code);
         if (f[0] == 'c') return g_count_items(w == -1 ? leader() : w, code);
         if (w == -2) { for (int m = 0; m < 5; m++) if (member_status(m) == 1 && g_has_item(m, code) == 1) return 1; return 0; }
@@ -466,14 +466,14 @@ static long call_fn(P *p, const char *f, const long *a, int n)
     }
     if (!strcasecmp(f, "wounds")) {             /* what the party has lost of an attribute, its present members together */
         if (!nargs_ok(p, f, n, 1, 1) || p->dry) return 0;
-        if (a[0] < 0 || a[0] > 6) { perr(p, "wounds: an attribute"); return 0; }
+        if (a[0] < 0 || a[0] > 6) { perr(p, "伤势：一项属性"); return 0; }
         long t = 0;
         for (int m = 0; m < 5; m++) if (member_status(m) && member_status(m) != 3) { int d = g_attr_max(m, (int)a[0]) - g_attr(m, (int)a[0]); if (d > 0) t += d; }
         return t;
     }
     if (!strcasecmp(f, "able")) { if (!nargs_ok(p, f, n, 1, 1) || p->dry) return 0; return member_status(resolve_who((int)a[0])) == 1; }
     if (!strcasecmp(f, "event")) { if (!nargs_ok(p, f, n, 1, 1) || p->dry) return 0; return g_event_started((int)a[0]) != 0; }
-    perr(p, "unknown function %s", f);
+    perr(p, "未知函数 %s", f);
     return 0;
 }
 
@@ -492,16 +492,16 @@ static long primary(P *p)
         }
         long v;
         if (value_of(p, n, &v)) return v;
-        perr(p, "unknown name %s", n);
+        perr(p, "未知名称 %s", n);
         return 0;
     }
-    perr(p, "a value expected");
+    perr(p, "应该是一个数值");
     return 0;
 }
 static long unary_(P *p);
 static long unary(P *p)
 {
-    if (p->depth >= 64) { perr(p, "nested too deeply"); return 0; }
+    if (p->depth >= 64) { perr(p, "嵌套过深"); return 0; }
     p->depth++; long v = unary_(p); p->depth--;
     return v;
 }
@@ -559,7 +559,7 @@ static long eval_src(Enc *e, const Src *src, int dry, int *err)
     if (!src->s) return 0;
     P p; p_init(&p, e, src, dry);
     long v = eval(&p);
-    if (!p.err && p.tt != TEND) perr(&p, "unexpected \"%s\"", p.id);
+    if (!p.err && p.tt != TEND) perr(&p, "意外的“%s", p.id);
     if (err) *err = p.err;
     return p.err ? 0 : v;
 }
@@ -573,7 +573,7 @@ static int args(P *p, long *a, int lo, int hi, const char *what)
     if (p->tt != TEND && !is_op(p, ";") && !is_op(p, "}")) {
         do { long v = eval(p); if (n < 12) a[n] = v; n++; } while (accept_op(p, ",") && !p->err);
     }
-    if (!p->err && (n < lo || n > hi)) perr(p, "%s takes %d to %d values", what, lo, hi);
+    if (!p->err && (n < lo || n > hi)) perr(p, "%s 需要 %d 到 %d 个数值", what, lo, hi);
     return n;
 }
 
@@ -584,7 +584,7 @@ static int exec_stmt(P *p);
 static int branch(P *p, int run)
 {
     int dry = p->dry, r = 0;
-    if (p->depth >= 64) { perr(p, "nested too deeply"); return 1; }
+    if (p->depth >= 64) { perr(p, "嵌套过深"); return 1; }
     p->depth++;
     if (!run) p->dry = 1;
     if (accept_op(p, "{")) { r = exec_list(p); if (!r || p->dry) expect_op(p, "}"); }   /* (after a goto or exit the rest is not read) */
@@ -597,7 +597,7 @@ static int branch(P *p, int run)
 static int jump(P *p, const char *n)
 {
     int i = find_sec(p->e, n);
-    if (i < 0) { perr(p, "no section [%s]", n); return 0; }
+    if (i < 0) { perr(p, "没有章节 [%s]", n); return 0; }
     if (p->dry) return 0;
     rt.sec = i; rt.jumped = 1;
     return 1;
@@ -611,26 +611,26 @@ static int arg_range(P *p, const char *w, const long *a, int n)
 {
     if (p->dry) return 1;
     const char *bad = 0;
-    if (!strcasecmp(w, "practice")) { if (!who_ok(a[0], 1)) bad = "who"; else if (a[1] < 0 || a[1] > 18) bad = "a skill (0 to 18)"; }
+    if (!strcasecmp(w, "practice")) { if (!who_ok(a[0], 1)) bad = "who"; else if (a[1] < 0 || a[1] > 18) bad = "一项技能（0 到 18）"; }
     else if (!strcasecmp(w, "injure") || !strcasecmp(w, "loseitems") || !strcasecmp(w, "keepitems") || !strcasecmp(w, "removeitems")) { if (!who_ok(a[0], 1)) bad = "who"; }
-    else if (!strcasecmp(w, "additem")) { if (!who_ok(a[0], 0)) bad = "who (one member)"; else if (a[1] < 0 || a[1] > 199) bad = "an item (0 to 199)"; else if (n > 2 && (a[2] < 1 || a[2] > 99)) bad = "a quality (1 to 99)"; }
-    else if (!strcasecmp(w, "takeitem")) { if (!who_ok(a[0], 0)) bad = "who (one member)"; else if (a[1] < 0 || a[1] > 199) bad = "an item (0 to 199)"; }
-    else if (!strcasecmp(w, "kill") || !strcasecmp(w, "chosen") || !strcasecmp(w, "chosen2")) { if (!who_ok(a[0], 0)) bad = "who (one member)"; }
-    else if (!strcasecmp(w, "itemname")) { if (a[0] < 0 || a[0] > 199) bad = "an item (0 to 199)"; }
-    else if (!strcasecmp(w, "saintname")) { if (a[0] < 0 || a[0] > 135) bad = "a saint (0 to 135)"; }
-    else if (!strcasecmp(w, "fame")) { if (a[0] < 1 || a[0] > 5) bad = "1 to 5"; }
-    else if (!strcasecmp(w, "text")) { if (a[0] < 0 || a[0] >= (s8)g_rb(V_MSG_BLOCKS)) bad = "a text block of the card"; }
-    else if (!strcasecmp(w, "hours") || !strcasecmp(w, "days")) { if (a[0] > 9999) bad = "at most 9999"; }
-    else if (!strcasecmp(w, "until")) { if (a[0] < 0 || a[0] > 23) bad = "an hour (0 to 23)"; }
-    else if (!strcasecmp(w, "heal")) { if (!who_ok(a[0], 1)) bad = "who"; else if (a[1] < 0 || a[1] > 6) bad = "an attribute (0 to 6)"; else if (a[2] < 0 || a[2] > 100) bad = "a percentage (0 to 100)"; }
+    else if (!strcasecmp(w, "additem")) { if (!who_ok(a[0], 0)) bad = "谁（一名成员）"; else if (a[1] < 0 || a[1] > 199) bad = "一件物品（0 到 199）"; else if (n > 2 && (a[2] < 1 || a[2] > 99)) bad = "一种品质（1 到 99）"; }
+    else if (!strcasecmp(w, "takeitem")) { if (!who_ok(a[0], 0)) bad = "谁（一名成员）"; else if (a[1] < 0 || a[1] > 199) bad = "一件物品（0 到 199）"; }
+    else if (!strcasecmp(w, "kill") || !strcasecmp(w, "chosen") || !strcasecmp(w, "chosen2")) { if (!who_ok(a[0], 0)) bad = "谁（一名成员）"; }
+    else if (!strcasecmp(w, "itemname")) { if (a[0] < 0 || a[0] > 199) bad = "一件物品（0 到 199）"; }
+    else if (!strcasecmp(w, "saintname")) { if (a[0] < 0 || a[0] > 135) bad = "一位圣人（0 到 135）"; }
+    else if (!strcasecmp(w, "fame")) { if (a[0] < 1 || a[0] > 5) bad = "1 到 5"; }
+    else if (!strcasecmp(w, "text")) { if (a[0] < 0 || a[0] >= (s8)g_rb(V_MSG_BLOCKS)) bad = "卡片的一段文字"; }
+    else if (!strcasecmp(w, "hours") || !strcasecmp(w, "days")) { if (a[0] > 9999) bad = "最多 9999"; }
+    else if (!strcasecmp(w, "until")) { if (a[0] < 0 || a[0] > 23) bad = "一小时（0 到 23）"; }
+    else if (!strcasecmp(w, "heal")) { if (!who_ok(a[0], 1)) bad = "who"; else if (a[1] < 0 || a[1] > 6) bad = "一项属性（0 到 6）"; else if (a[2] < 0 || a[2] > 100) bad = "一个百分比（0 到 100）"; }
     if (!bad) return 1;
-    perr(p, "%s: %s expected", w, bad);
+    perr(p, "%s：期望 %s", w, bad);
     return 0;
 }
 
 static int exec_stmt(P *p)
 {
-    if (p->tt != TID) { perr(p, "an action expected"); return 1; }
+    if (p->tt != TID) { perr(p, "期望一个动作"); return 1; }
     char w[48]; snprintf(w, sizeof w, "%s", p->id);
     nx(p);
     long a[12]; int n;
@@ -649,7 +649,7 @@ static int exec_stmt(P *p)
             }
             return r;
         }
-        if (!is_word(p, "then")) { perr(p, "'then' or 'goto' expected"); return 1; }
+        if (!is_word(p, "then")) { perr(p, "期望“then”或“goto"); return 1; }
         nx(p);
         int r = branch(p, c && !dry);
         if (is_word(p, "else")) { nx(p); int r2 = branch(p, !c && !dry); if (!c) r = r2; }
@@ -659,7 +659,7 @@ static int exec_stmt(P *p)
     if (!strcasecmp(w, "exit")) { if (!dry) { exit_to_map(); return 1; } return 0; }
     if (!strcasecmp(w, "card")) {               /* on to one of the game's cards (a town's street ...) */
         n = args(p, a, 1, 1, w);
-        if (!p->err && (a[0] < 1 || a[0] > 0x16d)) perr(p, "card: one of the game's cards, 1 to 0x16d");
+        if (!p->err && (a[0] < 1 || a[0] > 0x16d)) perr(p, "卡片：游戏中的某张卡片，1 到 0x16d");
         if (!dry && !p->err) { g_ww(V_NEXT_CARD, (u16)a[0]); return 1; }
         return 0;
     }
@@ -672,13 +672,13 @@ static int exec_stmt(P *p)
         expect_op(p, "=");
         long x = eval(p);
         int i = var_index(p->e, v);
-        if (i < 0) { perr(p, "unknown variable %s", v); return 1; }
+        if (i < 0) { perr(p, "未知变量 %s", v); return 1; }
         if (!dry && !p->err) rt.var[i] = x;
         return 0;
     }
     if (!strcasecmp(w, "picture")) {
         char pic[48]; snprintf(pic, sizeof pic, "%s", p->id); nx(p);
-        if (strlen(pic) > 8) perr(p, "picture names have at most 8 letters");
+        if (strlen(pic) > 8) perr(p, "图片名称最多 8 个字母");
         if (!dry && !p->err) { dset_pic(V_PIC_BUF2, pic); g_card_load_near(); }
         return 0;
     }
@@ -687,17 +687,17 @@ static int exec_stmt(P *p)
     if (!strcasecmp(w, "dropaway")) { if (!dry) g_drop_away(); return 0; }
     if (!strcasecmp(w, "disable") || !strcasecmp(w, "enable") || !strcasecmp(w, "hide")) {
         n = args(p, a, 1, 1, w);
-        if (!p->err && (a[0] < 0 || a[0] >= NOPT)) perr(p, "options are numbered 0 to 9");
+        if (!p->err && (a[0] < 0 || a[0] >= NOPT)) perr(p, "选项编号为 0 到 9");
         if (!dry && !p->err) rt.flag[a[0]] = w[0] == 'd' ? 2 : w[0] == 'e' ? 1 : 0;
         return 0;
     }
     if (!strcasecmp(w, "battle")) {             /* battle FIELD, ENEMY, QUALITY, COUNT [, ENEMY, QUALITY, COUNT [, ...]] */
         n = args(p, a, 4, 10, w);
-        if (!p->err && (n - 1) % 3) perr(p, "battle: a battlefield, then enemy, quality, count for each group");
+        if (!p->err && (n - 1) % 3) perr(p, "战斗：一片战场，然后是敌人、品质、每组的数量");
         if (dry || p->err) return 0;
         long bf = a[0];                         /* the wilderness battlefields (the game's vec_1b71) and the cave; the rest need a town, castle or mine */
         if (!((bf >= 0x2e && bf <= 0x55) || (bf >= 0x61 && bf <= 0x63) || (bf >= 0x6f && bf <= 0x79) || bf == 0x68)) {
-            perr(p, "battle: a wilderness battlefield (Wilds, Surrounded, Clearing, Cave, or 0x2e-0x55, 0x61-0x63, 0x6f-0x79)"); return 1;
+            perr(p, "战斗：一片荒野战场（Wilds、Surrounded、Clearing、Cave，或 0x2e-0x55、0x61-0x63、0x6f-0x79）"); return 1;
         }
         int b[11] = { (int)a[0], -1, -1, 0, 0, -1, 0, 0, -1, 0, 0 };
         int ng = 0, total = 0;                  /* a battle holds 8 foes (13 combatants, 5 of them the party) */
@@ -722,7 +722,7 @@ static int exec_stmt(P *p)
         /* skill WHO, K, AMOUNT: with WHO party the amount is worked out for each member (who = that member) */
         long who = eval(p); expect_op(p, ","); long k = eval(p); expect_op(p, ",");
         if (p->err) return 1;
-        if (!dry && (!who_ok(who, 1) || k < 0 || k > (w[0] == 's' && w[1] == 'k' ? 18 : 6))) { perr(p, "%s: who, then a %s", w, w[0] == 's' && w[1] == 'k' ? "skill (0 to 18)" : "attribute (0 to 6)"); return 1; }
+        if (!dry && (!who_ok(who, 1) || k < 0 || k > (w[0] == 's' && w[1] == 'k' ? 18 : 6))) { perr(p, "%s：谁，然后是一个 %s", w, w[0] == 's' && w[1] == 'k' ? "技能（0 到 18）" : "属性（0 到 6）"); return 1; }
         void (*f)(int, int, int) = w[0] == 's' && w[1] == 'k' ? g_add_skill : w[0] == 's' ? g_set_attr : w[4] ? g_add_attr_max : g_add_attr;
         P at = *p;
         int saved = rt.who;
@@ -744,12 +744,12 @@ static int exec_stmt(P *p)
         { "kill", 1, 1 }, { "chosen", 1, 1 }, { "chosen2", 1, 1 }, { "itemname", 1, 1 }, { "saintname", 1, 1 }, { "actor", 1, 1 } };
     int k = -1;
     for (int i = 0; i < (int)(sizeof K / sizeof K[0]); i++) if (!strcasecmp(w, K[i].w)) { k = i; break; }
-    if (k < 0) { perr(p, "unknown action %s", w); return 1; }
+    if (k < 0) { perr(p, "未知动作 %s", w); return 1; }
     n = args(p, a, K[k].lo, K[k].hi, w);
     if (!p->err && !arg_range(p, w, a, n)) return 1;
     if (!p->err && !strcasecmp(w, "text") && p->e && (a[0] < 0 || (p->e->nblocks ? a[0] >= p->e->nblocks : a[0] > 24))) {
-        if (p->e->nblocks) perr(p, "text %ld: %s has blocks 0 to %d", a[0], p->e->card, p->e->nblocks - 1);
-        else perr(p, "text %ld: a card holds blocks 0 to 24", a[0]);
+        if (p->e->nblocks) perr(p, "文本 %ld：%s 有 0 到 %d 块", a[0], p->e->card, p->e->nblocks - 1);
+        else perr(p, "文本 %ld：一张卡片包含 0 到 24 块", a[0]);
         return 1;
     }
     if (dry || p->err) return 0;
@@ -795,7 +795,7 @@ static int exec_list(P *p)
         int r = exec_stmt(p);
         if (aborting) return 1;
         if (r && !p->dry) return 1;
-        if (!p->err && p->tt != TEND && !is_op(p, ";") && !is_op(p, "}")) perr(p, "';' expected");
+        if (!p->err && p->tt != TEND && !is_op(p, ";") && !is_op(p, "}")) perr(p, "期望“;");
     }
     return 1;
 }
@@ -804,7 +804,7 @@ static int run_src(Enc *e, const Src *src, int dry)
     if (!src->s) return 0;
     P p; p_init(&p, e, src, dry);
     int r = exec_list(&p);
-    if (!p.err && !r && p.tt != TEND) perr(&p, "unexpected \"%s\"", p.id);     /* (after a goto or exit the rest is not run) */
+    if (!p.err && !r && p.tt != TEND) perr(&p, "意外的“%s", p.id);     /* (after a goto or exit the rest is not run) */
     return p.err ? (dry ? -1 : 2) : r;          /* 2: an error while running */
 }
 
@@ -911,7 +911,7 @@ static int load_text(Enc *e, const char *text, const char *label, const char *id
         char *t = line; while (*t == ' ' || *t == '\t') t++;
         if (*t == '[') {
             char *end = strchr(t, ']');
-            if (!end) { ferr(e, ln, "']' missing"); continue; }
+            if (!end) { ferr(e, ln, "缺少“]"); continue; }
             *end = 0;
             e->sec = realloc(e->sec, (size_t)(e->nsec + 1) * sizeof(Sec));
             s = &e->sec[e->nsec++]; memset(s, 0, sizeof *s);
@@ -927,29 +927,29 @@ static int load_text(Enc *e, const char *text, const char *label, const char *id
         char *v = t + n; while (*v == ' ' || *v == '\t') v++;
         if (!s) {                                       /* the header */
             if (!strcasecmp(w, "name")) snprintf(e->title, sizeof e->title, "%s", v);
-            else if (!strcasecmp(w, "card")) { if (strlen(v) > 8 || !*v) ferr(e, ln, "card: a MSGFILES name of at most 8 letters"); snprintf(e->card, sizeof e->card, "%s", v); }
-            else if (!strcasecmp(w, "picture")) { if (strlen(v) > 8 || !*v) ferr(e, ln, "picture: at most 8 letters"); snprintf(e->pic, sizeof e->pic, "%s", v); }
-            else if (!strcasecmp(w, "terrain")) { int bad = 0; e->terrain = terrain_bits(v, &bad); if (bad) ferr(e, ln, "terrain: marsh woods farmland plains forest pinewood hills mountains road wild any, or numbers"); }
-            else if (!strcasecmp(w, "when")) { e->when = !strcasecmp(v, "day") ? 1 : !strcasecmp(v, "night") ? 2 : 0; if (e->when == 0 && strcasecmp(v, "any")) ferr(e, ln, "when: day, night or any"); }
-            else if (!strcasecmp(w, "weight")) { e->weight = atoi(v); if (e->weight < 0 || e->weight > 100) { ferr(e, ln, "weight: 0 to 100"); e->weight = 1; } }
+            else if (!strcasecmp(w, "card")) { if (strlen(v) > 8 || !*v) ferr(e, ln, "卡片：一条 MSGFILES 名称，最多 8 个字母"); snprintf(e->card, sizeof e->card, "%s", v); }
+            else if (!strcasecmp(w, "picture")) { if (strlen(v) > 8 || !*v) ferr(e, ln, "图片：最多 8 个字母"); snprintf(e->pic, sizeof e->pic, "%s", v); }
+            else if (!strcasecmp(w, "terrain")) { int bad = 0; e->terrain = terrain_bits(v, &bad); if (bad) ferr(e, ln, "地形：沼泽、树林、农田、平原、森林、松林、丘陵、山脉、道路、荒野等，或数字"); }
+            else if (!strcasecmp(w, "when")) { e->when = !strcasecmp(v, "day") ? 1 : !strcasecmp(v, "night") ? 2 : 0; if (e->when == 0 && strcasecmp(v, "any")) ferr(e, ln, "时间：白天、夜晚或任何"); }
+            else if (!strcasecmp(w, "weight")) { e->weight = atoi(v); if (e->weight < 0 || e->weight > 100) { ferr(e, ln, "重量：0 到 100"); e->weight = 1; } }
             else if (!strcasecmp(w, "only")) src_set(&e->only, v, ln);
             else if (!strcasecmp(w, "music")) e->music = !strcasecmp(v, "yes") || !strcasecmp(v, "ambush");
             else if (!strcasecmp(w, "vars")) {
                 char buf[300]; snprintf(buf, sizeof buf, "%s", v);
                 for (char *q = strtok(buf, " ,\t"); q; q = strtok(0, " ,\t")) if (e->nvars < 24) snprintf(e->vars[e->nvars++], 24, "%s", q);
             }
-            else ferr(e, ln, "unknown setting %s", w);
+            else ferr(e, ln, "未知设定 %s", w);
             continue;
         }
         if (!strcasecmp(w, "option")) {
             char kind[32] = ""; int k = -1;
             sscanf(v, "%d %31s", &k, kind);
-            if (k < 0 || k >= NOPT) { ferr(e, ln, "option: a number 0 to 9"); o = 0; continue; }
+            if (k < 0 || k >= NOPT) { ferr(e, ln, "选项：一个 0 到 9 的数字"); o = 0; continue; }
             o = &s->opt[k];
-            if (o->defined) ferr(e, ln, "option %d twice", k);
+            if (o->defined) ferr(e, ln, "选项 %d 出现两次", k);
             o->defined = 1;
             o->kind = !strcasecmp(kind, "potion") ? 1 : !strcasecmp(kind, "saint") ? 2 : 0;
-            if (*kind && !o->kind) ferr(e, ln, "option %d: potion or saint", k);
+            if (*kind && !o->kind) ferr(e, ln, "选项 %d：药剂或圣人", k);
             last = 0;
             continue;
         }
@@ -962,15 +962,15 @@ static int load_text(Enc *e, const char *text, const char *label, const char *id
             else if (!strcasecmp(w, "ok") || !strcasecmp(w, "then") || !strcasecmp(w, "success")) d = &o->ok;
             else if (!strcasecmp(w, "fail") || !strcasecmp(w, "failure")) d = &o->fail;
             else if (!strcasecmp(w, "potion")) {
-                if (o->npot >= 4) { ferr(e, ln, "at most 4 potions"); continue; }
+                if (o->npot >= 4) { ferr(e, ln, "个药水"); continue; }
                 char *c = strchr(v, ',');
-                if (!c) { ferr(e, ln, "potion CODE, CHANCE"); continue; }
+                if (!c) { ferr(e, ln, "药水 代码，几率"); continue; }
                 *c = 0;
                 o->pot_code[o->npot] = (int)strtol(v, 0, 0);
                 d = &o->pot[o->npot++];
                 v = c + 1; while (*v == ' ') v++;
             }
-            if (d->s) ferr(e, ln, "%s twice", w);
+            if (d->s) ferr(e, ln, "%s 两次", w);
             src_set(d, v, ln);
             last = (d == &o->only || d == &o->need || d == &o->who || d == &o->chance) ? 0 : d;
             continue;
@@ -978,19 +978,19 @@ static int load_text(Enc *e, const char *text, const char *label, const char *id
         if (!indented && is_sec_key(w)) {
             o = 0; last = 0;
             if (!strcasecmp(w, "block")) s->block = atoi(v);
-            else if (!strcasecmp(w, "picture")) { if (strlen(v) > 8) ferr(e, ln, "picture: at most 8 letters"); snprintf(s->pic, sizeof s->pic, "%s", v); }
+            else if (!strcasecmp(w, "picture")) { if (strlen(v) > 8) ferr(e, ln, "图片：最多 8 个字母"); snprintf(s->pic, sizeof s->pic, "%s", v); }
             else if (!strcasecmp(w, "chosen")) src_set(&s->chosen, v, ln);
             else if (!strcasecmp(w, "saints")) ints(v, s->saints, 4);
             else if (!strcasecmp(w, "items")) ints(v, s->items, 4);
-            else if (!strcasecmp(w, "do")) { if (s->enter.s) ferr(e, ln, "do twice"); src_set(&s->enter, v, ln); last = &s->enter; }
+            else if (!strcasecmp(w, "do")) { if (s->enter.s) ferr(e, ln, "做两次"); src_set(&s->enter, v, ln); last = &s->enter; }
             continue;
         }
         if (indented && last) { src_add(last, t); continue; }
-        ferr(e, ln, "unknown key %s", w);
+        ferr(e, ln, "未知密钥 %s", w);
     }
-    if (!e->card[0]) ferr(e, 1, "no card (the MSGFILES text) given");
-    if (!e->pic[0]) ferr(e, 1, "no picture given");
-    if (!e->nsec) ferr(e, 1, "no [section]");
+    if (!e->card[0]) ferr(e, 1, "未提供卡牌（MSGFILES文本）");
+    if (!e->pic[0]) ferr(e, 1, "未提供图片");
+    if (!e->nsec) ferr(e, 1, "无 [章节]");
     return 1;
 }
 
@@ -1066,9 +1066,9 @@ static void check(Enc *e)
 {
     int bad = 0;
     card_shape(e);
-    if (e->nblocks > 25) { ferr(e, 1, "%s has %d text blocks: the game holds 25", e->card, e->nblocks); bad = 1; }
-    if (e->card_bytes >= 6000) { ferr(e, 1, "%s is too long: %ld bytes as the game loads it, under 6000 fit", e->card, e->card_bytes); bad = 1; }
-    if (e->maxopts > NOPT) { ferr(e, 1, "%s has a block with %d option lines: at most %d", e->card, e->maxopts, NOPT); bad = 1; }
+    if (e->nblocks > 25) { ferr(e, 1, "%s 有 %d 个文本块：游戏最多可容纳 25", e->card, e->nblocks); bad = 1; }
+    if (e->card_bytes >= 6000) { ferr(e, 1, "%s 太长了：游戏加载时为 %ld 字节，不超过 6000 即可", e->card, e->card_bytes); bad = 1; }
+    if (e->maxopts > NOPT) { ferr(e, 1, "%s 有一个包含 %d 行选项的区块：最多 %d", e->card, e->maxopts, NOPT); bad = 1; }
     if (e->only.s) { int er; eval_src(e, &e->only, 1, &er); bad |= er; }
     for (int i = 0; i < e->nsec; i++) {
         Sec *s = &e->sec[i];
@@ -1080,14 +1080,14 @@ static void check(Enc *e)
             Opt *o = &s->opt[k];
             if (!o->defined) continue;
             any = 1;
-            if (s->block < 0) { ferr(e, s->line, "[%s] has options but no block", s->name); bad = 1; }
+            if (s->block < 0) { ferr(e, s->line, "[%s] 有选项但没有格罗申", s->name); bad = 1; }
             else if (e->nblocks && s->block < 64) {
                 int nl = s->block < e->nblocks ? (e->nopts[s->block] > NOPT ? NOPT : e->nopts[s->block]) : 0;
-                if (k >= nl) { ferr(e, s->line, "[%s] option %d: block %d of %s has %d option line%s", s->name, k, s->block, e->card, nl, nl == 1 ? "" : "s"); bad = 1; }
+                if (k >= nl) { ferr(e, s->line, "[%s] 选项 %d：第 %d 条，共 %s，包含 %d 行选项%s", s->name, k, s->block, e->card, nl, nl == 1 ? "" : "s"); bad = 1; }
                 else {
                     int c = e->optcode[s->block][k];
-                    if ((c == 0x16) != (o->kind == 2)) { ferr(e, s->line, "[%s] option %d: %s", s->name, k, c == 0x16 ? "its line (\\16) opens the saints: write option N saint" : "a saint option needs a \\16 line"); bad = 1; }
-                    if ((c == 0x10) != (o->kind == 1)) { ferr(e, s->line, "[%s] option %d: %s", s->name, k, c == 0x10 ? "its line (\\10) opens the potions: write option N potion" : "a potion option needs a \\10 line"); bad = 1; }
+                    if ((c == 0x16) != (o->kind == 2)) { ferr(e, s->line, "[%s] 选项 %d：%s", s->name, k, c == 0x16 ? "其行（\\\\16）打开圣人：写选项 N 圣人" : "一个圣人选项需要\\\\16行"); bad = 1; }
+                    if ((c == 0x10) != (o->kind == 1)) { ferr(e, s->line, "[%s] 选项 %d：%s", s->name, k, c == 0x10 ? "其行（\\\\10）打开药水：写选项 N 药水" : "一瓶药剂选项需要 \\\\10 行"); bad = 1; }
                 }
             }
             Src *ex[] = { &o->only, &o->need, &o->who };
@@ -1096,16 +1096,16 @@ static void check(Enc *e)
                 { eval_src(e, &o->chance, 1, &er); bad |= er; }
             for (int j = 0; j < o->npot; j++) { eval_src(e, &o->pot[j], 1, &er); bad |= er; }
             if (run_src(e, &o->ok, 1) < 0 || run_src(e, &o->fail, 1) < 0) bad = 1;
-            if (o->kind == 2 && s->saints[0] < 0) { ferr(e, s->line, "[%s] option %d is a saint option, but there are no saints", s->name, k); bad = 1; }
-            if (o->kind == 1 && s->items[0] < 0) { ferr(e, s->line, "[%s] option %d is a potion option, but there are no items", s->name, k); bad = 1; }
+            if (o->kind == 2 && s->saints[0] < 0) { ferr(e, s->line, "[%s] 选项 %d 是圣人选项，但没有圣人", s->name, k); bad = 1; }
+            if (o->kind == 1 && s->items[0] < 0) { ferr(e, s->line, "[%s] 选项 %d 是一个药水选项，但没有物品", s->name, k); bad = 1; }
         }
-        if (s->block >= 0 && !any) { ferr(e, s->line, "[%s] has a block but no options", s->name); bad = 1; }
+        if (s->block >= 0 && !any) { ferr(e, s->line, "[%s] 有一个方块，但没有选项", s->name); bad = 1; }
         for (int j = 0; j < 4; j++) {
-            if (s->saints[j] < -1 || s->saints[j] > 135) { ferr(e, s->line, "[%s] saints: numbers 0 to 135 (DARKLAND.LST), or -1", s->name); bad = 1; break; }
-            if (s->items[j] < -1 || s->items[j] > 199) { ferr(e, s->line, "[%s] items: numbers 0 to 199 (DARKLAND.LST), or -1", s->name); bad = 1; break; }
+            if (s->saints[j] < -1 || s->saints[j] > 135) { ferr(e, s->line, "[%s] 圣人：数字0至135（DARKLAND.LST），或-1", s->name); bad = 1; break; }
+            if (s->items[j] < -1 || s->items[j] > 199) { ferr(e, s->line, "[%s] 件物品：数字0至199（DARKLAND.LST），或-1", s->name); bad = 1; break; }
         }
-        if (s->block > 24) { ferr(e, s->line, "[%s] block %d: the game holds 25 blocks (0 to 24)", s->name, s->block); bad = 1; }
-        else if (s->block >= 0 && e->nblocks && s->block >= e->nblocks) { ferr(e, s->line, "[%s] block %d: %s has blocks 0 to %d", s->name, s->block, e->card, e->nblocks - 1); bad = 1; }
+        if (s->block > 24) { ferr(e, s->line, "[%s] 块 %d：游戏共包含25个块（0至24）", s->name, s->block); bad = 1; }
+        else if (s->block >= 0 && e->nblocks && s->block >= e->nblocks) { ferr(e, s->line, "[%s] 区块 %d：%s 有区块 0 到 %d", s->name, s->block, e->card, e->nblocks - 1); bad = 1; }
     }
     if (bad) e->ok = 0;
 }
@@ -1169,7 +1169,7 @@ static void reload(void)
     }
     int good = 0; for (int i = 0; i < nenc; i++) good += encs[i].ok;
     if (nenc) fprintf(stderr, "encounters: %d new encounters (%d with errors)\n", good, nerr);
-    if (nerr) { char m[200]; snprintf(m, sizeof m, "New encounters: %d file%s with errors left out (see darklands_port.log).", nerr, nerr == 1 ? "" : "s"); ui_notice(m); }
+    if (nerr) { char m[200]; snprintf(m, sizeof m, "新的遭遇：%d 个文件%s存在错误，已被排除（请参阅 darklands_port.log）。", nerr, nerr == 1 ? "" : "s"); ui_notice(m); }
 }
 
 /* ================================================================ running a card */

@@ -93,8 +93,8 @@ static void key_text(u16 p, int maxn, char *out, int n)
         else if (c == 0x0f) snprintf(b, sizeof b, "Alt+");
         else if (c == 0x10) snprintf(b, sizeof b, "Ctrl+");
         else if (c == 0x11) snprintf(b, sizeof b, "Shift+");
-        else if (c == 0x12) snprintf(b, sizeof b, "Enter");
-        else if (c == 0x13) snprintf(b, sizeof b, "Space");
+        else if (c == 0x12) snprintf(b, sizeof b, "进入");
+        else if (c == 0x13) snprintf(b, sizeof b, "空间");
         else if (c == '>' || c == ' ') continue;          /* (a sub-menu's sign; the padding) */
         else if (c > 32 && c < 127) { b[0] = (char)c; b[1] = 0; }
         strncat(out, b, (size_t)n - strlen(out) - 1);
@@ -166,9 +166,9 @@ static void build_into(u16 mp, MenuModel *M, MvFn *fn)
     for (int j = 0; j < M->nmenus; j++) M->menu[j].native = 0;
     /* Darklands+'s own menu, at the right end: its window and pages (handled here, not the game's) */
     static const struct { const char *name, *key; int act; } DP[] = {
-        { "Darklands+ window", "F12", NA_WINDOW }, { "Quests (world map)", "", NA_QUESTS }, { "World map", "M", NA_MAP },
-        { "Quick save", "Ctrl+S", NA_QSAVE }, { "Quick load", "F9", NA_QLOAD },
-        { "Settings", "", NA_HELPERS }, { "Keys and clicks on this screen", "F11", NA_HELP },   /* (the New Player Guide: withdrawn) */
+        { "Darklands+窗口", "F12", NA_WINDOW }, { "任务（世界地图）", "", NA_QUESTS }, { "世界地图", "M", NA_MAP },
+        { "快速存档", "Ctrl+S", NA_QSAVE }, { "快速载入", "F9", NA_QLOAD },
+        { "设置", "", NA_HELPERS }, { "此屏幕上的按键与点击操作", "F11", NA_HELP },   /* (the New Player Guide: withdrawn) */
     };
     int nd = (int)(sizeof DP / sizeof DP[0]);
     if (M->nmenus < 7 && M->nitems + nd <= 96) {

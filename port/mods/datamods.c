@@ -207,7 +207,7 @@ static unsigned char *card_text_to_msg(const unsigned char *t, long n, long *out
         long e = i; while (e < n && t[e] != '\n') e++;
         long l = e; if (l > i && t[l - 1] == '\r') l--;
         if (l > i && t[i] == '#') { i = e + 1; continue; }        /* a comment ('#' in the text itself is written \23) */
-        if (l - i >= 8 && !memcmp(t + i, "=== card", 8)) {
+        if (l - i >= 8 && !memcmp(t + i, "=== 卡牌", 8)) {
             if (in_card) { if (on > 0 && o[on - 1] == '\n') on--; o[on++] = 0; }   /* the text ended with the line before */
             int v[5] = { 0, 0, 0, 0, 0 }, k = 0;
             const unsigned char *p = memchr(t + i, ':', (size_t)(l - i));
@@ -284,6 +284,7 @@ static const char *merged_catalog(const char *base_path, const char *catname)
         closedir(dd);
     }
     char md[1100], cache[1200]; mods_dir(md, sizeof md);
+    MKDIR(md);                                  /* the folder itself first: MKDIR makes one level only */
     snprintf(cache, sizeof cache, "%s/.cache", md); MKDIR(cache);
     snprintf(cached[ci], sizeof cached[ci], "%s/%s", cache, CATS[ci]);
     FILE *f = fopen(cached[ci], "wb");

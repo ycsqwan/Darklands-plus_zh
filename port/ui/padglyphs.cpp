@@ -17,9 +17,9 @@ int ui_pad_button_for(int b)
 }
 
 /* what the face buttons say, by kind: Xbox's letters, PlayStation's shapes, Nintendo's letters */
-static const char *XB_NAME[PB_COUNT] = { "A", "B", "X", "Y", "LB", "RB", "Menu", "View", "LS", "RT", "Left stick", "Right stick", "D-pad" };
-static const char *PS_NAME[PB_COUNT] = { "Cross", "Circle", "Square", "Triangle", "L1", "R1", "Options", "Share", "L3", "R2", "Left stick", "Right stick", "D-pad" };
-static const char *NS_NAME[PB_COUNT] = { "A", "B", "X", "Y", "L", "R", "+", "-", "L stick", "ZR", "Left stick", "Right stick", "D-pad" };
+static const char *XB_NAME[PB_COUNT] = { "A", "B", "X", "Y", "LB", "RB", "菜单", "视图", "LS", "RT", "左摇杆", "右摇杆", "十字键" };
+static const char *PS_NAME[PB_COUNT] = { "十字", "圆形", "正方形", "三角形", "L1", "R1", "选项", "分享", "L3", "R2", "左摇杆", "右摇杆", "十字键" };
+static const char *NS_NAME[PB_COUNT] = { "A", "B", "X", "Y", "L", "R", "+", "-", "左摇杆", "ZR", "左摇杆", "右摇杆", "十字键" };
 
 const char *ui_pad_name(int b)
 {

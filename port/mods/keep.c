@@ -29,7 +29,7 @@ static void load(int seed)
     char line[64];
     while (fgets(line, sizeof line, f) && nkept < NK) {
         int id, q; char w[16] = "";
-        if (sscanf(line, "formula %d %15s", &id, w) == 2) { if (id >= 0 && id < 66) fmark[id] = !strcmp(w, "first") ? 1 : !strcmp(w, "last") ? 2 : 0; continue; }
+        if (sscanf(line, "配方%d %15s", &id, w) == 2) { if (id >= 0 && id < 66) fmark[id] = !strcmp(w, "first") ? 1 : !strcmp(w, "last") ? 2 : 0; continue; }
         if (line[0] == '#' || sscanf(line, "%d %d %15s", &id, &q, w) < 2) continue;
         kept[nkept].id = (short)id; kept[nkept].q = (short)q; kept[nkept].mark = strcmp(w, "sell") ? 1 : 2; nkept++;
     }

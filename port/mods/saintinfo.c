@@ -24,412 +24,412 @@
 /* does / unlike: the game's code; st_does / st_unlike: with the sainttexts fix (0: the same), st_arm:
    that needs armourday (else the game's help); cards: the encounters that call for the saint */
 static const struct { const char *does, *unlike, *st_does, *st_unlike; int st_arm, cards; } INFO[SAINT_INFO_N] = {
-    { "Endurance +8 to 15, Charisma +6 to 11, every weapon skill +15 to 29.",
+    { "耐力+8至15，魅力+6至11，每种武器技能+15至29。",
       "",
-      "Heals 8 to 15 Endurance (up to its maximum). Charisma +6 to 11, every weapon skill +15 to 29.", "", 0, 39 },   /* 0 St.Adrian */
-    { "Endurance +6 to 11 (a woman: +12 to 23), Charisma +6 to 11.",
+      "治愈8至15点耐力（最高值）。魅力+6至11，每种武器技能+15至29。", "", 0, 39 },   /* 0 St.Adrian */
+    { "耐力+6至11（女性：+12至23），魅力+6至11。",
       "",
-      "Heals 6 to 11 Endurance (a woman: 12 to 23; up to its maximum). Charisma +6 to 11.", "", 0, 0 },   /* 1 St.Agatha */
-    { "Only if a woman is in the party: may raise the reputation in the nearest town by 10 to 19; Charisma +10 to 29.",
+      "治愈6至11点耐力（女性：12至23；最高值）。魅力+6至11。", "", 0, 0 },   /* 1 St.Agatha */
+    { "仅当队伍中有女性时：可在最近的城镇提升声望10至19点；魅力+10至29。",
       "",
       0, 0, 0, 1 },   /* 2 St.Agnes */
-    { "Woodwise +25 to 29.",
+    { "木艺+25至29。",
       "",
       0, 0, 0, 10 },   /* 3 St.Aidan */
-    { "Intelligence +8 to 15, Perception +6 to 11, Alchemy +30 to 44, Latin and Read & Write +15 to 29.",
+    { "智力+8至15，感知+6至11，炼金术+30至44，拉丁语及读写+15至29。",
       "",
       0, 0, 0, 0 },   /* 4 St.Albert the Great */
-    { "Intelligence +6 to 11, Latin and Read & Write +20 to 39.",
+    { "智力+6至11，拉丁语及读写+20至39。",
       "",
       0, 0, 0, 5 },   /* 5 St.Alcuin */
-    { "May raise the reputation in the nearest town by 10 to 19. Charisma +6 to 11. A party with neither florins nor groschen gets 3 to 9 groschen.",
+    { "可在最近的城镇提升声望10至19点。魅力+6至11。若队伍既无弗罗林又无格罗申，则获得3至9格罗申。",
       "",
       0, 0, 0, 1 },   /* 6 St.Alexis */
-    { "Endurance +6 to 11, Charisma +8 to 15.",
-      "No reputation in Scotland or Russia, which are not in the game.",
+    { "耐力+6至11，魅力+8至15。",
+      "苏格兰与俄罗斯不在游戏中，故无声望。",
       0, 0, 0, 0 },   /* 7 St.Andrew */
-    { "Edged, Impact, Polearms, Thrown and Bows +15 to 29.",
+    { "刃器、冲击、长柄武器、投掷与弓箭+15至29。",
       "",
       0, 0, 0, 0 },   /* 8 St.Andrew the Tribune */
-    { "Endurance +4 to 9, Strength +5 to 10, Charisma +1 to 10, Speak Common and Latin +10 to 19, Read & Write +20 to 39.",
+    { "耐力+4至9，力量+5至10，魅力+1至10，通用语与拉丁语+10至19，读写+20至39。",
       "",
-      "Heals 4 to 9 Endurance (up to its maximum). Strength +5 to 10, Charisma +1 to 10, Speak Common and Latin +10 to 19, Read & Write +20 to 39.", "", 0, 3 },   /* 9 St.Anthony */
-    { "Perception +6 to 11, Strength +4 to 7, Charisma +15 to 24, Speak Common +20 to 29, Impact and Latin +10 to 19.",
+      "治愈4至9点耐力（最高值）。力量+5至10，魅力+1至10，通用语与拉丁语+10至19，读写+20至39。", "", 0, 3 },   /* 9 St.Anthony */
+    { "感知+6至11，力量+4至7，魅力+15至24，通用语+20至29，冲击与拉丁语+10至19。",
       "",
       0, 0, 0, 1 },   /* 10 St.Anthony of Padua */
-    { "Perception +6 to 11, Strength and Intelligence +4 to 7, every weapon skill +10 to 19, Streetwise and Latin +6 to 11, Read & Write and Riding +8 to 15.",
+    { "感知+6至11，力量与智力+4至7，每种武器技能+10至19，街头智慧与拉丁语+6至11，读写与骑术+8至15。",
       "",
       0, 0, 0, 0 },   /* 11 St.Arnulf */
-    { "Endurance +8 to 23, Strength +2 to 4.",
+    { "耐力+8至23，力量+2至4。",
       "",
-      "Heals 30% of lost Endurance and 10% of lost Strength.", "", 0, 9 },   /* 12 St.Apollinarius */
-    { "Artifice +15 to 29 for two hours at most; Missile Devices +20 to 39 for 5 to 7 hours.",
+      "治愈30%已损失的耐力与10%已损失的力量。", "", 0, 9 },   /* 12 St.Apollinarius */
+    { "工艺+15至29，最长两小时；投射装置+20至39，持续5至7小时。",
       "",
-      "Artifice +15 to 29 for two hours at most; Missile Devices +20 to 39 for 5 to 7 hours. In a battle, wounds cannot bring the one prayed for below 1 Strength: no death from wounds.", "", 0, 1 },   /* 13 St.Barbara */
-    { "Intelligence +4 to 8, Perception +3 to 6.",
+      "工艺+15至29，最长两小时；投射装置+20至39，持续5至7小时。战斗中，伤口不会使祈祷者的力量降至1以下：不会因伤致死。", "", 0, 1 },   /* 13 St.Barbara */
+    { "智力+4至8，感知+3至6。",
       "",
       0, 0, 0, 1 },   /* 14 St.Bathildis */
-    { "Charisma +8 to 15, every weapon skill +10 to 19, Speak Common +8 to 15.",
+    { "魅力+8至15，每种武器技能+10至19，通用语+8至15。",
       "",
       0, 0, 0, 13 },   /* 15 St.Boniface */
-    { "Charisma and Intelligence +8 to 15, Speak Common +40 to 99.",
+    { "魅力与智力+8至15，通用语+40至99。",
       "",
       0, 0, 0, 1 },   /* 16 St.Catherine */
-    { "Charisma and Perception +1 to 15, Speak Common +10 to 29.",
+    { "魅力与感知+1至15，通用语+10至29。",
       "",
       0, 0, 0, 12 },   /* 17 St.Catherine of Siena */
-    { "Charisma +3 to 10. @INSTR, the reputation of the town the party is in (in the overland view: the nearest) may rise by 20 to 59.",
+    { "魅力+3至10。@INSTR，队伍所在城镇的声望（在陆地视图中为最近的）可提升20至59点。",
       "",
       0, 0, 0, 7 },   /* 18 St.Cecilia */
-    { "Perception and Intelligence +3 to 5, Strength +6 to 11, every weapon skill and Latin +6 to 11.",
+    { "感知与智力+3至5，力量+6至11，每种武器技能与拉丁语+6至11。",
       "",
       0, 0, 0, 0 },   /* 19 St.Ceolwulf */
-    { "@FIRE1 May raise the reputation in the nearest town by 10 to 19. Charisma +6 to 11, Flails +15 to 29.",
-      "Flails and the reputation are not in the text. The fire protection is only for the one prayed for (the text promises it to everyone, and much more to one person), and no Endurance is healed.",
-      "Fire protection 50 for every member, 90 for the one prayed for. Heals 10% of lost Endurance.", "", 1, 3 },   /* 20 St.Charity */
-    { "Agility +8 to 15, Charisma +1 to 10.",
+    { "@FIRE1 可在最近的城镇提升声望10至19点。魅力+6至11，连枷+15至29。",
+      "连枷与声望均未见于文本。防火保护仅针对被祈祷者（文本承诺惠及所有人，且对特定一人更为丰厚），且不治愈耐力。",
+      "防火保护每位成员50，被祈祷者90。治愈10%已损失的耐力。", "", 1, 3 },   /* 20 St.Charity */
+    { "敏捷+8至15，魅力+1至10。",
       "",
       0, 0, 0, 8 },   /* 21 St.Christina, Astonish. */
-    { "Streetwise +10 to 19, Woodwise +20 to 39, Riding +25 to 74, Bows +6 to 11.",
-      "No faster travel, and no Strength or Endurance restored.",
-      "The party travels half again as fast for a week (fewer days on the road). Heals 10% of lost Strength and 20% of lost Endurance. Streetwise +10 to 19, Woodwise +20 to 39, Riding +25 to 74, Bows +6 to 11.", "", 0, 1 },   /* 22 St.Christopher */
-    { "Heals all lost Endurance and Strength.",
+    { "街头智慧+10至19，木艺+20至39，骑术+25至74，弓箭+6至11。",
+      "无加速旅行，亦不恢复力量或耐力。",
+      "队伍一周内行进速度提高一半（路上天数减少）。治愈10%已损失的力量与20%已损失的耐力。街头智慧+10至19，木艺+20至39，骑术+25至74，弓箭+6至11。", "", 0, 1 },   /* 22 St.Christopher */
+    { "治愈所有已损失的耐力与力量。",
       "",
       0, 0, 0, 3 },   /* 23 St.Clare */
-    { "Heals 25% of lost Endurance and 50% of lost Strength. Charisma +6 to 11, Healing +10 to 19.",
+    { "治愈25%已损失的耐力与50%已损失的力量。魅力+6至11，治疗+10至19。",
       "",
       0, 0, 0, 0 },   /* 24 St.Clotilda */
-    { "Charisma +8 to 15, Speak Common +30 to 89, Latin +6 to 11, Read & Write +10 to 19.",
+    { "魅力+8至15，通用语+30至89，拉丁语+6至11，读写+10至19。",
       "",
       0, 0, 0, 0 },   /* 25 St.Colman of Cloyne */
-    { "Endurance +8 to 15, Strength +6 to 13, Charisma +4 to 7, Perception lowered by 5 to 9, the skills of the weapons in hand +10 to 19.",
+    { "耐力+8至15，力量+6至13，魅力+4至7，感知降低5至9，手中武器技能+10至19。",
       "",
       0, 0, 0, 0 },   /* 26 St.Columba */
-    { "Heals 10% of lost Endurance and 10% of lost Strength. Perception +4 to 7, Healing +40 to 79. Teaches St. Damian.",
+    { "治愈10%已损失的耐力与10%已损失的力量。感知+4至7，治疗+40至79。教授圣达米安。",
       "",
       0, 0, 0, 0 },   /* 27 St.Cosmas */
     { "@CRISPIN",
-      "The text says non-metal armor; the game raises all armor.",
-      "Every member's leather and cloth armor counts 10 points better in quality.", "", 1, 0 },   /* 28 St.Crispin */
-    { "Intelligence +5 to 9, Alchemy +5 to 9.",
+      "文本称非金属护甲；游戏则提升所有护甲。",
+      "每位成员的皮革与布质盔甲在品质上均提升10点。", "", 1, 0 },   /* 28 St.Crispin */
+    { "智力+5至9，炼金术+5至9。",
       "",
       0, 0, 0, 3 },   /* 29 St.Cyprian */
-    { "Heals all lost Endurance and 30% of lost Strength. Teaches St. Cosmas.",
+    { "治愈所有已损失的耐力，并恢复30%已损失的力量。教授圣科斯马斯。",
       "",
       0, 0, 0, 0 },   /* 30 St.Damian */
-    { "Intelligence +4 to 7, Charisma +1 to 6, Perception +6 to 11, the skills of the weapons in hand +8 to 15, Riding +6 to 11.",
+    { "智力+4至7，魅力+1至6，感知+6至11，手中武器技能+8至15，骑术+6至11。",
       "",
       0, 0, 0, 0 },   /* 31 St.David */
-    { "Heals all lost Strength. Charisma +15 to 44, Speak Common +25 to 49.",
-      "No reputation in Paris and France, which are not in the game.",
-      "Heals all lost Strength and 10% of lost Endurance. Charisma +15 to 44, Speak Common +25 to 49.", "No reputation in Paris and France, which are not in the game.", 0, 0 },   /* 32 St.Denis */
-    { "Heals 30% of lost Endurance. Strength +5 to 14, the skills of the weapons in hand +20 to 59.",
+    { "治愈所有已损失的力量。魅力+15至44，通用语+25至49。",
+      "在巴黎和法国无声望，这两地不在游戏中。",
+      "治愈所有已损失的力量，并恢复10%已损失的耐力。魅力+15至44，通用语+25至49。", "在巴黎和法国无声望，这两地不在游戏中。", 0, 0 },   /* 32 St.Denis */
+    { "恢复30%已损失的耐力。力量+5至14，手中武器技能+20至59。",
       "",
       0, 0, 0, 0 },   /* 33 St.Derfel Gadarn */
-    { "Heals all lost Endurance and 20% of lost Strength. Charisma +15 to 29.",
-      "No reputation in Corsica and Monaco, which are not in the game.",
+    { "治愈所有已损失的耐力，并恢复20%已损失的力量。魅力+15至29。",
+      "在科西嘉和摩纳哥无声望，这两地不在游戏中。",
       0, 0, 0, 4 },   /* 34 St.Devota */
-    { "Agility +10 to 19, Woodwise and Stealth +10 to 19, Streetwise and Artifice +20 to 39.",
-      "Only the one prayed for, not the entire party; no Charisma or Speak Common.",
-      "Every member's Stealth +10 to 19. Agility, Woodwise +10 to 19, Streetwise and Artifice +20 to 39, Charisma and Speak Common +6 to 11.", "", 0, 6 },   /* 35 St.Dismas */
-    { "Intelligence +10 to 19, Speak Common and Latin +10 to 19, Read & Write +20 to 39.",
+    { "敏捷+10至19，木艺与潜行+10至19，街头智慧与巧思+20至39。",
+      "仅对所祈求之人有效，不作用于整个队伍；无魅力或通用语技能。",
+      "每位成员的潜行+10至19。敏捷、木艺+10至19，街头智慧与巧思+20至39，魅力与通用语+6至11。", "", 0, 6 },   /* 35 St.Dismas */
+    { "智力+10至19，通用语与拉丁语+10至19，读写+20至39。",
       "",
       0, 0, 0, 3 },   /* 36 St.Dominic */
-    { "Charisma +10 to 19, Perception +6 to 11, Healing +10 to 19. A member with no edged weapon gets a long sword.",
+    { "魅力+10至19，感知+6至11，治疗+10至19。未持有刃器的成员将获得一柄长剑。",
       "",
       0, 0, 0, 11 },   /* 37 St.Dorothy of Montau */
-    { "Perception +6 to 11, Healing +10 to 19, Woodwise +20 to 39. For a week no ambush takes the party by surprise (bandits and the like).",
-      "No faster travel; instead, a week safe from ambushes.",
-      "The party travels half again as fast for a week. Perception +6 to 11, Healing +10 to 19, Woodwise +20 to 39.", "", 0, 1 },   /* 38 St.Drogo */
-    { "Perception +6 to 11, the skills of the weapons in hand +6 to 11, Artifice +25 to 74, Streetwise +6 to 11, Alchemy +5 to 14. @ARM1",
-      "The text says the quality of all metal armor in the party; the game gives the one prayed for armor one level thicker.",
-      "Every member's metal armor (scale, mail, plate) counts 10 points better in quality. Perception +6 to 11, the skills of the weapons in hand +6 to 11, Artifice +25 to 74, Streetwise +6 to 11, Alchemy +5 to 14.", "", 1, 0 },   /* 39 St.Dunstan */
-    { "Heals 30% of lost Endurance. Agility +4 to 7, Stealth +15 to 29, Healing +10 to 19.",
+    { "感知+6至11，治疗+10至19，木艺+20至39。一周内队伍不会遭遇伏击（如盗匪等）。",
+      "无法加速旅行；取而代之的是，一周内免遭伏击。",
+      "队伍在一周内以原先速度的一倍半行进。感知+6至11，治疗+10至19，木艺+20至39。", "", 0, 1 },   /* 38 St.Drogo */
+    { "感知+6至11，手中武器技能+6至11，巧思+25至74，街头智慧+6至11，炼金术+5至14。@ARM1",
+      "文本称队伍中所有金属盔甲的品质；游戏则为所祈求的那件盔甲赋予更高一级的厚度。",
+      "每位成员的金属盔甲（鳞甲、锁子甲、板甲）在品质上均提升10点。感知+6至11，手中武器技能+6至11，巧思+25至74，街头智慧+6至11，炼金术+5至14。", "", 1, 0 },   /* 39 St.Dunstan */
+    { "恢复30%已损失的耐力。敏捷+4至7，潜行+15至29，治疗+10至19。",
       "",
       0, 0, 0, 2 },   /* 40 St.Dymphna */
-    { "Endurance +4 to 7, Intelligence +6 to 11, Perception +8 to 15, Riding +8 to 15, every weapon skill +6 to 11. Every member's Virtue is raised to at least 20, for good, and the party loses a quarter of its money.",
-      "Endurance is raised past its maximum for a day, not healed; a rich party loses less than a quarter (the game counts only part of the purse).",
-      "Heals 4 to 7 Endurance (up to its maximum). Intelligence +6 to 11, Perception +8 to 15, Riding +8 to 15, every weapon skill +6 to 11. Every member's Virtue is raised to at least 20, for good, and the party loses a quarter of its money.", "", 0, 6 },   /* 41 St.Edward, Confessor */
-    { "Artifice +25 to 74, Alchemy +8 to 15.",
+    { "耐力+4至7，智力+6至11，感知+8至15，骑术+8至15，每项武器技能+6至11。每位成员的美德至少提升至20，以示良好，并且队伍将损失四分之一的金钱。",
+      "耐力在一天内被提升至超过其上限，而非治愈；富裕的队伍损失不到四分之一（游戏仅计算部分钱包）。",
+      "治愈4至7点耐力（直至其上限）。智力+6至11，感知+8至15，骑术+8至15，每项武器技能+6至11。每位成员的美德至少提升至20，以示良好，并且队伍将损失四分之一的金钱。", "", 0, 6 },   /* 41 St.Edward, Confessor */
+    { "巧思+25至74，炼金术+8至15。",
       "",
-      "Blades, hammers and maces, polearms, crossbows and guns of the one prayed for count 10 points better in quality. Artifice +25 to 74, Alchemy +8 to 15.", "", 0, 0 },   /* 42 St.Eligius */
-    { "Charisma +15 to 29, Speak Common +20 to 39.",
+      "所祈求之人的刀剑、锤斧、长矛、长杆武器、弩与枪械，在品质上均提升10点。巧思+25至74，炼金术+8至15。", "", 0, 0 },   /* 42 St.Eligius */
+    { "魅力+15至29，通用语+20至39。",
       "",
       0, 0, 0, 9 },   /* 43 St.Emydius */
-    { "Charisma +5 to 9, Riding and Woodwise +10 to 19, Speak Common +6 to 11. The party can cross water as if it were land.",
+    { "魅力+5至9，骑术与木艺+10至19，通用语+6至11。队伍可像在陆地上一样跨越水域。",
       "",
       0, 0, 0, 1 },   /* 44 St.Engelbert */
-    { "@FIRE1 Agility and Perception +6 to 11.",
+    { "@FIRE1 敏捷与感知+6至11。",
       "",
-      "Fire protection 50 for every member. Agility and Perception +6 to 11.", "", 1, 2 },   /* 45 St.Erasmus */
-    { "Strength +8 to 23, Charisma +4 to 7, the skills of the weapons in hand +15 to 24, Riding and Speak Common +6 to 11.",
-      "No reputation in Sweden, which is not in the game.",
+      "每位成员享有50点防火保护。敏捷与感知+6至11。", "", 1, 2 },   /* 45 St.Erasmus */
+    { "力量+8至23，魅力+4至7，手中武器技能+15至24，骑术与通用语+6至11。",
+      "在瑞典无声望，该地不在游戏中。",
       0, 0, 0, 6 },   /* 46 St.Eric */
-    { "Riding +10 to 19, Woodwise +40 to 69, Edged, Thrown and Bows +6 to 11.",
-      "No faster travel through woods, and the weapon skills are only Edged, Thrown and Bows.",
-      "The party travels twice as fast through woods and forests for a week. Riding +10 to 19, Woodwise +40 to 69, Edged, Polearms, Thrown, Bows and Missile Devices +15 to 29.", "", 0, 2 },   /* 47 St.Eustace */
-    { "Agility +8 to 15, Stealth +40 to 119, Woodwise +10 to 19.",
+    { "骑术+10至19，木艺+40至69，刃器、投掷与弓箭+6至11。",
+      "无法在林地中加速行进，且武器技能仅限于刃器、投掷与弓箭。",
+      "队伍在一周内以两倍速度穿越树林与森林。骑术+10至19，木艺+40至69，刃器、长杆武器、投掷、弓箭及导弹装置+15至29。", "", 0, 2 },   /* 47 St.Eustace */
+    { "敏捷+8至15，潜行+40至119，木艺+10至19。",
       "",
       0, 0, 0, 2 },   /* 48 St.Felix of Nola */
-    { "Charisma +8 to 15, Perception +6 to 11, Latin +10 to 19.",
+    { "魅力+8至15，感知+6至11，拉丁语+10至19。",
       "",
       0, 0, 0, 2 },   /* 49 St.Finbar */
-    { "Agility +8 to 15, Charisma +6 to 11, Streetwise +4 to 7, Speak Common and Read & Write +6 to 11. The party can cross water as if it were land.",
+    { "敏捷+8至15，魅力+6至11，街头智慧+4至7，通用语与读写+6至11。队伍可像在陆地上一样跨越水域。",
       "",
       0, 0, 0, 3 },   /* 50 St.Finnian */
-    { "May raise the reputation by 15 to 24 in Passau, Salzburg, Linz, Steyr, Wien or Graz (nowhere else). The skills of the weapons in hand +6 to 11, Riding +6 to 11. The party can cross water as if it were land.",
+    { "可在帕绍、萨尔茨堡、林茨、施泰尔、维也纳或格拉茨等地提升声望15至24点（其他地方不可）。手中武器技能+6至11，骑术+6至11。队伍可像在陆地上一样跨越水域。",
       "",
-      "May raise the reputation by 15 to 24 in Passau, Salzburg, Linz, Steyr, Wien, Graz, Posen or Bromberg (nowhere else). The skills of the weapons in hand +6 to 11, Riding +6 to 11. The party can cross water as if it were land.", "", 0, 3 },   /* 51 St.Florian */
-    { "Heals 30% of lost Endurance and 10% of lost Strength. Perception and Endurance +6 to 11, Charisma +15 to 29, Speak Common and Woodwise +4 to 7, Healing +10 to 19, Artifice +12 to 23.",
-      "No Virtue and no loss of money; instead Healing, Artifice and Woodwise.",
-      "Endurance and Perception +6 to 11, Charisma +15 to 29, Speak Common +10 to 19, Virtue +25 to 49. One time in two the party loses a tenth of its money.", "", 0, 1 },   /* 52 St.Francis */
-    { "Intelligence and Perception +10 to 29.",
+      "可在帕绍、萨尔茨堡、林茨、施泰尔、维也纳、格拉茨、波森或布罗姆贝格等地将声望提升15至24点（其他地方无效）。手中武器的技能+6至11，骑术+6至11。队伍可像在陆地上一样涉水而过。", "", 0, 3 },   /* 51 St.Florian */
+    { "治愈30%的体力损耗和10%的力量损耗。感知与体力+6至11，魅力+15至29，通用语与木系知识+4至7，治疗+10至19，工艺+12至23。",
+      "无美德且不损失金钱；取而代之的是治疗、工艺与木系知识。",
+      "体力与感知+6至11，魅力+15至29，通用语+10至19，美德+25至49。每两次中有一次，队伍会损失十分之一的金钱。", "", 0, 1 },   /* 52 St.Francis */
+    { "智力与感知+10至29。",
       "",
       0, 0, 0, 14 },   /* 53 St.Gabriel */
-    { "Heals 30% of lost Endurance and 20% of lost Strength. For a week no ambush takes the party by surprise (bandits and the like).",
+    { "治愈30%的体力损耗和20%的力量损耗。一周内不会遭遇伏击（如盗匪等）。",
       "",
       0, 0, 0, 22 },   /* 54 St.Genevieve */
-    { "Strength +10 to 14, Agility +5 to 9, every weapon skill and Riding +25 to 49.",
+    { "力量+10至14，敏捷+5至9，所有武器技能与骑术+25至49。",
       "",
-      "The weapon and the armor of the one prayed for count 10 points better in quality. Strength +10 to 14, Agility +5 to 9, every weapon skill and Riding +25 to 49.", "", 1, 0 },   /* 55 St.George */
-    { "Heals 30% of lost Endurance and 20% of lost Strength. The skills of the weapons in hand +15 to 24, Healing +20 to 39.",
-      "No Charisma, and only the skills of the weapons in hand, not all weapon skills.",
-      "Heals 30% of lost Endurance and 20% of lost Strength. Every weapon skill +15 to 24, Healing +20 to 39, Charisma +6 to 11.", "", 0, 0 },   /* 56 St.Gerlac */
-    { "Charisma +6 to 11, Riding +5 to 9, Woodwise, Latin and Read & Write +15 to 29. At the party's next step in the overland view it is carried to the nearest town.",
+      "被祈祷者的武器与盔甲品质提升10点。力量+10至14，敏捷+5至9，所有武器技能与骑术+25至49。", "", 1, 0 },   /* 55 St.George */
+    { "治愈30%的体力损耗和20%的力量损耗。手中武器的技能+15至24，治疗+20至39。",
+      "无魅力，仅限手中武器的技能，而非全部武器技能。",
+      "治愈30%的体力损耗和20%的力量损耗。所有武器技能+15至24，治疗+20至39，魅力+6至11。", "", 0, 0 },   /* 56 St.Gerlac */
+    { "魅力+6至11，骑术+5至9，木系知识、拉丁语以及读写能力+15至29。队伍在陆地视图中每前进一步，都会被传送到最近的城镇。",
       "",
       0, 0, 0, 4 },   /* 57 St.Gertrude o'Nivelles */
-    { "Heals 40% of lost Endurance and 10% of lost Strength. Agility lowered by 4 to 7, the skills of the weapons in hand lowered by 15 to 24, Stealth +30 to 59, Woodwise +5 to 9, Streetwise +50 to 89.",
-      "Woodwise and Streetwise the other way around (the text: a little Streetwise, a tremendous Woodwise); no money.",
-      "Heals 40% of lost Endurance and 10% of lost Strength. Agility lowered by 4 to 7, the skills of the weapons in hand lowered by 15 to 24, Stealth +30 to 59, Woodwise +50 to 89, Streetwise +5 to 9. A party with neither florins nor groschen gets 3 to 9 groschen.", "", 0, 0 },   /* 58 St.Giles */
-    { "Intelligence +5 to 9, Perception +15 to 24, Alchemy +40 to 59, Artifice +10 to 19. Costs a point of Strength (a wound) and a point of Virtue, for good.",
+    { "治愈40%的体力损耗和10%的力量损耗。敏捷降低4至7，手中武器技能降低15至24，潜行+30至59，木系知识+5至9，街头智慧+50至89。",
+      "木系知识与街头智慧互换位置（原文：略带街头智慧，极为木系知识）；无金钱。",
+      "治愈40%的体力损耗和10%的力量损耗。敏捷降低4至7，手中武器技能降低15至24，潜行+30至59，木系知识+50至89，街头智慧+5至9。一支既无弗罗林也无格罗申的队伍，可获得3至9格罗申。", "", 0, 0 },   /* 58 St.Giles */
+    { "智力+5至9，感知+15至24，炼金术+40至59，工艺+10至19。需消耗一点力量（伤势）和一点美德，以换取效果。",
       "",
       0, 0, 0, 0 },   /* 59 St.Giles of Portugal */
-    { "Heals 30% of lost Endurance. Latin +20 to 39, Read & Write +25 to 49.",
+    { "治愈30%的体力损耗。拉丁语+20至39，读写能力+25至49。",
       "",
       0, 0, 0, 4 },   /* 60 St.Godehard */
-    { "Heals 20% of lost Endurance. Speak Common +15 to 29, Artifice +10 to 19. For a week no ambush takes the party by surprise (bandits and the like).",
+    { "治愈20%的体力损耗。通用语+15至29，工艺+10至19。一周内不会遭遇伏击（如盗匪等）。",
       "",
       0, 0, 0, 30 },   /* 61 St.Godfrey */
-    { "May raise the reputation by 20 to 39 in Schleswig, Lübeck, Wismar, Rostock, Hamburg, Lüneburg or Bremen (nowhere else). Every weapon skill +15 to 29.",
+    { "可在石勒苏益格、吕贝克、维斯马、罗斯托克、汉堡、吕讷堡或不来梅等地将声望提升20至39点（其他地方无效）。所有武器技能+15至29。",
       "",
       0, 0, 0, 0 },   /* 62 St.Gottschalk */
-    { "Charisma +8 to 15, Alchemy and Speak Common +10 to 19, Artifice +20 to 39.",
+    { "魅力+8至15，炼金术与通用语+10至19，工艺+20至39。",
       "",
       0, 0, 0, 13 },   /* 63 St.Gregory Thaumaturg. */
-    { "May raise the reputation by 30 to 49 in Frankfurt an der Oder, Breslau, Olmütz or Teschen (nowhere else). Healing +20 to 29.",
+    { "可在奥得河畔法兰克福、布雷斯劳、奥洛穆茨或特申等地将声望提升30至49点（其他地方无效）。治疗+20至29。",
       "",
-      "May raise the reputation by 30 to 49 in Frankfurt an der Oder, Breslau, Olmütz or Teschen (nowhere else). Heals 20% of lost Endurance and Strength. Healing +20 to 29.", "", 0, 6 },   /* 64 St.Hedwig */
-    { "Intelligence +8 to 23, every weapon skill +10 to 19.",
-      "No reputation in its help.",
+      "可在奥得河畔法兰克福、布雷斯劳、奥洛穆茨或特申等地将声望提升30至49点（其他地方无效）。治愈20%的体力与力量损耗。治疗+20至29。", "", 0, 6 },   /* 64 St.Hedwig */
+    { "智力+8至23，所有武器技能+10至19。",
+      "无任何声望加成。",
       0, 0, 0, 1 },   /* 65 St.Henry */
-    { "Charisma +10 to 19, Strength +4 to 7.",
+    { "魅力+10至19，力量+4至7。",
       "",
       0, 0, 0, 8 },   /* 66 St.Heribert */
-    { "Perception +15 to 29.",
+    { "感知+15至29。",
       "",
       0, 0, 0, 10 },   /* 67 St.Herve */
-    { "Perception +20 to 59.",
-      "No reputation in its help.",
-      "Perception +20 to 59. By the Rhine (Basel to Xanten), may raise the reputation by 5 to 14.", "", 0, 10 },   /* 68 St.Hildegard */
-    { "Polearms, Thrown and Bows +15 to 29, Missile Devices +10 to 19, Stealth +25 to 49, Woodwise +40 to 79.",
+    { "感知+20至59。",
+      "无任何声望加成。",
+      "感知+20至59。沿莱茵河（巴塞尔至桑滕），可将声望提升5至14点。", "", 0, 10 },   /* 68 St.Hildegard */
+    { "长柄武器、投掷武器与弓箭+15至29，投射装置+10至19，潜行+25至49，木系知识+40至79。",
       "",
       0, 0, 0, 11 },   /* 69 St.Hubert */
-    { "Charisma +15 to 29, every weapon skill and Speak Common +10 to 19, Riding +5 to 9.",
+    { "魅力+15至29，所有武器技能与通用语+10至19，骑术+5至9。",
       "",
       0, 0, 0, 0 },   /* 70 St.Illtyd */
-    { "Charisma +8 to 15, Streetwise +10 to 19, Speak Common +5 to 9.",
-      "No reputation in Madrid and Spain, which are not in the game.",
+    { "魅力+8至15，街头智慧+10至19，通用语+5至9。",
+      "马德里及西班牙不在游戏内，故无声望。",
       0, 0, 0, 2 },   /* 71 St.Isidore */
-    { "Heals 50% of lost Endurance and all lost Strength. Charisma +8 to 15, Healing +20 to 39.",
+    { "治愈50%的体力损耗和全部力量损耗。魅力+8至15，治疗+20至39。",
       "",
       0, 0, 0, 0 },   /* 72 St.Ita */
-    { "Heals 20% of lost Endurance and 10% of lost Strength. Strength and Endurance +4 to 7, Charisma +3 to 5, Virtue +20 to 34.",
-      "No reputation in Spain, which is not in the game; no Intelligence lost.",
-      "Heals 20% of lost Endurance and 10% of lost Strength. Strength and Endurance +4 to 7, Charisma +3 to 5, Virtue +20 to 34, Intelligence lowered by 3 to 5.", "No reputation in Spain, which is not in the game.", 0, 0 },   /* 73 St.James */
-    { "No help of its own: its powers work only where an encounter calls for it.",
+    { "治愈20%的体力损耗和10%的力量损耗。力量与体力+4至7，魅力+3至5，美德+20至34。",
+      "西班牙不在游戏内，故无声望；亦无智力损耗。",
+      "治愈20%的体力损耗和10%的力量损耗。力量与体力+4至7，魅力+3至5，美德+20至34，智力降低3至5。", "西班牙不在游戏内，故无声望。", 0, 0 },   /* 73 St.James */
+    { "无自身助力：其能力仅在遭遇需要时才生效。",
       "",
       0, 0, 0, 3 },   /* 74 St.Januarius */
-    { "A woman: heals all lost Endurance and 20% of lost Strength, and Endurance +5 to 9, Strength +4 to 7. A man: heals 30% of lost Endurance and 10% of lost Strength.",
+    { "女性：治愈全部体力损耗和20%的力量损耗，同时体力+5至9，力量+4至7。男性：治愈30%的体力损耗和10%的力量损耗。",
       "",
       0, 0, 0, 0 },   /* 75 St.John of Bridlington */
-    { "Charisma +8 to 15, Perception lowered by 6 to 11, Speak Common and Latin +30 to 59.",
+    { "魅力+8至15，感知降低6至11，通用语与拉丁语+30至59。",
       "",
       0, 0, 0, 0 },   /* 76 St.John Chrysostom */
-    { "Alchemy, Religion, Speak Common, Latin, Read & Write, Healing, Artifice, Stealth, Streetwise and Woodwise each +1 to 4, and 1 more for every 5 points of Virtue.",
-      "Not all skills: no weapon skills and no Riding.",
-      "Every skill +1 to 4, and 1 more for every 5 points of Virtue.", "", 0, 0 },   /* 77 St.John Climacus */
-    { "@NEPOMUK Charisma +8 to 15, Intelligence +6 to 11, Speak Common +20 to 39, Streetwise +4 to 7.",
+    { "炼金术、宗教、通用语、拉丁语、读写、治疗、工艺、潜行、街头智慧和木艺每项+1至4，每5点美德再加1。",
+      "并非所有技能：没有武器技能，也没有骑术。",
+      "每项技能+1至4，每5点美德再加1。", "", 0, 0 },   /* 77 St.John Climacus */
+    { "@NEPOMUK 魅力+8至15，智力+6至11，通用语+20至39，街头智慧+4至7。",
       "",
       0, 0, 0, 6 },   /* 78 St.John Nepolmuchen */
-    { "Charisma +6 to 11, Artifice and Streetwise +30 to 59.",
+    { "魅力+6至11，工艺与街头智慧+30至59。",
       "",
-      "Artifice and Streetwise +30 to 59; in a town, Charisma +6 to 11.", "", 0, 1 },   /* 79 St.Joseph */
-    { "Endurance, Charisma, Strength, Perception, Agility and Intelligence +4 to 8, the skills of the weapons in hand +15 to 24, Alchemy, Religion, Speak Common, Latin, Read & Write, Healing, Stealth, Artifice, Woodwise and Streetwise +6 to 11.",
-      "Not every skill: no Riding, and no weapon skill but those of the weapons in hand.",
-      "Endurance, Charisma, Strength, Perception, Agility and Intelligence +4 to 8, the skills of the weapons in hand +15 to 24, every other skill +6 to 11.", "", 0, 9 },   /* 80 St.Jude */
-    { "Woodwise +20 to 39, Riding +6 to 11. The party can cross water as if it were land.",
+      "工艺与街头智慧+30至59；在城镇中，魅力+6至11。", "", 0, 1 },   /* 79 St.Joseph */
+    { "耐力、魅力、力量、感知、敏捷和智力+4至8，手中武器的技能+15至24，炼金术、宗教、通用语、拉丁语、读写、治疗、潜行、工艺、木艺和街头智慧+6至11。",
+      "并非所有技能：没有骑术，除手中武器外无其他武器技能。",
+      "耐力、魅力、力量、感知、敏捷和智力+4至8，手中武器的技能+15至24，其他各项技能+6至11。", "", 0, 9 },   /* 80 St.Jude */
+    { "木艺+20至39，骑术+6至11。队伍可如在陆地上般穿越水域。",
       "",
       0, 0, 0, 1 },   /* 81 St.Julian, Hospitaler */
-    { "Heals 40% of lost Endurance and 20% of lost Strength. Charisma +6 to 11, Speak Common +15 to 29, Riding +4 to 7, Healing +10 to 19.",
+    { "治愈40%已损失的耐力和20%已损失的力量。魅力+6至11，通用语+15至29，骑术+4至7，治疗+10至19。",
       "",
       0, 0, 0, 0 },   /* 82 St.Kessog */
-    { "Strength +4 to 7, Agility +3 to 5, the skills of the weapons in hand +15 to 24, Speak Common +6 to 11, Riding +10 to 19.",
+    { "力量+4至7，敏捷+3至5，手中武器的技能+15至24，通用语+6至11，骑术+10至19。",
       "",
       0, 0, 0, 0 },   /* 83 St.Lasdislaus */
-    { "Heals all lost Endurance. Charisma +12 to 19, Speak Common and Streetwise +10 to 19.",
+    { "治愈所有已损失的耐力。魅力+12至19，通用语和街头智慧+10至19。",
       "",
       0, 0, 0, 4 },   /* 84 St.Lawrence */
-    { "Heals 30% of lost Endurance and all lost Strength.",
+    { "治愈30%已损失的耐力和全部已损失的力量。",
       "",
       0, 0, 0, 1 },   /* 85 St.Lazarus */
-    { "Every weapon skill +10 to 19.",
+    { "每项武器技能+10至19。",
       "",
-      "The weapon of the one prayed for counts 10 points better in quality. Every weapon skill +10 to 19.", "", 0, 0 },   /* 86 St.Longinius */
-    { "Heals all lost Endurance and Strength. Perception +6 to 11.",
+      "被祈祷者的武器品质提升10点。每项武器技能+10至19。", "", 0, 0 },   /* 86 St.Longinius */
+    { "治愈所有已损失的耐力和力量。感知+6至11。",
       "",
       0, 0, 0, 3 },   /* 87 St.Lucy */
-    { "Heals 50% of lost Endurance and 30% of lost Strength. Healing +20 to 39.",
+    { "治愈50%已损失的耐力和30%已损失的力量。治疗+20至39。",
       "",
       0, 0, 0, 0 },   /* 88 St.Luke */
-    { "Charisma +6 to 11, Perception +8 to 15, Endurance +5 to 9, Virtue +6 to 17.",
-      "Endurance is raised, not spent.",
-      "Costs 5 to 9 Endurance (not below 1). Charisma +6 to 11, Perception +8 to 15, Virtue +6 to 17.", "", 0, 53 },   /* 89 St.Lutgardis */
-    { "A woman: heals all lost Endurance and half the lost Strength, and every attribute +3 to 6 and Alchemy, Religion, Speak Common, Latin, Read & Write, Healing, Artifice, Stealth, Streetwise and Woodwise +5 to 10. A man: heals 10% of lost Endurance and Strength.",
-      "No protection from flames.",
-      "Fire protection 90 for the one prayed for. A woman: heals all lost Endurance and half the lost Strength, and every attribute +3 to 6 and Alchemy, Religion, Speak Common, Latin, Read & Write, Healing, Artifice, Stealth, Streetwise and Woodwise +5 to 10. A man: heals 10% of lost Endurance and Strength.", "", 1, 3 },   /* 90 St.Margaret */
-    { "Heals all lost Endurance and 40% of lost Strength. Healing +20 to 39, Speak Common +10 to 19.",
+    { "魅力+6至11，感知+8至15，耐力+5至9，美德+6至17。",
+      "耐力被提升，而非消耗。",
+      "花费5至9点耐力（不低于1）。魅力+6至11，感知+8至15，美德+6至17。", "", 0, 53 },   /* 89 St.Lutgardis */
+    { "女性：治愈所有已损失的耐力和一半已损失的力量，每项属性+3至6，炼金术、宗教、通用语、拉丁语、读写、治疗、工艺、潜行、街头智慧和木艺+5至10。男性：治愈10%已损失的耐力和力量。",
+      "无防火保护。",
+      "被祈祷者享有90%的防火保护。女性：治愈所有已损失的耐力和一半已损失的力量，每项属性+3至6，炼金术、宗教、通用语、拉丁语、读写、治疗、工艺、潜行、街头智慧和木艺+5至10。男性：治愈10%已损失的耐力和力量。", "", 1, 3 },   /* 90 St.Margaret */
+    { "治愈所有已损失的耐力和40%已损失的力量。治疗+20至39，通用语+10至19。",
       "",
       0, 0, 0, 0 },   /* 91 St.Margaret of Cortona */
-    { "Agility +12 to 23, Read & Write +15 to 29.",
+    { "敏捷+12至23，读写+15至29。",
       "",
       0, 0, 0, 0 },   /* 92 St.Mark */
-    { "Heals 30% of lost Endurance and 30% of lost Strength. Charisma +8 to 15, Perception +12 to 19, Speak Common +25 to 49, Riding +20 to 39.",
+    { "治愈30%已损失的耐力和30%已损失的力量。魅力+8至15，感知+12至19，通用语+25至49，骑术+20至39。",
       "",
-      "One who wears armor has 30% of lost Endurance and Strength healed. Charisma +8 to 15, Perception +12 to 19, Speak Common +25 to 49, Riding +20 to 39.", "", 0, 10 },   /* 93 St.Martin of Tours */
-    { "Intelligence +8 to 15, Latin +15 to 29, Read & Write +25 to 49. The party's standing with the Fugger and with the Medici rises by 20 to 39 each.",
+      "穿着盔甲者，其已损失的耐力和力量可治愈30%。魅力+8至15，感知+12至19，通用语+25至49，骑术+20至39。", "", 0, 10 },   /* 93 St.Martin of Tours */
+    { "智力+8至15，拉丁语+15至29，读写+25至49。队伍与富格尔家族及美第奇家族的声望各提升20至39。",
       "",
       0, 0, 0, 0 },   /* 94 St.Matthew */
-    { "Edged +20 to 39, Alchemy +10 to 19.",
+    { "刃器+20至39，炼金术+10至19。",
       "",
-      "An edged weapon of the one prayed for counts 10 points better in quality. Edged +20 to 39, Alchemy +10 to 19.", "", 0, 0 },   /* 95 St.Maurice */
-    { "May raise the reputation in the nearest town by 20 to 39. Charisma +12 to 19, the skills of the weapons in hand +20, Healing +20 to 39.",
-      "In combat it raises the skills of the weapons in hand, not the quality of the weapons and armor.",
-      "Every member's weapon and armor count 10 points better in quality. May raise the reputation in the nearest town by 20 to 39. Charisma +12 to 19, the skills of the weapons in hand +20, Healing +20 to 39.", "", 1, 0 },   /* 96 St.Michael */
-    { "Charisma +10 to 19, Healing +20 to 39. The party can cross water as if it were land.",
+      "被祈祷者的刃器品质提升10点。刃器+20至39，炼金术+10至19。", "", 0, 0 },   /* 95 St.Maurice */
+    { "可使附近城镇的声望提升20至39。魅力+12至19，手中武器的技能+20，治疗+20至39。",
+      "在战斗中提升手中武器的技能，而非武器与 armor 的品质。",
+      "队伍每位成员的武器与 armor 品质均提升10点。可使附近城镇的声望提升20至39。魅力+12至19，手中武器的技能+20，治疗+20至39。", "", 1, 0 },   /* 96 St.Michael */
+    { "魅力+10至19，治疗+20至39。队伍可如在陆地上般穿越水域。",
       "",
       0, 0, 0, 53 },   /* 97 St.Milburga */
-    { "Every weapon skill +15 to 29, Stealth +20 to 39, Woodwise and Streetwise +10 to 19.",
+    { "每项武器技能+15至29，潜行+20至39，木艺与街头智慧+10至19。",
       "",
       0, 0, 0, 1 },   /* 98 St.Moses the Black */
-    { "May raise the reputation in the nearest town by 10 to 19. Charisma +6 to 11, Endurance +4 to 8, Flails +15 to 29.",
-      "Flails and Endurance instead of Agility and Riding; the reputation anywhere, not only in his lands.",
-      "May raise the reputation in Nancy (Lorraine) by 10 to 19. Agility and Charisma +6 to 11, Riding +40 to 79.", "No reputation in Russia, Greece, Sicily and Apulia, which are not in the game.", 0, 2 },   /* 99 St.Nicholas */
-    { "May raise the reputation by 15 to 24 in Strassburg or Basel (nowhere else). Perception +6 to 11.",
+    { "可使附近城镇的声望提升10至19。魅力+6至11，耐力+4至8，连枷+15至29。",
+      "以连枷与耐力取代敏捷与骑术；声望遍及各地，而不仅限于其领地。",
+      "可使南锡（洛林）的声望提升10至19。敏捷与魅力+6至11，骑术+40至79。", "俄罗斯、希腊、西西里与阿普利亚不在游戏内，故无相关声望。", 0, 2 },   /* 99 St.Nicholas */
+    { "可在斯特拉斯堡或巴塞尔提升声望15至24点（其他地方无效）。感知+6至11。",
       "",
       0, 0, 0, 2 },   /* 100 St.Odilia */
-    { "Perception +10 to 19, Charisma +4 to 8, every weapon skill +8 to 22, Speak Common +8 to 15.",
+    { "感知+10至19，魅力+4至8，每项武器技能+8至22，通用语+8至15。",
       "",
       0, 0, 0, 0 },   /* 101 St.Odo */
-    { "Heals 30% of lost Endurance. Every weapon skill +8 to 22.",
+    { "治愈30%的已损失耐力。每项武器技能+8至22。",
       "",
       0, 0, 0, 0 },   /* 102 St.Olaf */
-    { "@FIRE1 Heals 30% of lost Endurance and 30% of lost Strength. Charisma +6 to 11, Alchemy +10 to 19, Healing +15 to 29. The party can cross water as if it were land.",
-      "The fire protection is only for the one prayed for, not the party; the crossing of water is not in the text; nothing against animals.",
-      "Fire protection 50 for every member. One who wears armor has 30% of lost Endurance and Strength healed. Alchemy +10 to 19, Healing +15 to 29.", "Nothing against animals.", 1, 5 },   /* 103 St.Pantaleon */
-    { "Charisma +15 to 24, Strength +12 to 19, Edged, Impact, Polearms, Speak Common, Latin and Read & Write +15 to 29. @ARM2",
-      "The armor is against every blow, not only missiles.",
-      "Armor two levels thicker against missiles. Charisma +15 to 24, Strength +12 to 19, Edged, Impact, Polearms, Speak Common, Latin and Read & Write +15 to 29.", "", 1, 0 },   /* 104 St.Patrick */
+    { "@FIRE1 治愈30%的已损失耐力和30%的已损失力量。魅力+6至11，炼金术+10至19，治疗+15至29。队伍可如在陆地上般涉水而过。",
+      "防火效果仅针对被祈祷者本人，不适用于队伍；文中未提及涉水功能；对动物无影响。",
+      "为每位成员提供50点防火保护。穿戴盔甲者可治愈30%的已损失耐力和力量。炼金术+10至19，治疗+15至29。", "对动物无影响。", 1, 5 },   /* 103 St.Pantaleon */
+    { "魅力+15至24，力量+12至19，刃器、冲击、长柄武器、通用语、拉丁语以及读写能力+15至29。@ARM2",
+      "盔甲可抵御一切打击，不仅限于投射物。",
+      "盔甲在抵御投射物时厚度增加两倍。魅力+15至24，力量+12至19，刃器、冲击、长柄武器、通用语、拉丁语以及读写能力+15至29。", "", 1, 0 },   /* 104 St.Patrick */
     { "@PAUL",
-      "No reputation in Greece and Malta, which are not in the game.",
+      "在希腊和马耳他无声望，因这两地不在游戏中。",
       0, 0, 0, 0 },   /* 105 St.Paul */
     { "@SIMPLE",
       "",
       0, 0, 0, 4 },   /* 106 St.Paul the Simple */
-    { "Charisma +15 to 29.",
+    { "魅力+15至29。",
       "",
       0, 0, 0, 7 },   /* 107 St.Perpetua */
-    { "Charisma +8 to 15, Strength +12 to 19, Perception lowered by half its maximum, Speak Common, Latin and Healing +10 to 19, Edged +15 to 29.",
+    { "魅力+8至15，力量+12至19，感知降至最大值的一半，通用语、拉丁语及治疗+10至19，刃器+15至29。",
       "",
       0, 0, 0, 5 },   /* 108 St.Peter */
-    { "May lower the reputation in the nearest town by 1 to 4. Intelligence and Perception +6 to 11, Alchemy and Riding +10 to 19, Stealth +40 to 79.",
+    { "可使最近城镇的声望降低1至4点。智力和感知+6至11，炼金术和骑术+10至19，潜行+40至79。",
       "",
       0, 0, 0, 0 },   /* 109 St.Peter of Atroa */
     { "@POLYCARP",
       "",
       0, 0, 0, 3 },   /* 110 St.Polycarp */
-    { "Heals all lost Endurance and Strength. Agility +8 to 15, Perception +6 to 11, Healing +50 to 139.",
+    { "治愈所有已损失的耐力和力量。敏捷+8至15，感知+6至11，治疗+50至139。",
       "",
       0, 0, 0, 14 },   /* 111 St.Raphael */
-    { "Intelligence +15 to 29, Read & Write +30 to 89. The party can cross water as if it were land.",
-      "No reputation with the Dominicans in its help.",
+    { "智力+15至29，读写能力+30至89。队伍可如在陆地上般涉水而过。",
+      "对多明我会的帮助无声望。",
       0, 0, 0, 5 },   /* 112 St.Raymond Penafort */
-    { "Intelligence +12 to 19, Alchemy +20 to 39, Read & Write +30 to 59. Endurance and Strength below 9 are raised to 9.",
+    { "智力+12至19，炼金术+20至39，读写能力+30至59。低于9点的耐力和力量将被提升至9点。",
       "",
       0, 0, 0, 0 },   /* 113 St.Raymond Lull */
-    { "Heals 30% of lost Endurance. Charisma lowered by 6 to 11, Alchemy +6 to 17, Artifice +35 to 69.",
+    { "治愈30%的已损失耐力。魅力降至6至11，炼金术+6至17，工艺+35至69。",
       "",
       0, 0, 0, 7 },   /* 114 St.Reinold */
-    { "Heals 20% of lost Endurance and 20% of lost Strength. Healing +10 to 19, Artifice +8 to 15.",
+    { "治愈20%的已损失耐力和20%的已损失力量。治疗+10至19，工艺+8至15。",
       "",
       0, 0, 0, 2 },   /* 115 St.Roch */
-    { "Heals all lost Endurance and Strength. Charisma +10 to 19.",
+    { "治愈所有已损失的耐力和力量。魅力+10至19。",
       "",
       0, 0, 0, 0 },   /* 116 St.Sabas the Goth */
-    { "Heals 10% of lost Endurance and 10% of lost Strength. Agility +12 to 19, Bows +20 to 39, Riding +10 to 19.",
+    { "治愈10%的已损失耐力和10%的已损失力量。敏捷+12至19，弓箭+20至39，骑术+10至19。",
       "",
-      "Heals 10% of lost Endurance and Strength. Agility +12 to 19, Bows +20 to 39, the other weapon skills +6 to 11, Riding +10 to 19.", "", 0, 2 },   /* 117 St.Sebastian */
-    { "Heals 20% of lost Endurance and 10% of lost Strength. Charisma +6 to 11, Speak Common +30 to 59, Latin +20 to 39.",
-      "No reputation in its help (Poland and Cracow: no such places in the game).",
-      "May raise the reputation by 10 to 19 in Posen or Bromberg (nowhere else). Heals 20% of lost Endurance and 10% of lost Strength. Charisma +6 to 11, Speak Common +30 to 59, Latin +20 to 39.", "No reputation in Cracow, which is not in the game.", 0, 0 },   /* 118 St.Stanislaus */
-    { "In Pressburg, may raise the reputation by 15 to 24. Charisma +6 to 11, Intelligence +8 to 15, the skills of the weapons in hand +15 to 24, Speak Common +6 to 11, Riding +10 to 19.",
+      "治愈10%的已损失耐力和力量。敏捷+12至19，弓箭+20至39，其他武器技能+6至11，骑术+10至19。", "", 0, 2 },   /* 117 St.Sebastian */
+    { "治愈20%的已损失耐力和10%的已损失力量。魅力+6至11，通用语+30至59，拉丁语+20至39。",
+      "其帮助无声望（波兰和克拉科夫：游戏中并无此类地点）。",
+      "可在波森或布罗姆贝格提升声望10至19点（其他地方无效）。治愈20%的已损失耐力和10%的已损失力量。魅力+6至11，通用语+30至59，拉丁语+20至39。", "克拉科夫无声望，因该游戏未收录该地。", 0, 0 },   /* 118 St.Stanislaus */
+    { "在普雷斯堡，可提升声望15至24点。魅力+6至11，智力+8至15，手中武器技能+15至24，通用语+6至11，骑术+10至19。",
       "",
       0, 0, 0, 0 },   /* 119 St.Stephen */
-    { "Heals 20% of lost Endurance and 10% of lost Strength. Charisma +10 to 19, Speak Common +25 to 49.",
+    { "治愈20%的已损失耐力和10%的已损失力量。魅力+10至19，通用语+25至49。",
       "",
       0, 0, 0, 0 },   /* 120 St.Swithbert */
-    { "Heals 40% of lost Endurance and 20% of lost Strength. Charisma +6 to 11.",
+    { "治愈40%的已损失耐力和20%的已损失力量。魅力+6至11。",
       "",
       0, 0, 0, 7 },   /* 121 St.Tarachus */
-    { "Heals 40% of lost Endurance and 20% of lost Strength. Healing +30 to 59.",
+    { "治愈40%的已损失耐力和20%的已损失力量。治疗+30至59。",
       "",
       0, 0, 0, 0 },   /* 122 St.Thalelaeus,Merciful */
-    { "Charisma +6 to 11, Endurance +4 to 8, the skills of the weapons in hand +15 to 24, Flails +15 to 29.",
-      "Flails instead of Riding.",
-      "Charisma +6 to 11, the skills of the weapons in hand +15 to 24, Riding +25 to 49.", "", 0, 0 },   /* 123 St.Theodore Tiro */
-    { "Strength and Endurance +4 to 8, Speak Common and Woodwise +4 to 7, Healing +10 to 19, Artifice +12 to 23.",
+    { "魅力+6至11，耐力+4至8，手中武器技能+15至24，连枷+15至29。",
+      "以连枷代替骑术。",
+      "魅力+6至11，手中武器技能+15至24，骑术+25至49。", "", 0, 0 },   /* 123 St.Theodore Tiro */
+    { "力量和耐力+4至8，通用语和木艺+4至7，治疗+10至19，工艺+12至23。",
       "",
       0, 0, 0, 0 },   /* 124 St.Thomas the Apostle */
-    { "Intelligence +12 to 23, Speak Common and Latin +12 to 26, Read & Write +15 to 29, Healing +10 to 19.",
-      "No Religion and no reputation at monasteries and universities; instead Speak Common and Healing.",
-      "In a town with a monastery or a university, may raise its reputation by 10 to 19. Intelligence +12 to 23, Latin +12 to 26, Read & Write +15 to 29, Religion +25 to 49.", "", 0, 3 },   /* 125 St.Thomas Aquinas */
-    { "Heals 10% of lost Endurance and 10% of lost Strength. Charisma +10 to 19, Stealth, Healing and Speak Common +6 to 11.",
+    { "智力+12至23，通用语和拉丁语+12至26，读写能力+15至29，治疗+10至19。",
+      "在修道院和大学无宗教信仰且无声望；取而代之的是通用语和治疗。",
+      "在设有修道院或大学的城镇，可提升声望10至19点。智力+12至23，拉丁语+12至26，读写能力+15至29，宗教+25至49。", "", 0, 3 },   /* 125 St.Thomas Aquinas */
+    { "治愈10%的已损失耐力和10%的已损失力量。魅力+10至19，潜行、治疗和通用语+6至11。",
       "",
       0, 0, 0, 3 },   /* 126 St.Valentine */
-    { "Heals all lost Endurance and 20% of lost Strength. Charisma +8 to 15, the skills of the weapons in hand +15 to 24, Speak Common +10 to 19.",
+    { "治愈所有已损失的耐力和20%的已损失力量。魅力+8至15，手中武器技能+15至24，通用语+10至19。",
       "",
       0, 0, 0, 0 },   /* 127 St.Victor o'Marseilles */
-    { "Charisma +10 to 19, Agility +12 to 23. At the party's next step in the overland view it is carried to the nearest town.",
-      "No Endurance lost.",
-      "Charisma +10 to 19, Agility +12 to 23. One time in two, the one prayed for loses 3 to 8 Endurance (not below 1). At the party's next step in the overland view it is carried to the nearest town.", "", 0, 40 },   /* 128 St.Vitus */
-    { "May raise the reputation by 15 to 24 in St. Joachimsthal, Bürglitz, Prag, Kuttenberg, Olmütz or Brünn (nowhere else). Perception and Strength +6 to 11, Intelligence +8 to 13, the skills of the weapons in hand +8 to 15, Riding +8 to 15.",
-      "No reputation with nobles in its help.",
+    { "魅力 +10 至 19，敏捷 +12 至 23。在队伍下次于陆地视图中移动时，它会被带到最近的城镇。",
+      "不会损失耐力。",
+      "魅力 +10 至 19，敏捷 +12 至 23。每两次祈祷中有一次，被祈求者会损失 3 至 8 点耐力（不低于 1 点）。在队伍下次于陆地视图中移动时，它会被带到最近的城镇。", "", 0, 40 },   /* 128 St.Vitus */
+    { "可以在圣约阿希姆斯塔尔、比尔格利茨、布拉格、库滕贝格、奥洛穆茨或布伦（其他地方不可）提升 15 至 24 点声望。感知与力量 +6 至 11，智力 +8 至 13，手中武器的技能 +8 至 15，骑术 +8 至 15。",
+      "在贵族中没有声望。",
       0, 0, 0, 3 },   /* 129 St.Wenceslaus */
-    { "Heals 20% of lost Endurance. Charisma +6 to 11, Artifice +6 to 11, Speak Common +20 to 39. For a week no ambush takes the party by surprise (bandits and the like).",
-      "No faster travel; instead, a week safe from ambushes.",
-      "The party travels twice as fast for a week. Heals 20% of lost Endurance. Charisma +6 to 11, Artifice +6 to 11, Speak Common +20 to 39.", "", 0, 2 },   /* 130 St.Wilfrid */
-    { "Agility +8 to 15, Woodwise +8 to 15, Riding +10 to 19. For a week no ambush takes the party by surprise (bandits and the like).",
+    { "治愈 20% 的已损失耐力。魅力 +6 至 11，巧思 +6 至 11，通用语 +20 至 39。一周内，队伍不会遭遇伏击（如强盗之类）。",
+      "无法加速旅行；取而代之的是，一周内免遭伏击。",
+      "队伍在一周内行进速度提高一倍。治愈 20% 的已损失耐力。魅力 +6 至 11，巧思 +6 至 11，通用语 +20 至 39。", "", 0, 2 },   /* 130 St.Wilfrid */
+    { "敏捷 +8 至 15，木艺 +8 至 15，骑术 +10 至 19。一周内，队伍不会遭遇伏击（如强盗之类）。",
       "",
       0, 0, 0, 10 },   /* 131 St.Willehad */
-    { "Charisma +10 to 19, Woodwise +6 to 11, Speak Common +25 to 49.",
+    { "魅力 +10 至 19，木艺 +6 至 11，通用语 +25 至 49。",
       "",
       0, 0, 0, 0 },   /* 132 St.Willebald */
-    { "Charisma +10 to 19, Woodwise +8 to 15, Speak Common +20 to 39.",
-      "No reputation in its help.",
-      "May raise the reputation by 10 to 19 in Groningen, Leer, Osnabrück, Zwolle, Deventer, Münster, Nymwegen or Elburg (nowhere else). Charisma +10 to 19, Woodwise +8 to 15, Speak Common +20 to 39.", "", 0, 0 },   /* 133 St.Williborord */
-    { "Charisma +8 to 15, Intelligence +6 to 11, Woodwise and Riding +6 to 11, Speak Common +20 to 39.",
-      "No reputation in its help.",
+    { "魅力 +10 至 19，木艺 +8 至 15，通用语 +20 至 39。",
+      "无任何声望加成。",
+      "可以在格罗宁根、莱尔、奥斯纳布吕克、兹沃勒、代芬特尔、明斯特、尼美根或埃尔堡（其他地方不可）提升 10 至 19 点声望。魅力 +10 至 19，木艺 +8 至 15，通用语 +20 至 39。", "", 0, 0 },   /* 133 St.Williborord */
+    { "魅力 +8 至 15，智力 +6 至 11，木艺与骑术 +6 至 11，通用语 +20 至 39。",
+      "无任何声望加成。",
       0, 0, 0, 2 },   /* 134 St.Wolfgang */
-    { "Heals 20% of lost Endurance and 5% of lost Strength. Perception +6 to 11, Streetwise +6 to 11.",
+    { "治愈 20% 的已损失耐力和 5% 的已损失力量。感知 +6 至 11，街头智慧 +6 至 11。",
       "",
       0, 0, 0, 2 },   /* 135 St.Zita */
 };
@@ -439,21 +439,21 @@ static const char *special(int s, const char *tok, char *buf, size_t n)
 {
     int arm = fix_is_on("armorday"), fire = fix_is_on("fireward"), pauls = fix_is_on("pauls"), nep = fix_is_on("saintrep");
     (void)s;
-    if (!strcmp(tok, "INSTR")) return sheetview_shared() ? "If anyone in the party carries a musical instrument (with Darklands+'s shared pack, it need not be the one prayed for)" : "If the one prayed for carries a musical instrument";
-    if (!strcmp(tok, "FIRE1")) return arm ? "Fire protection 90 for the one prayed for." :
-        fire ? "Meant as protection against fire, but the game adds it to the armor instead, for good (with the fix \"No invulnerability from fire protection\" on, it does nothing)."
-             : "Meant as protection against fire, it gives the one prayed for armor +32 in battle instead, for good.";
-    if (!strcmp(tok, "CRISPIN")) return arm ? "Every member's worn armor counts 10 points better in quality."
-                                            : "Every member's worn body and leg armor +10 quality, for good, piling up with each prayer.";
-    if (!strcmp(tok, "ARM1")) return arm ? "Armor one level thicker." : "Armor one level thicker, for good, piling up.";
-    if (!strcmp(tok, "ARM2")) return arm ? "Armor two levels thicker." : "Armor two levels thicker, for good, piling up.";
-    if (!strcmp(tok, "NEPOMUK")) return nep ? "May raise the reputation by 15 to 24 in Prag, and by 10 to 19 in St. Joachimsthal, Bürglitz, Kuttenberg, Olmütz or Brünn (nowhere else)."
-        : "May raise the reputation by 10 to 19 in St. Joachimsthal, Bürglitz, Kuttenberg, Olmütz or Brünn (nowhere else); in Prag it goes to a place picked at random.";
-    if (!strcmp(tok, "PAUL")) return pauls ? "Heals 10% of lost Strength. Endurance +5 to 9, Charisma +8 to 15, Speak Common +20 to 39, Latin +10 to 19, Read & Write +40 to 79." : "Heals all lost Endurance and Strength. Intelligence lowered by half its maximum.";
-    if (!strcmp(tok, "SIMPLE")) return pauls ? "Heals all lost Endurance and Strength. Intelligence lowered by half its maximum." : "Intelligence +12 to 23, Speak Common and Latin +12 to 26, Read & Write +15 to 29, Healing +10 to 19.";
-    if (!strcmp(tok, "POLYCARP")) return arm ? "Every member: fire protection 90." :
-        fire ? "Every member: fire protection 90 for good (and an armor bonus, which the fix \"No invulnerability from fire protection\" cancels)."
-             : "Every member: fire protection 90 for good, and armor +48 for good (meant as protection against fire).";
+    if (!strcmp(tok, "INSTR")) return sheetview_shared() ? "如果队伍中有任何人携带乐器（使用 Darklands 的共享背包时，不必是被祈求者本人）" : "如果被祈求者本人携带乐器";
+    if (!strcmp(tok, "FIRE1")) return arm ? "为被祈求者提供 90 点防火保护。" :
+        fire ? "本意是用于防火保护，但游戏却将其加到了护甲上，效果很好（在启用“无防火保护免疫”修复后，此效果将失效）。"
+             : "本意是用于防火保护，却为被祈求者在战斗中提供了 +32 护甲值，效果很好。";
+    if (!strcmp(tok, "CRISPIN")) return arm ? "每位成员所穿戴的护甲品质提升 10 点。"
+                                            : "每位成员所穿戴的躯干与腿部护甲品质提升 10 点，效果很好，每次祈祷都会叠加。";
+    if (!strcmp(tok, "ARM1")) return arm ? "护甲厚度增加一级。" : "护甲厚度增加一级，效果很好，可叠加。";
+    if (!strcmp(tok, "ARM2")) return arm ? "护甲厚度增加两级。" : "护甲厚度增加两级，效果很好，可叠加。";
+    if (!strcmp(tok, "NEPOMUK")) return nep ? "可以在布拉格提升 15 至 24 点声望，在圣约阿希姆斯塔尔、比尔格利茨、库滕贝格、奥洛穆茨或布伦提升 10 至 19 点声望（其他地方不可）。"
+        : "可以在圣约阿希姆斯塔尔、比尔格利茨、库滕贝格、奥洛穆茨或布伦提升 10 至 19 点声望（其他地方不可）；而在布拉格则随机选择一处地点。";
+    if (!strcmp(tok, "PAUL")) return pauls ? "治愈 10% 的已损失力量。耐力 +5 至 9，魅力 +8 至 15，通用语 +20 至 39，拉丁语 +10 至 19，读写能力 +40 至 79。" : "治愈所有已损失的耐力与力量。智力降低至最大值的一半。";
+    if (!strcmp(tok, "SIMPLE")) return pauls ? "治愈所有已损失的耐力与力量。智力降低至最大值的一半。" : "智力+12至23，通用语和拉丁语+12至26，读写能力+15至29，治疗+10至19。";
+    if (!strcmp(tok, "POLYCARP")) return arm ? "每位成员：90 点防火保护。" :
+        fire ? "每位成员：90 点防火保护，效果很好（并附带护甲加成，该加成已被“无防火保护免疫”修复取消）。"
+             : "每位成员：90 点防火保护，效果很好，并附带 +48 护甲值（本意是用于防火保护）。";
     snprintf(buf, n, "?");
     return buf;
 }
@@ -484,8 +484,8 @@ const char *saint_info_does(int s)
 const char *saint_info_unlike(int s)
 {
     if (s < 0 || s >= SAINT_INFO_N) return "";
-    if (s == 105 && !fix_is_on("pauls")) return "This is the help the texts and the manual give St. Paul the Simple: the two Pauls are mixed up (the fix \"The two St. Pauls do what their texts say\" sets this right).";
-    if (s == 106 && !fix_is_on("pauls")) return "This is St. Thomas Aquinas's help: the two Pauls are mixed up (the fix \"The two St. Pauls do what their texts say\" sets this right).";
+    if (s == 105 && !fix_is_on("pauls")) return "这是文本与说明书对圣保罗·辛普勒提供的帮助：两圣保罗被混淆了（“两圣保罗按各自文本行事”修复纠正了这一问题）。";
+    if (s == 106 && !fix_is_on("pauls")) return "这是圣托马斯·阿奎那的帮助：两圣保罗被混淆了（“两圣保罗按各自文本行事”修复纠正了这一问题）。";
     return st(s) ? INFO[s].st_unlike : INFO[s].unlike;
 }
 
@@ -497,6 +497,6 @@ const char *saint_info_note(int s)
     static const char *WEARS[] = { "+", "lowered", "protection", "better", "thicker" };
     const char *d = saint_info_does(s);
     for (size_t k = 0; k < sizeof WEARS / sizeof *WEARS; k++)
-        if (strstr(d, WEARS[k])) return "A saint's help lasts about a day, unless said otherwise.";
+        if (strstr(d, WEARS[k])) return "圣人的帮助通常持续约一天，除非另有说明。";
     return "";
 }

@@ -15,7 +15,8 @@
 #include "richtext.h"
 #include "skillicons.h"
 
-extern ImFont *ui_font_text, *ui_font_overlay;
+extern ImFont *ui_font_text, *ui_font_overlay, *ui_font_cjk;
+float ui_face_k(ImFont *f);                       /* overlay_text.cpp: the face's letters to the size asked */
 extern ImFont *ui_font_game[UI_GAME_FONTS], *ui_font_game_hi[UI_GAME_FONTS];
 extern int ui_game_font;
 extern "C" void plat_game_to_win(float gx, float gy, float *wx, float *wy);
@@ -60,7 +61,16 @@ struct NsDraw {
         return true;
     }
     static ImVec2 w(float x, float y) { float a, b; plat_game_to_win(x, y, &a, &b); return ImVec2(a, b); }
-    float size(ImFont *ff, float gs) const { return gs * k * (ff == f ? fk : fok); }
+    /* the translated text is Han: ImGui has no fallback between fonts, so a run that carries Han
+       glyphs is drawn in the pixel font (ui/ui.cpp), at the size the game's own face would take */
+    static ImFont *han_face(ImFont *ff, const std::string &s)
+    {
+        if (!ui_font_cjk) return ff;
+        for (size_t i = 0; i < s.size(); i++) if ((unsigned char)s[i] >= 0xe0) return ui_font_cjk;
+        return ff;
+    }
+    float face_k(ImFont *ff) const { return ff == f ? fk : ff == fo ? fok : ui_face_k(ff); }
+    float size(ImFont *ff, float gs) const { return gs * k * face_k(ff); }
 
     void rect(float x0, float y0, float x1, float y1, ImU32 c, float rnd = 0)
     {
@@ -85,6 +95,7 @@ struct NsDraw {
        shields' {Name} and {Name:value} (ui/richtext.h) */
     void text(ImFont *ff, float gs, float x, float y, ImU32 c, const std::string &s, float right_to = -1, float clip_to = -1)
     {
+        ff = han_face(ff, s);
         float sz = size(ff, gs);
         ImVec2 p = w(x, y);
         bool rich = rich_has(s.c_str());
@@ -114,6 +125,7 @@ struct NsDraw {
     /* wrapped to width (game pixels); returns the height used, game pixels */
     float para(ImFont *ff, float gs, float x, float y, float width, ImU32 c, const std::string &s)
     {
+        ff = han_face(ff, s);
         float sz = size(ff, gs), ww = width * kx;
         if (rich_has(s.c_str())) { float h = rich_draw(dl, ff, sz, w(x, y), ww, c, s.c_str()).y / k; shield_tip(); return h; }
         dl->AddText(ff, sz, w(x, y), c, s.c_str(), nullptr, ww);
@@ -121,11 +133,13 @@ struct NsDraw {
     }
     float para_height(ImFont *ff, float gs, float width, const std::string &s) const   /* (what para would take) */
     {
+        ff = han_face(ff, s);
         if (rich_has(s.c_str())) return rich_size(ff, size(ff, gs), width * kx, s.c_str()).y / k;
         return ff->CalcTextSizeA(size(ff, gs), FLT_MAX, width * kx, s.c_str()).y / k;
     }
     float width(ImFont *ff, float gs, const std::string &s) const
     {
+        ff = han_face(ff, s);
         if (rich_has(s.c_str())) return rich_size(ff, size(ff, gs), 0, s.c_str()).x / kx;
         return ff->CalcTextSizeA(size(ff, gs), FLT_MAX, 0, s.c_str()).x / kx;
     }

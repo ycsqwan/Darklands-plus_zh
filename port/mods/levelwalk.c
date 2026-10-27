@@ -66,7 +66,7 @@ static void input_hook(void)                 /* s014 0e76:3166 combat_input () *
             }
     if (mx < 0) {
         g_ww(CBF(lead, CB_TO_X), (u16)otx); g_ww(CBF(lead, CB_TO_Y), (u16)oty);
-        ui_notice("The party cannot get there from where it stands.");
+        ui_notice("队伍无法从当前位置到达那里。");
         hook_call_original(); return;
     }
     for (int i = 0; i < 5; i++) if (g_rb(CBF(i, CB_STATUS)) == 1) g_wb((u16)(GV_cbt_moving + i), 1);
@@ -76,9 +76,9 @@ static void input_hook(void)                 /* s014 0e76:3166 combat_input () *
     g_wb(CBF(lead, CB_TARGET), 0xff);
     g_wb((u16)(0xd6fb + lead), 0);
     if (getenv("DL_LEVELWALK_LOG")) fprintf(stderr, "levelwalk: map %d,%d -> %d,%d for %d (move mode %d, was %d)\n", tx, ty, mx, my, lead, g_rb(GV_move_mode), was_mode);
-    if (g_rb(GV_ai_paused) == 1) ui_notice(was_mode != 2 ? "The party will walk there in single file (press G to move as a group again); Space resumes the battle."
-                                                          : "The party will walk there: Space resumes the battle.");
-    else if (was_mode != 2) ui_notice("The party walks there in single file (press G to move as a group again).");
+    if (g_rb(GV_ai_paused) == 1) ui_notice(was_mode != 2 ? "队伍将以单列队形行进（按G键可再次以队伍形式移动）；按空格键恢复战斗。"
+                                                          : "队伍将行进至那里：按空格键恢复战斗。");
+    else if (was_mode != 2) ui_notice("队伍以单列队形行进（按G键可再次以队伍形式移动）。");
     hook_call_original();
 }
 
@@ -138,10 +138,10 @@ static void keys_hook(void)                /* combat_keys (): U with nobody on t
         if (d < bd) { bd = d; best = s; bx = cx; by = cy; }
     }
     bios_kbd_get(1);                                         /* (the key is ours) */
-    if (best < 0) { ui_notice("There are no stairs on this floor that the party has found."); return; }
+    if (best < 0) { ui_notice("在这一层，队伍尚未发现任何楼梯。"); return; }
     levelwalk_x = bx; levelwalk_y = by; levelwalk_floor = fl;
     stairs_pending = best; stairs_floor = fl; stairs_t = plat_ticks_ms();
-    ui_notice("The party walks to the stairs and takes them.");
+    ui_notice("队伍走到楼梯并拾级而上。");
     if (g_rb(GV_ai_paused) == 1) { extern void bios_kbd_inject(u16); bios_kbd_inject(0x3920); }   /* (on its way at once: Space) */
 }
 

@@ -91,14 +91,14 @@ void losses_frame(void)
         for (int a = 0; a < 7; a++) {
             int v = (s8)g_rb((u16)(G_MEMBER(m) + G_M_ATTR_MAX + a));
             if (v < snap[m].max[a]) {
-                pl += (size_t)snprintf(part + pl, sizeof part - pl, "%s%s %d (was %d)", pl ? ", " : "", gm_attr_name(a), v, snap[m].max[a]); if (pl >= sizeof part) pl = sizeof part - 1;
+                pl += (size_t)snprintf(part + pl, sizeof part - pl, "%s%s %d（原为%d）", pl ? ", " : "", gm_attr_name(a), v, snap[m].max[a]); if (pl >= sizeof part) pl = sizeof part - 1;
                 row->ch[row->n].key = a; row->ch[row->n].was = snap[m].max[a]; row->ch[row->n].now = v; row->n++;
             }
         }
         for (int k = 0; k < 19 && ek; k++) {          /* (the skills only while their boosts can be told) */
             int v = (s8)(g_rb((u16)(G_MEMBER(m) + G_M_SKILLS + k)) - temp_of(0x49, m, k));
             if (v < snap[m].skill[k]) {
-                pl += (size_t)snprintf(part + pl, sizeof part - pl, "%s%s %d (was %d)", pl ? ", " : "", gm_skill_name(k), v, snap[m].skill[k]); if (pl >= sizeof part) pl = sizeof part - 1;
+                pl += (size_t)snprintf(part + pl, sizeof part - pl, "%s%s %d（原为%d）", pl ? ", " : "", gm_skill_name(k), v, snap[m].skill[k]); if (pl >= sizeof part) pl = sizeof part - 1;
                 row->ch[row->n].key = 7 + k; row->ch[row->n].was = snap[m].skill[k]; row->ch[row->n].now = v; row->n++;
             }
         }
@@ -106,10 +106,10 @@ void losses_frame(void)
         if (!part[0]) continue;
         nr++;
         char nu[80]; ui_text_utf8(nm, nu, sizeof nu);
-        len += (size_t)snprintf(body + len, sizeof body - len, "%s%s: %s.", len ? "\n" : "", nu, part);
+        len += (size_t)snprintf(body + len, sizeof body - len, "%s%s：%s。", len ? "\n" : "", nu, part);
         if (len >= sizeof body) len = sizeof body - 1;
     }
-    if (body[0]) ui_alert_rows("Lost for good", body, rows, nr, "The maximum of an attribute, or a skill, is lower now (what it was, and what it is now), and will not come back by itself.");
+    if (body[0]) ui_alert_rows("永久丢失", body, rows, nr, "某项属性或技能的上限现在降低了（过去是多少，现在是多少），而且不会自行恢复。");
 }
 
 /* ---------------------------------------------------------------- armour worn down */
@@ -129,17 +129,17 @@ static void wear_hook(void)                  /* s019 1ef8:0968 (i, type, quality
     gm_itemdef_name(id, it, sizeof it); ui_text_utf8(it, iu, sizeof iu);
     if (!iu[0]) snprintf(iu, sizeof iu, "armor");
     int nq = q - amt;
-    worn_len += (size_t)snprintf(worn + worn_len, sizeof worn - worn_len, "%s%s's %s: ", worn_len ? "\n" : "", nu, iu);
+    worn_len += (size_t)snprintf(worn + worn_len, sizeof worn - worn_len, "%s%s的%s：", worn_len ? "\n" : "", nu, iu);
     if (worn_len >= sizeof worn) worn_len = sizeof worn - 1;
-    if (nq <= 0) worn_len += (size_t)snprintf(worn + worn_len, sizeof worn - worn_len, "worn to nothing and gone (it was %dq).", q);
-    else worn_len += (size_t)snprintf(worn + worn_len, sizeof worn - worn_len, "now %dq (was %dq).", nq, q);
+    if (nq <= 0) worn_len += (size_t)snprintf(worn + worn_len, sizeof worn - worn_len, "磨损至无，已消失（原为%dq）。", q);
+    else worn_len += (size_t)snprintf(worn + worn_len, sizeof worn - worn_len, "现为%dq（原为%dq）。", nq, q);
     if (worn_len >= sizeof worn) worn_len = sizeof worn - 1;
 }
 /* told once a frame, all that wore down together (a splash of acid on several members) */
 void losses_battle_frame(void)
 {
     if (!worn_len) return;
-    ui_alert("Armor worn down", worn, "Acid and fire wear armor down for good: a smith's work cannot mend it; a better piece must be bought.");
+    ui_alert("盔甲磨损", worn, "酸和火会永久磨损盔甲：铁匠无法修复，只能购买更好的装备。");
     worn_len = 0; worn[0] = 0;
 }
 

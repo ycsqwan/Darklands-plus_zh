@@ -42,7 +42,7 @@ static const Field FIELDS[] = {
     { "strength_max", 0x77a4, 0, 0xff }, { "reload", 0x77e3, 0, 0xff },
 };
 static const int NF = sizeof FIELDS / sizeof FIELDS[0];
-static const char *SKILLS[7] = { "edged", "impact", "flails", "polearms", "thrown", "bows", "missile devices" };
+static const char *SKILLS[7] = { "edged", "impact", "flails", "polearms", "thrown", "bows", "弹射装置" };
 static const u16 TABLES[] = { 0x75ac, 0x7669, 0x76a8, 0x76e7, 0x7726, 0x7765, 0x77a4, 0x77e3, 0x7822 };
 static unsigned char orig[sizeof TABLES / sizeof TABLES[0]][NW];
 static bool have_orig;
@@ -105,7 +105,7 @@ static int apply_file(const char *path, std::string &log)
             std::string sec = trim(s.substr(1, e == std::string::npos ? std::string::npos : e - 1));
             w = -1;
             if (!strncasecmp(sec.c_str(), "weapon", 6)) w = weapon_by_name(trim(sec.substr(6)));
-            if (w < 0) log += "rules.ini line " + std::to_string(ln) + ": unknown section " + sec + "\n";
+            if (w < 0) log += "rules.ini 文件中的某一行" + std::to_string(ln) + "：未知部分" + sec + "\n";
             continue;
         }
         size_t eq = s.find('=');
@@ -127,7 +127,7 @@ static int apply_file(const char *path, std::string &log)
         }
         bool ok = false;
         for (int i = 0; i < NF; i++) if (k == FIELDS[i].key) { set(w, FIELDS[i], atoi(v.c_str())); changed++; ok = true; }
-        if (!ok) log += "rules.ini line " + std::to_string(ln) + ": unknown field " + k + "\n";
+        if (!ok) log += "rules.ini 文件中的某一行" + std::to_string(ln) + "：未知字段" + k + "\n";
     }
     fclose(f);
     return changed;
@@ -203,11 +203,11 @@ static bool write_rules(const char *path)
 /* F12 > Appendices > Weapons */
 void rules_tab(void)
 {
-    ImGui::TextWrapped("The battle numbers of every weapon, as the game uses them now%s.", rules_changed ? " (changed by a mod)" : "");
-    static const char *SK[7] = { "Edged", "Impact", "Flails", "Polearms", "Thrown", "Bows", "Missile dev." };
+    ImGui::TextWrapped("每种武器当前使用的战斗数值%s。", rules_changed ? "（由模组修改）" : "");
+    static const char *SK[7] = { "锋利武器", "冲击", "棍棒类武器", "长柄武器", "投掷", "弓箭", "弹射装置" };
     if (ImGui::BeginTable("weapons", 9, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_Sortable | ImGuiTableFlags_SortMulti,
                           ImVec2(0, ImGui::GetContentRegionAvail().y - (ui_modding() ? UIS(110) : UIS(60))))) {
-        const char *H[9] = { "Weapon", "Skill", "Hands", "Damage", "Penetr.", "Time", "Reload", "Skill needed", "Strength" };
+        const char *H[9] = { "武器", "技能", "手部", "伤害", "Penetr.", "时间", "重新装填", "需要的技能", "力量" };
         for (int i = 0; i < 9; i++) ImGui::TableSetupColumn(H[i], i == 0 ? ImGuiTableColumnFlags_WidthStretch : 0);
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableHeadersRow();
@@ -232,7 +232,7 @@ void rules_tab(void)
             ImGui::TableNextRow();
             ImGui::TableNextColumn(); ImGui::TextUnformatted(n.c_str());
             int sk = get(w, FIELDS[0]);
-            ImGui::TableNextColumn(); if (sk < 7) ui_rich_text(("{" + std::string(SK[sk] == std::string("Missile dev.") ? "Missile Devices" : SK[sk]) + "}").c_str()); else ImGui::TextUnformatted("?");   /* (its shield; the name under the pointer) */
+            ImGui::TableNextColumn(); if (sk < 7) ui_rich_text(("{" + std::string(SK[sk] == std::string("弹射装置") ? "投射装置" : SK[sk]) + "}").c_str()); else ImGui::TextUnformatted("?");   /* (its shield; the name under the pointer) */
             ImGui::TableNextColumn(); ImGui::Text("%d", get(w, FIELDS[2]) >= 2 ? 2 : 1);
             ImGui::TableNextColumn(); ImGui::Text("%d", get(w, FIELDS[4]));
             ImGui::TableNextColumn(); ImGui::Text("%d", get(w, FIELDS[3]));
@@ -245,18 +245,18 @@ void rules_tab(void)
     }
     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
     ImGui::PushTextWrapPos(0);
-    ui_rich_text("Time: how long a blow takes (lower is quicker); where it is blank, Reload sets the pace. Hand to hand, a fighter's melee rating counts both in attack and in defense; each point of skill below what a weapon needs costs 2 of it, each point of {Strength} below the weapon's range 3 (and weaker blows), each point above the range adds 2 (and harder blows). With a missile weapon, the aim: 2 per point of skill short, 1 per point of {Strength} short.");
+    ui_rich_text("时间：一次攻击所需时长（数值越低越快）；若此处为空，则由“重新装填”决定节奏。近战时，战士的近战等级同时影响攻击与防御；每低于武器所需技能点数1点，需消耗2点；每低于武器适用范围1点，伤害降低3点（且攻击更弱）；每高于适用范围1点，伤害增加2点（且攻击更强）。使用远程武器时，瞄准精度：每低于所需技能点数1点，减少2点；每低于所需{力量}1点，减少1点。");
     ImGui::PopTextWrapPos();
     ImGui::PopStyleColor();
     if (!ui_modding()) { if (!rules_log.empty()) ImGui::TextColored(ImVec4(0.6f, 0.15f, 0.1f, 1), "%s", rules_log.c_str()); return; }
-    static char modname[64] = "My weapons"; static std::string msg;
+    static char modname[64] = "我的武器"; static std::string msg;
     ImGui::SetNextItemWidth(UIS(220)); ImGui::InputText("##rulesmod", modname, sizeof modname); ImGui::SameLine();
-    if (ImGui::Button("Write these numbers into a mod folder (rules.ini)") && modname[0]) {
+    if (ImGui::Button("将这些数字写入模组文件夹（rules.ini）") && modname[0]) {
         char w[1300]; int r = datamods_new(modname, w, sizeof w);
         std::string p = std::string(w) + "/rules.ini";
-        if (r < 0) msg = "Could not make the mod folder.";
-        else if (write_rules(p.c_str())) msg = "Written: " + p + ". Edit it, then tick the mod in F12 > Mods.";
-        else msg = "Could not write " + p + ".";
+        if (r < 0) msg = "无法创建模组文件夹。";
+        else if (write_rules(p.c_str())) msg = "Written: " + p + "编辑该文件后，在F12 > 模组中勾选此模组。";
+        else msg = "无法写入" + p + ".";
     }
     if (!msg.empty()) ImGui::TextWrapped("%s", msg.c_str());
     if (!rules_log.empty()) ImGui::TextColored(ImVec4(0.6f, 0.15f, 0.1f, 1), "%s", rules_log.c_str());

@@ -90,21 +90,21 @@ extern "C" void alchemyview_draw(void)
 
     /* the head, on the table */
     P.rect(63, 2, 170, 19, IM_COL32(24, 12, 4, 150), 1.5f);
-    P.text(f, NsDraw::FS_TITLE, 65, 3, cream, "Alchemy");
-    P.text(fo, NsDraw::FS_BODY, 65, 12.5f, cream_soft, who + " mixes; the whole party's ingredients count.", -1, 169);
+    P.text(f, NsDraw::FS_TITLE, 65, 3, cream, "炼金术");
+    P.text(fo, NsDraw::FS_BODY, 65, 12.5f, cream_soft, who + "混合物；整个队伍的原料数量统计。", -1, 169);
     {   /* the party's Philosopher's Stone, on its own plaque: what it adds to every batch */
         P.rect(173, 2, 279, 19, IM_COL32(24, 12, 4, 170), 1.5f);
         ui_pstone_draw(P.dl, NsDraw::w(182, 10.5f), 15 * P.k, ui_pstone_look(), a.stone, (float)ImGui::GetTime());
-        P.text(f, NsDraw::FS_NAME, 191, 3, a.stone ? IM_COL32(255, 196, 150, 255) : cream_soft, a.stone ? "The party's Philosopher's Stone" : "No Philosopher's Stone", -1, 278);
+        P.text(f, NsDraw::FS_NAME, 191, 3, a.stone ? IM_COL32(255, 196, 150, 255) : cream_soft, a.stone ? "队伍的哲人石" : "没有哲人石", -1, 278);
         char sl[80];
-        if (a.stone) snprintf(sl, sizeof sl, "Quality %d: +%d to every batch's chance", a.stone, a.stone);
-        else snprintf(sl, sizeof sl, "An alchemist or a university sells one");
+        if (a.stone) snprintf(sl, sizeof sl, "质量%d：每批配方的机会+%d", a.stone, a.stone);
+        else snprintf(sl, sizeof sl, "炼金术士或大学出售一枚");
         P.text(fo, NsDraw::FS_SMALL, 191, 11.5f, cream_soft, sl, -1, 278);
         if (P.over(173, 2, 279, 19))
-            ns_tip(a.stone ? ("The party's Philosopher's Stone, of quality " + std::to_string(a.stone) + ": it adds " + std::to_string(a.stone) + " to the chance of every batch, whoever mixes. Its picture shows the stage of the alchemists' Great Work its quality has reached: " + std::string(ui_pstone_stage_name(a.stone)) + ". A town's alchemist (up to 25) or university (up to 29) may sell a better one, each always the same quality; the card's option is greyed where it is no better than the party's.").c_str()
-                           : "The party has no Philosopher's Stone yet. A town's alchemist (up to quality 25) or university (up to 29) sells one; its quality adds to the chance of every batch.");
+            ns_tip(a.stone ? ("队伍的哲人石，质量为" + std::to_string(a.stone) + "：它增加了" + std::to_string(a.stone) + "对每批配方机会的影响，无论谁在混合。它的图片展示了炼金术士“大业”所达到的质量阶段：" + std::string(ui_pstone_stage_name(a.stone)) + "。城镇的炼金术士（最高质量25）或大学（最高质量29）可能会出售更好的产品，但每件的质量始终相同；若其品质不及队伍的，则卡片选项会变灰。").c_str()
+                           : "队伍尚未拥有哲人石。城镇的炼金术士（最高质量25）或大学（最高质量29）出售哲人石；其质量会提升每批配方的机会。");
     }
-    if (P.button(282, 4, 316, 16, "Leave", IM_COL32(112, 40, 22, 235), NsDraw::FS_HEADBTN, PB_Y)) ns_push(AV_LEAVE, 0, 0, 0);
+    if (P.button(282, 4, 316, 16, "离开", IM_COL32(112, 40, 22, 235), NsDraw::FS_HEADBTN, PB_Y)) ns_push(AV_LEAVE, 0, 0, 0);
 
     /* ---- the formulary's left page: the index, the starred first and those put aside last */
     const float LX0 = AD_BOOK_X0 + 6, LX1 = AD_GUTTER - 4, LY0 = AD_BOOK_Y0 + 11, ROWH = 12.5f; const int NROWS = 7;
@@ -112,12 +112,12 @@ extern "C" void alchemyview_draw(void)
     std::vector<int> order;
     for (int mk : { FMARK_FIRST, FMARK_NONE, FMARK_LAST })
         for (int i = 0; i < a.nrows; i++) { int m = formula_mark(a.row[i].formula); if (m == mk || (mk == FMARK_NONE && m != FMARK_FIRST && m != FMARK_LAST)) order.push_back(i); }
-    P.text(fo, 4.3f, LX0 + 1, AD_BOOK_Y0 + 5, soft, "Formulae known");
+    P.text(fo, 4.3f, LX0 + 1, AD_BOOK_Y0 + 5, soft, "已知配方");
     if (P.over(LX0, LY0, LX1, LY1) && ns_in.wheel != 0) { V.scroll -= (int)(ns_in.wheel * 2); ns_in.wheel = 0; }
     int maxs = a.nrows - NROWS; if (maxs < 0) maxs = 0;
     if (V.scroll > maxs) V.scroll = maxs;
     if (V.scroll < 0) V.scroll = 0;
-    if (!a.nrows) P.para(fo, NsDraw::FS_BODY, LX0 + 2, LY0 + 2, LX1 - LX0 - 4, dim, who + " knows no formulae yet.");
+    if (!a.nrows) P.para(fo, NsDraw::FS_BODY, LX0 + 2, LY0 + 2, LX1 - LX0 - 4, dim, who + "尚未掌握任何配方。");
     const char *mark_tip = nullptr;
     for (int r = 0; r < NROWS && V.scroll + r < (int)order.size(); r++) {
         int i = order[V.scroll + r];
@@ -137,13 +137,13 @@ extern "C" void alchemyview_draw(void)
         P.text(f, 5.0f, LX0 + 10.5f, y + 0.9f, (bt || w.count) && !put ? ink : dim, nm, -1, LX1 - 1 - pcw);
         if (pc) P.text(fo, 4.2f, 0, y + 1.6f, put ? dim : soft, pcs, LX1 - 1);
         std::string l2;
-        if (bt) l2 = "enough ingredients to make " + std::to_string(bt) + (bt == 1 ? " potion" : " potions");
+        if (bt) l2 = "足够的原料可以制作" + std::to_string(bt) + (bt == 1 ? " potion" : " potions");
         else if (w.formula < (int)gamedata.formulas.size()) {                /* what is short: the first, and how many more */
             int nshort = 0; std::string first;
             for (const FormulaIngr &q : gamedata.formulas[w.formula].ingr) if (q.item >= 0 && q.item < 200 && have[q.item] < q.count) { if (!nshort) first = ns_item_name(q.item); nshort++; }
             l2 = "needs " + first + (nshort > 1 ? " and " + std::to_string(nshort - 1) + " more" : "");
         }
-        if (w.count) l2 = std::to_string(w.count) + (w.count == 1 ? " batch set - " : " batches set - ") + l2;
+        if (w.count) l2 = std::to_string(w.count) + (w.count == 1 ? "一批配方集——" : "几批配方集——") + l2;
         /* the marks, at the end of the second line: shown when set, offered when the row is pointed at */
         const float SX = LX1 - 9.5f, AX2 = LX1 - 3.5f, MY = y + 9.0f;
         bool on_star = P.over(SX - 2.8f, y + 5.8f, SX + 2.8f, y + ROWH), on_aside = P.over(AX2 - 2.8f, y + 5.8f, AX2 + 2.8f, y + ROWH);
@@ -152,8 +152,8 @@ extern "C" void alchemyview_draw(void)
             star(P.dl, SX, MY, 2.3f, mk == FMARK_FIRST ? IM_COL32(222, 168, 40, 255) : on_star ? IM_COL32(222, 168, 40, 110) : 0,
                  mk == FMARK_FIRST ? IM_COL32(120, 70, 10, 255) : IM_COL32(120, 80, 36, on_star ? 230 : 140), th);
         if (put || h) aside(P.dl, AX2, MY - 0.3f, 2.2f, put ? IM_COL32(120, 80, 36, 255) : IM_COL32(120, 80, 36, on_aside ? 230 : 120), th);
-        if (on_star) mark_tip = mk == FMARK_FIRST ? "Starred: first in the list. Click to take the star off." : "Star it: first in the list.";
-        else if (on_aside) mark_tip = put ? "Put aside: last in the list, still there. Click to bring it back." : "Put it aside: last in the list, still there.";
+        if (on_star) mark_tip = mk == FMARK_FIRST ? "加星：列表首位。点击可取消加星。" : "加星：列表首位。";
+        else if (on_aside) mark_tip = put ? "放在一边：列表末尾，仍在原地。点击可将其重新放回。" : "放在一边：列表末尾，仍在原地。";
         if (P.hit(SX - 2.8f, y + 5.8f, SX + 2.8f, y + ROWH)) formula_mark_set(w.formula, mk == FMARK_FIRST ? FMARK_NONE : FMARK_FIRST);
         else if (P.hit(AX2 - 2.8f, y + 5.8f, AX2 + 2.8f, y + ROWH)) formula_mark_set(w.formula, put ? FMARK_NONE : FMARK_LAST);
         else if (P.hit(LX0, y, LX1, y + ROWH) && !sel) ns_push(AV_SELECT, i, 0, 0);
@@ -174,8 +174,8 @@ extern "C" void alchemyview_draw(void)
         float ty0 = y;
         y += P.para(f, NsDraw::FS_HEAD * 0.92f, RX0 + 10, y, RX1 - RX0 - 10, ink, nm) + 0.5f;
         if (y < ty0 + 10.5f) y = ty0 + 10.5f;                        /* (below the flask) */
-        static const char *RISK[3] = { "low risk", "medium risk", "high risk" };
-        char rl[64]; snprintf(rl, sizeof rl, "Mystic number %d, %s", a.mystic, a.risk >= 0 && a.risk < 3 ? RISK[a.risk] : "?");
+        static const char *RISK[3] = { "低风险", "中等风险", "高风险" };
+        char rl[64]; snprintf(rl, sizeof rl, "神秘数字 %d，%s", a.mystic, a.risk >= 0 && a.risk < 3 ? RISK[a.risk] : "?");
         pentacle(P.dl, RX0 + 2.3f, y + 2.7f, 2.3f, IM_COL32(110, 60, 140, 255), th);
         P.text(fo, NsDraw::FS_SMALL, RX0 + 6, y, a.risk >= 2 ? red : soft, rl);
         risk_hover = P.over(RX0, y, RX1, y + 6);
@@ -189,7 +189,7 @@ extern "C" void alchemyview_draw(void)
         }
         {   /* the potion carried already: a flask of each grade the party has, with how many */
             int k = fm / 3; float x = RX0;
-            P.text(fo, NsDraw::FS_SMALL, x, y + 0.8f, soft, "Carried"); x += P.width(fo, NsDraw::FS_SMALL, "Carried") + 3;
+            P.text(fo, NsDraw::FS_SMALL, x, y + 0.8f, soft, "携带中"); x += P.width(fo, NsDraw::FS_SMALL, "携带中") + 3;
             bool any = false;
             if (k >= 0 && k < 22) for (int g2 = 0; g2 <= 3; g2++) {
                 int nn = pot[k][g2 == 0 ? 0 : g2]; if (g2 == 0 || !nn) continue;
@@ -203,7 +203,7 @@ extern "C" void alchemyview_draw(void)
             y += 10;
         }
         P.rect(RX0, y - 0.6f, RX1, y - 0.3f, IM_COL32(120, 80, 36, 90));
-        P.text(fo, 4.3f, RX0, y + 0.5f, soft, "For a batch: at hand / needed"); y += 6.5f;
+        P.text(fo, 4.3f, RX0, y + 0.5f, soft, "对于一批：手头有 / 需要"); y += 6.5f;
         for (int kk = 0; kk < a.ningr; kk++) {
             const AvIngr &q = a.ingr[kk];
             P.icon(RX0 + 3.3f, y + 3.3f, 5.4f, q.item);   /* (a gap between the medallions, and before the name) */
@@ -221,7 +221,7 @@ extern "C" void alchemyview_draw(void)
         const float cx0 = X0 + wl, cy0 = Y0 + wl, cw = (X1 - wl - cx0) / AD_CHEST_COLS, ch = (Y1 - wl - cy0) / AD_CHEST_ROWS;
         /* the label inside the lid */
         P.rect((X0 + X1) * 0.5f - 34, AD_CHEST_LID + 1.6f, (X0 + X1) * 0.5f + 34, Y0 - 1.4f, IM_COL32(236, 222, 186, 255), 0.6f);
-        const char *lab = "The party's ingredients";
+        const char *lab = "队伍的原料";
         P.text(fo, 4.0f, (X0 + X1) * 0.5f - P.width(fo, 4.0f, lab) * 0.5f, AD_CHEST_LID + 2.6f, ink, lab);
         int tip = -1;
         for (int i = 0; i < 23; i++) {
@@ -250,7 +250,7 @@ extern "C" void alchemyview_draw(void)
             if (have[tip] == 0 && config_get_int("assist.where_sold", 1)) where = journal_where_sold(tip);
             ns_tip_begin();
             ImGui::TextUnformatted(ns_item_name(tip).c_str());
-            ImGui::TextDisabled(have[tip] ? "The party carries %d." : "The party has none.", have[tip]);
+            ImGui::TextDisabled(have[tip] ? "队伍携带 %d。" : "队伍没有。", have[tip]);
             if (!where.empty()) ImGui::TextUnformatted(where.c_str());
             if (!use.empty()) ui_rich_text(use.c_str());
             ns_tip_end();
@@ -265,7 +265,7 @@ extern "C" void alchemyview_draw(void)
         if (sel_f >= 0) {
             int cnt = a.page ? a.count : 0, most = a.most;
             float y = Y0;
-            P.text(f, NsDraw::FS_NAME, X0, y + 0.5f, wax, "Batches");
+            P.text(f, NsDraw::FS_NAME, X0, y + 0.5f, wax, "批次");
             float bx = X0 + 26;
             if (cnt > 0) { if (P.button(bx, y, bx + 8, y + 7.5f, "-", IM_COL32(120, 84, 40, 235), NsDraw::FS_BODY)) ns_push(AV_FEWER, 0, 0, 0); }
             else P.button_off(bx, y, bx + 8, y + 7.5f, "-", NsDraw::FS_BODY);
@@ -276,8 +276,8 @@ extern "C" void alchemyview_draw(void)
             else P.button_off(px, y, px + 8, y + 7.5f, "+", NsDraw::FS_BODY);
             P.text(fo, NsDraw::FS_SMALL, 0, y + 1.6f, most ? wax_soft : wax_red, most ? "of " + std::to_string(most) : std::string("none"), X1);
             if (P.over(px + 9, y, X1, y + 7.5f))
-                tablet_tip = most ? "The party's ingredients make " + std::to_string(most) + (most == 1 ? " batch" : " batches") + " of this formula at most. A batch makes one potion."
-                                  : std::string("The party lacks the ingredients for a batch of this formula (the right page shows what is short).");
+                tablet_tip = most ? "队伍的原料最多只能制作" + std::to_string(most) + (most == 1 ? " batch" : " batches") + "个这种配方。一批只能制作一瓶药剂。"
+                                  : std::string("队伍缺少制作一批该配方所需的原料（右页显示缺什么）。");
             y += 9.0f;
 
             /* the chance by the number of batches: one roll decides them all */
@@ -288,8 +288,8 @@ extern "C" void alchemyview_draw(void)
                 bool on = P.over(X0, CY0 - 1, X1, CY1 + 1.5f);
                 if (on) {
                     hover_n = 1 + (int)((P.mx - X0) / bw); if (hover_n < 1) hover_n = 1; if (hover_n > most) hover_n = most;
-                    tablet_tip = "The chance for each number of batches, 1 to " + std::to_string(most) + " (what the ingredients allow). One roll decides them all: "
-                                 "more batches, more potions, a lower chance (1 to 3 alike, then 4 and 5, 6 and 7 ...). Click to set the batches; below, what may come of " +
+                    tablet_tip = "每种批次数量的几率，从 1 到" + std::to_string(most) + "（由原料决定）。一次掷骰子决定所有结果："
+                                 "批次越多，药剂越多，但几率越低（1 和 3 相同，然后是 4 和 5，6 和 7……）。点击设定批次；下方显示可能得到的结果" +
                                  std::to_string(hover_n) + (hover_n == 1 ? " batch." : " batches.");
                 }
                 for (int n = 1; n <= most; n++) {
@@ -313,7 +313,7 @@ extern "C" void alchemyview_draw(void)
                     if (n != cnt) ns_push(AV_SET, n, 0, 0);
                     hover_n = n;
                 }
-            } else P.para(fo, NsDraw::FS_SMALL, X0, CY0 + 2, X1 - X0, wax_red, "Not enough ingredients for one batch.");
+            } else P.para(fo, NsDraw::FS_SMALL, X0, CY0 + 2, X1 - X0, wax_red, "原料不足，无法制作一批。");
             y = CY1 + 2.6f;
 
             /* what may come of it (the number pointed at in the chart, else the batches set) */
@@ -337,16 +337,16 @@ extern "C" void alchemyview_draw(void)
                     x += 5.6f + P.width(pt.kind == 0 ? f : fo, pt.kind == 0 ? NsDraw::FS_NAME : NsDraw::FS_SMALL, v) + 2.6f;
                     if (P.over(x0, iy - 3.2f, x - 1, iy + 3.2f)) {
                         char b[400]; std::string bn = std::to_string(sn) + (sn == 1 ? " batch" : " batches");
-                        if (pt.kind == 0) snprintf(b, sizeof b, "Success, a chance of %d%%: %d %s of %s. One roll decides all %s.", (int)ok, sn, sn == 1 ? "potion" : "potions",
+                        if (pt.kind == 0) snprintf(b, sizeof b, "成功，几率为 %d%%：%d %s 的 %s。一次掷骰子决定所有 %s。", (int)ok, sn, sn == 1 ? "potion" : "potions",
                                                    gamedata.formula_names[sel_f].c_str(), bn.c_str());
-                        else if (pt.kind == 1) snprintf(b, sizeof b, a.at_place ? "Failure and no more: the ingredients of the %s are lost (half the failures here)." : "Failure: the ingredients of the %s are lost; in a camp in the wild nothing worse can happen.", bn.c_str());
-                        else if (pt.kind == 2) snprintf(b, sizeof b, "Failure, and a stink: the ingredients lost, and no room at this inn for a month.");
-                        else snprintf(b, sizeof b, "Failure, and an explosion: the ingredients lost, the party hurt, damages to pay, and no room at this inn for four months.");
+                        else if (pt.kind == 1) snprintf(b, sizeof b, a.at_place ? "失败且无后续：%s 的原料丢失（此处一半的失败情况如此）。" : "失败：%s 的原料丢失；在野外营地，不会发生更糟的情况。", bn.c_str());
+                        else if (pt.kind == 2) snprintf(b, sizeof b, "失败，还伴有恶臭：原料丢失，队伍受伤，需赔偿损失，且这家旅店一个月内无房。");
+                        else snprintf(b, sizeof b, "失败，还引发爆炸：原料丢失，队伍受损，需赔偿损失，且这家旅店四个月内无房。");
                         tablet_tip = b;
                     }
                 }
                 y = iy + 3.6f;
-            } else { P.text(fo, NsDraw::FS_SMALL, X0, y, wax_soft, "No batch set."); y += 6.5f; }
+            } else { P.text(fo, NsDraw::FS_SMALL, X0, y, wax_soft, "未设定批次。"); y += 6.5f; }
 
             /* what the chance is made of, in pictures; or a word from the screen */
             if (a.note[0] && plat_ticks_ms() - a.note_t < 6000) P.para(fo, NsDraw::FS_SMALL, X0, y, X1 - X0, wax, ns_gtext(a.note));
@@ -366,30 +366,30 @@ extern "C" void alchemyview_draw(void)
                 P.text(fo, fs, x, cy - 2.4f, wax, eq);
                 if (P.over(X0, cy - 3, X1, cy + 3)) {
                     char b[600];
-                    snprintf(b, sizeof b, "The chance: %d for %d %s (100 for 1 to 3, 50 for 4 or 5, 33 for 6 or 7, 25 for 8 or 9 ...: 100 divided by half the batches) "
-                             "+ %s's {Intelligence:%d} + {Alchemy:%d} + the party's Philosopher's Stone %d - the formula's mystic number %d = %d, at most 99%%.",
+                    snprintf(b, sizeof b, "机会：%d 对 %d %s（1 到 3 为 100，4 或 5 为 50，6 或 7 为 33，8 或 9 为 25……：100 除以批次的一半）"
+                             "+ %s 的 {智力：%d} + {炼金术：%d} + 队伍的哲学家之石 %d - 配方的神秘数字 %d = %d，最高 99%%。",
                              bp, nb, nb == 1 ? "batch" : "batches", who.c_str(), a.intel, a.alch, a.stone, a.mystic, sum);
                     tablet_tip = b;
                 }
             }
-        } else P.para(fo, NsDraw::FS_SMALL, X0, Y0 + 2, X1 - X0, wax_soft, "Choose a formula in the book.");
+        } else P.para(fo, NsDraw::FS_SMALL, X0, Y0 + 2, X1 - X0, wax_soft, "在书中选择一个配方。");
     }
 
     /* ---- Start, on the furnace */
     {
         bool can = sel_f >= 0 && a.page && a.count > 0;
-        if (can) { if (P.button(AD_START_X0, AD_START_Y0, AD_START_X1, AD_START_Y1, "Start mixing", IM_COL32(40, 92, 34, 235), NsDraw::FS_BODY)) ns_push(AV_START, 0, 0, 0); }
-        else P.button_off(AD_START_X0, AD_START_Y0, AD_START_X1, AD_START_Y1, "Start mixing", NsDraw::FS_BODY);
+        if (can) { if (P.button(AD_START_X0, AD_START_Y0, AD_START_X1, AD_START_Y1, "开始混合", IM_COL32(40, 92, 34, 235), NsDraw::FS_BODY)) ns_push(AV_START, 0, 0, 0); }
+        else P.button_off(AD_START_X0, AD_START_Y0, AD_START_X1, AD_START_Y1, "开始混合", NsDraw::FS_BODY);
     }
     if (mark_tip) ns_tip(mark_tip);
     else if (!tablet_tip.empty()) ns_tip(tablet_tip.c_str());
     else if (risk_hover) {             /* what the risk means (mods/fixes.c, alchrisk) */
-        static const char *IN[5] = { "", "one time", "two times", "three times", "" }, *OF[5] = { "", "", "two", "three", "four" };
+        static const char *IN[5] = { "", "一次", "两次", "三次", "" }, *OF[5] = { "", "", "two", "three", "four" };
         int num, den; fixes_alchemy_blast_odds(a.risk, &num, &den);
         char t[400];
-        snprintf(t, sizeof t, "The mystic number: the higher, the harder the formula is to brew. The risk is what a failed batch can cause. At an inn, in a village or a hideout, one failure in two ends in a mishap: "
-                 "%s in %s it is an explosion (the party hurt, damages to pay, no room at the inn for four months), otherwise a stink (no room for a month). "
-                 "In a camp in the wild a failure only costs the ingredients.", IN[num], OF[den]);
+        snprintf(t, sizeof t, "神秘数字：越高，配方越难熬制。风险则取决于失败批次可能造成的后果。在旅店、村庄或藏身处，每两次失败就有一起意外："
+                 "在 %s 的 %s 中，可能是爆炸（队伍受伤，需赔偿损失，旅店四个月内无房），否则就是恶臭（一个月内无房）。"
+                 "在野外营地，失败只损失原料。", IN[num], OF[den]);
         ns_tip(t);
     }
 }

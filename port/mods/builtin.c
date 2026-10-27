@@ -100,12 +100,12 @@ static void quick_learning(int on)
 }
 
 Mod MODS[] = {
-    { "swift_travel", "Faster overland travel", "Travel", "Overland travel takes a third of the time.", swift_travel, 0, 0 },
-    { "cheap_inn", "Half-price inns", "Towns", "Lodging costs half as much.", cheap_inn, 0, 0 },
-    { "quick_learning", "Quick learning", "Skills", "Skills improve about twice as often through use, on cards and in battles (slow ones such as Streetwise and Latin too).", quick_learning, 0, 0 },
-    { "heavy_blows", "Double damage against enemies", "Combat", "Every hit on an enemy does double damage. Hits on the party are unchanged.", heavy_blows, 0, 0 },
-    { "strong_party", "Strong Quickstart party", "New game", "The four members of the Quickstart party start with 60 in every attribute and 75 in every skill.", strong_party, 0, 1 },
-    { "rich_start", "Rich start", "New game", "A party made with Create a New World starts with 5000 florins instead of 200.", rich_start, 0, 1 },
+    { "swift_travel", "陆路旅行速度更快", "旅行", "陆路旅行所需时间仅为原来的三分之一。", swift_travel, 0, 0 },
+    { "cheap_inn", "半价旅店", "城镇", "住宿费用减半。", cheap_inn, 0, 0 },
+    { "quick_learning", "快速学习", "技能", "技能在使用、卡牌和战斗中提升的频率大约是原来的两倍（像“街头智慧”和“拉丁语”这类缓慢的技能除外）。", quick_learning, 0, 0 },
+    { "heavy_blows", "对敌人造成双倍伤害", "战斗", "每次击中敌人都会造成双倍伤害。对队伍的攻击则不受影响。", heavy_blows, 0, 0 },
+    { "strong_party", "强力快速开局队伍", "新游戏", "快速开局队伍的四名成员在各项属性上初始值均为60，各项技能初始值均为75。", strong_party, 0, 1 },
+    { "rich_start", "富裕开局", "新游戏", "使用“创建新世界”模式组建的队伍初始拥有5000弗罗林，而非200。", rich_start, 0, 1 },
 };
 int MOD_COUNT = sizeof MODS / sizeof MODS[0];
 

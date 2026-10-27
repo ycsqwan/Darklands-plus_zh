@@ -126,13 +126,13 @@ std::string system_name(void)
 #ifdef _WIN32
     typedef const char *(*WineVer)(void);
     HMODULE nt = GetModuleHandleA("ntdll.dll");
-    if (nt && GetProcAddress(nt, "wine_get_version")) { WineVer v = (WineVer)(void *)GetProcAddress(nt, "wine_get_version"); return std::string("Linux (Wine or Proton ") + v() + ")"; }
+    if (nt && GetProcAddress(nt, "wine_get_version")) { WineVer v = (WineVer)(void *)GetProcAddress(nt, "wine_get_version"); return std::string("Linux（Wine 或 Proton") + v() + ")"; }
     typedef LONG (WINAPI *RtlVer)(OSVERSIONINFOW *);
     RtlVer rv = nt ? (RtlVer)(void *)GetProcAddress(nt, "RtlGetVersion") : nullptr;
     OSVERSIONINFOW vi; memset(&vi, 0, sizeof vi); vi.dwOSVersionInfoSize = sizeof vi;
     if (rv && rv(&vi) == 0) {
         char b[64];
-        if (vi.dwMajorVersion == 10) snprintf(b, sizeof b, "Windows %s (build %lu)", vi.dwBuildNumber >= 22000 ? "11" : "10", (unsigned long)vi.dwBuildNumber);
+        if (vi.dwMajorVersion == 10) snprintf(b, sizeof b, "Windows %s（版本 %lu）", vi.dwBuildNumber >= 22000 ? "11" : "10", (unsigned long)vi.dwBuildNumber);
         else snprintf(b, sizeof b, "Windows %lu.%lu", (unsigned long)vi.dwMajorVersion, (unsigned long)vi.dwMinorVersion);
         return b;
     }
@@ -146,7 +146,7 @@ std::string preset_words(void)
     int p = preset_current();
     if (p >= 0 && p < PRESET_COUNT) return PRESETS[p].name;
     int d = 0, n = preset_nearest(&d);
-    char b[120]; snprintf(b, sizeof b, "own switches (%d from %s)", d, n >= 0 && n < PRESET_COUNT ? PRESETS[n].name : "?");
+    char b[120]; snprintf(b, sizeof b, "自定义开关（%d 个来自 %s）", d, n >= 0 && n < PRESET_COUNT ? PRESETS[n].name : "?");
     return b;
 }
 std::string url_encode(const std::string &s)
@@ -162,8 +162,8 @@ std::string url_encode(const std::string &s)
 std::string made_zip, made_note;    /* the last report: its zip, or what went wrong */
 std::string form_url(void)
 {
-    std::string sys = system_name(), files = "The report from Darklands+ (F12 > About > Report a problem): drag " +
-        made_zip.substr(made_zip.find_last_of("/\\") + 1) + " here from the folder it opened. It holds the log, the settings and the two newest saves.";
+    std::string sys = system_name(), files = "来自 Darklands+ 的报告（F12 > 关于 > 报告问题）：请拖动" +
+        made_zip.substr(made_zip.find_last_of("/\\") + 1) + "此处，从它打开的文件夹中。其中包含日志、设置以及最近的两个存档。";
     return std::string(REPO_FORM) + "&version=" + url_encode(dlp_version) + "&system=" + url_encode(sys) + "&preset=" + url_encode(preset_words()) + "&files=" + url_encode(files);
 }
 void open_folder(const std::string &file)
@@ -188,7 +188,7 @@ bool make_report(void)
 #endif
     dos_mkdirs_for(zip.c_str());
     Zip z; z.f = fopen(zip.c_str(), "wb");
-    if (!z.f) { made_note = "Could not write " + zip + "."; made_zip.clear(); return false; }
+    if (!z.f) { made_note = "无法写入" + zip + "."; made_zip.clear(); return false; }
     std::string d, summary;
     for (const char *log : { "darklands_port.log", "darklands_port_previous.log", "darklands_port.ini" })
         if (read_file(std::string(dlp_data_dir) + "/" + log, d)) z.add(log, scrub(d));
@@ -205,7 +205,7 @@ bool make_report(void)
     }
     free(v);
     char tb[64]; strftime(tb, sizeof tb, "%Y-%m-%d %H:%M", t);
-    summary = std::string("Darklands+ build ") + dlp_version + "\nSystem: " + system_name() + "\nPreset: " + preset_words() +
+    summary = std::string("Darklands+ 版本") + dlp_version + "\nSystem: " + system_name() + "\nPreset: " + preset_words() +
               "\nMade: " + tb + "\nSaves: " + (saves.empty() ? "none" : saves) + "\n";
     z.add("report.txt", summary);
     z.close();
@@ -218,18 +218,18 @@ bool make_report(void)
 /* F12 > About: the section and its button */
 void ui_report_section(void)
 {
-    ImGui::TextWrapped("Something wrong? Make a report: a zip of this session's log and the last one's, your settings and your two "
-                       "newest saves (your own name taken out of the folder paths in them). Its folder opens, and GitHub's bug form "
-                       "with the version, system and preset filled in: write what happened and drag the zip into the form. "
-                       "Posting there takes a free GitHub account.");
-    if (ImGui::Button("Make a report and open the form")) {
+    ImGui::TextWrapped("出现问题？请提交报告：将本会话及上一次会话的日志、您的设置，以及您的两个"
+                       "最新存档打包成 zip 文件（请移除文件路径中的您的姓名）。其文件夹将自动打开，同时 GitHub 的缺陷反馈表单"
+                       "也会自动填充版本、系统与预设信息：请写下发生的情况，并将 zip 文件拖入表单。"
+                       "在那里发布需要一个免费的 GitHub 账号。");
+    if (ImGui::Button("提交报告并打开表单")) {
         if (make_report()) { open_folder(made_zip); SDL_OpenURL(form_url().c_str()); }
     }
     if (!made_zip.empty()) {
-        ImGui::TextDisabled("Made: %s", made_zip.c_str());
-        if (ImGui::SmallButton("Show the zip")) open_folder(made_zip);
+        ImGui::TextDisabled("已完成：%s", made_zip.c_str());
+        if (ImGui::SmallButton("显示 zip 文件")) open_folder(made_zip);
         ImGui::SameLine();
-        if (ImGui::SmallButton("Open the form again")) SDL_OpenURL(form_url().c_str());
+        if (ImGui::SmallButton("再次打开表单")) SDL_OpenURL(form_url().c_str());
     }
     if (!made_note.empty()) ImGui::TextColored(ImVec4(0.6f, 0.15f, 0.1f, 1), "%s", made_note.c_str());
 }

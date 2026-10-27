@@ -13,3 +13,11 @@ darklands_game.dll
 libdarklands_game.so
 *.dll.new
 *.so.new
+
+# local scratch: font downloads, build logs, screenshot staging
+$tmp/
+*.log
+zhanshi/
+
+# a second bitmap font that was evaluated but is not used (see README.zh-CN.md)
+port/third_party/fonts/fusion-pixel-10px-cjk.ttf

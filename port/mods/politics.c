@@ -108,7 +108,7 @@ static long serial(int y, int m, int d, int h)                        /* hours s
 }
 static long now(void) { return serial((s16)g_rw(G_CUR_YEAR), (s16)g_rw(G_CUR_MONTH), (s16)g_rw(G_CUR_DAY), (s16)g_rw(G_CUR_HOUR)); }
 static long ev_start(u32 e) { return serial(g_ev(e, 0x10), g_ev(e, 0x0e), g_ev(e, 0x0c), g_ev(e, 0x0a)); }
-static const char *MONTHS[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+static const char *MONTHS[12] = { "一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月" };
 void gm_hour_name(int hour, char *out, int n);                         /* (mods/gamemodel.c: the game's own names of the bells) */
 /* "d days from now at hour h": the hours until then, and the date as text */
 static int hours_to(int d, int h, char *date, int n)
@@ -197,15 +197,15 @@ static void settle_missed(int loc)
     int chance = pct / 2; if (chance < 10) chance = 10; if (chance > 90) chance = 90;
     int won = rnd(100) < chance, winner = won ? who : -who, party = side();
     char seat[48]; expand(has_council() ? "councilHall" : "fortress", seat, sizeof seat);
-    if (!seat[0]) snprintf(seat, sizeof seat, "%s", has_council() ? "town hall" : "fortress");
+    if (!seat[0]) snprintf(seat, sizeof seat, "%s", has_council() ? "市政厅" : "fortress");
     LOG("the day passed without the party: %s acted, %s won\n", who == REBELS ? "rebels" : "government", winner == REBELS ? "rebels" : "government");
     C(GF_conflict_outcome_impl, 3, who, 0, winner);                 /* (the party, 0: no reward, no blame) */
     if (ns_unwinding) return;
     char msg[240];
-    if (who == REBELS) snprintf(msg, sizeof msg, won ? "While you were away, the rebels marched on the %s: the city has a new government."
-                                                     : "While you were away, the rebels marched on the %s and were scattered: the old government holds.", seat);
-    else snprintf(msg, sizeof msg, won ? "While you were away, the city guard arrested the rebel leaders: the old government holds."
-                                       : "While you were away, the guard tried to arrest the rebel leaders and the crowd freed them: the city has a new government.");
+    if (who == REBELS) snprintf(msg, sizeof msg, won ? "在你外出期间，叛军攻占了 %s：城市有了新政府。"
+                                                     : "在你外出期间，叛军攻占了 %s，但被击退：旧政府仍在执政。", seat);
+    else snprintf(msg, sizeof msg, won ? "在你外出期间，城防军逮捕了叛军头目：旧政府仍在执政。"
+                                       : "在你外出期间，守军试图逮捕叛军头目，但群众将其救出：城市有了新政府。");
     if (party) ui_notice(msg);
 }
 static int arrived = -1;
@@ -267,7 +267,7 @@ static void daily_hook(void)
 
 /* ---------------------------------------------------------------- texts */
 static int cur_block = -1;                                           /* the text block being expanded */
-static const char *support_word(int v) { return v < 0 ? "support" : v > 0 ? "oppose" : "are undecided about"; }
+static const char *support_word(int v) { return v < 0 ? "support" : v > 0 ? "oppose" : "尚未决定"; }
 static void var_expand_hook(void)                                    /* var_expand (char *name): the value in place */
 {
     if (!politics_on()) { hook_call_original(); return; }
@@ -281,14 +281,14 @@ static void var_expand_hook(void)                                    /* var_expa
         dset(p, support_word((s16)g_rw(GV_var_support0)), 40); hook_return_far(0); return;
     }
     const char *v = 0; char buf[64];
-    if (!strcmp(nm, "VarString1") && card_is("$Revol02") && cur_block == 8) v = "the exiled heir";
+    if (!strcmp(nm, "VarString1") && card_is("$Revol02") && cur_block == 8) v = "被流放的继承人";
     else if (!strcmp(nm, "VarString2") && card_is("$Revol09")) v = "banner";
-    else if (!strcmp(nm, "VarString2")) v = has_council() ? "town hall" : "fortress";
+    else if (!strcmp(nm, "VarString2")) v = has_council() ? "市政厅" : "fortress";
     else if (!strcmp(nm, "VarString1") || !strcmp(nm, "VarString5")) {
         dset(p, has_council() ? "councilHall" : "fortress", 24);
         hook_call_original();                                        /* the building's name in this city */
         char b[48]; g_str(G_DGROUP, p, b, sizeof b);
-        snprintf(buf, sizeof buf, "the %s", b); dset(p, buf, 60);
+        snprintf(buf, sizeof buf, "的 %s", b); dset(p, buf, 60);
         return;
     }
     if (v) { dset(p, v, 40); hook_return_far(0); return; }
@@ -344,7 +344,7 @@ static void card_load_hook(void)                                     /* card_loa
         dset(GV_var_text1, b, 40); dset(GV_var_text2, date, 40);
         u16 p = (u16)GV_var_text3;                                   /* the seat, by its name */
         dset(p, has_council() ? "councilHall" : "fortress", 24); C(GF_var_expand, 1, p);
-        dset(GV_var_text4, "the exiled heir", 40);
+        dset(GV_var_text4, "被流放的继承人", 40);
         g_ww(GV_var_chosen1, (u16)(s8)g_rb(G_LEADER));
         card_text(0);
     } else if (card_is("$Revol04")) {

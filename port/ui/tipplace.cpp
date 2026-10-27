@@ -133,7 +133,7 @@ void ui_tip_audit(void)
         bool stayed = false;
         for (int i = 0; i < nprev; i++) stayed = stayed || (prev_id[i] == w->ID && prev_r[i].Min.x == r.Min.x && prev_r[i].Min.y == r.Min.y && prev_r[i].Max.x == r.Max.x && prev_r[i].Max.y == r.Max.y);
         if (!stayed) continue;
-        const char *what = r.Overlaps(ptr) ? "the pointer" : (anc_frame == g.FrameCount && r.Overlaps(anc)) ? "what it describes" : nullptr;
+        const char *what = r.Overlaps(ptr) ? "指针" : (anc_frame == g.FrameCount && r.Overlaps(anc)) ? "它所描述的内容" : nullptr;
         if (!what) continue;
         ImRect rr(floorf(r.Min.x), floorf(r.Min.y), floorf(r.Max.x), floorf(r.Max.y));
         if (rr.Min.x == last.Min.x && rr.Min.y == last.Min.y && rr.Max.x == last.Max.x && rr.Max.y == last.Max.y) continue;

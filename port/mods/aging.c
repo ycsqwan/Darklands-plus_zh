@@ -72,7 +72,7 @@ void aging_month(int n)
             if (now == was) continue;
             g_wb(mx, (u8)now);
             int c = (s8)g_rb(cu); if (c > 0) { c -= was - now; if (c < 1) c = 1; g_wb(cu, (u8)c); }
-            pl += (size_t)snprintf(part + pl, sizeof part - pl, "%s%s %d (was %d)", pl ? ", " : "", gm_attr_name(a), now, was);
+            pl += (size_t)snprintf(part + pl, sizeof part - pl, "%s%s %d（原为%d）", pl ? ", " : "", gm_attr_name(a), now, was);
             if (pl >= sizeof part) pl = sizeof part - 1;
             row->ch[row->n].key = a; row->ch[row->n].was = was; row->ch[row->n].now = now; row->n++;
         }
@@ -80,15 +80,15 @@ void aging_month(int n)
         if (!part[0]) continue;
         nr++;
         char nm[40], nu[80]; gm_member_name(m, nm, sizeof nm); ui_text_utf8(nm, nu, sizeof nu);
-        len += (size_t)snprintf(body + len, sizeof body - len, "%s%s, now %d: %s.", len ? "\n" : "", nu, A / 12, part);
+        len += (size_t)snprintf(body + len, sizeof body - len, "%s%s，现为%d：%s。", len ? "\n" : "", nu, A / 12, part);
         if (len >= sizeof body) len = sizeof body - 1;
         any = 1;
     }
     if (getenv("DL_AGING_LOG")) fprintf(stderr, "aging: %d month(s): %s\n", n, any ? body : "nothing");
-    if (any) ui_alert_rows("The years take their toll", body, rows, nr,
-                           "Beside each name, the age (the hourglass); then each attribute's maximum lowered: what it was, and what it is now. "
-                           "These losses are permanent, as with aging at character creation: from age 30, a little each month, and more as the years go by. "
-                           "(Aging during play is a Darklands+ switch: F12 > Settings > The party and its items.)");
+    if (any) ui_alert_rows("岁月无情", body, rows, nr,
+                           "每个名字旁都标有年龄（沙漏）；随后，各项属性的上限都会降低：显示其原本数值与当前数值。"
+                           "这些损失是永久性的，如同角色创建时的衰老一样：从30岁起，每月略有下降，随着年岁增长愈发明显。"
+                           "（游戏中的衰老属于Darklands+选项：F12 > 设置 > 队伍及其物品。）");
 }
 
 /* (out of n chars, written up to *len: more added, never past the end) */
@@ -107,14 +107,14 @@ static void add(char *out, int n, int *len, const char *fmt, ...)
 void aging_forecast(int m, char *out, int n)
 {
     int len = 0; out[0] = 0;
-    if (!aging_on()) { add(out, n, &len, "Aging in play is off: characters age only while they are made (F12 > Settings > The party and its items)."); return; }
+    if (!aging_on()) { add(out, n, &len, "游戏中关闭了衰老功能：角色仅在创建时才会衰老（F12 > 设置 > 队伍及其物品）。"); return; }
     int A = age_months(m);
-    add(out, n, &len, "The years take their toll from 30, a little each month, for good (as aging at character creation).");
+    add(out, n, &len, "从30岁起，岁月便开始侵蚀，每月略有减少，且持续不断（如同角色创建时的衰老）。");
     if (A < 360) {
         int y = (360 - A) / 12, mo = (360 - A) % 12;
-        add(out, n, &len, "\nIt begins in ");
-        if (y) add(out, n, &len, "%d year%s%s", y, y == 1 ? "" : "s", mo ? " and " : "");
-        if (mo || !y) add(out, n, &len, "%d month%s", mo, mo == 1 ? "" : "s");
+        add(out, n, &len, "\\n它始于");
+        if (y) add(out, n, &len, "%d年%s%s", y, y == 1 ? "" : "s", mo ? " and " : "");
+        if (mo || !y) add(out, n, &len, "%d月%s", mo, mo == 1 ? "" : "s");
         add(out, n, &len, ".");
         return;
     }
@@ -131,7 +131,7 @@ void aging_forecast(int m, char *out, int n)
         for (int a = 0; a < 6; a++) if (when[a] == k) any = 1;
         if (!any) continue;
         add(out, n, &len, shown ? "; " : "\nNext: ");
-        if (k == 1) add(out, n, &len, "next month"); else if (k < 24) add(out, n, &len, "in %d months", k); else add(out, n, &len, "in about %d years", (k + 6) / 12);
+        if (k == 1) add(out, n, &len, "下个月"); else if (k < 24) add(out, n, &len, "在%d个月后", k); else add(out, n, &len, "大约%d年后", (k + 6) / 12);
         for (int a = 0; a < 6; a++) if (when[a] == k) add(out, n, &len, " {%s:-1}", gm_attr_name(a));
         shown++;
     }
@@ -140,7 +140,7 @@ void aging_forecast(int m, char *out, int n)
     for (int a = 0; a < 6; a++) {
         int d = (int)floor(due(a, A + 60) + 1e-9) - (int)floor(due(a, A) + 1e-9);
         if (d <= 0) continue;
-        if (first) add(out, n, &len, "\nBy %d:", (A + 60) / 12);
+        if (first) add(out, n, &len, "\\n到%d时：", (A + 60) / 12);
         add(out, n, &len, " {%s:-%d}", gm_attr_name(a), d);
         first = 0;
     }

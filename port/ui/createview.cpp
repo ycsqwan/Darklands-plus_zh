@@ -26,8 +26,8 @@ static int skill_cost(int v) { return v >= 79 ? 3 : v >= 49 ? 2 : 1; }
 
 /* the professions by kind, as the game numbers them (DARKLAND.EXE's table: 0..36) */
 static const struct { const char *name; int first, n; } GROUPS[7] = {
-    { "Arms", 0, 4 }, { "Nobility", 4, 4 }, { "Church", 8, 8 }, { "Trade", 16, 5 },
-    { "Learning", 21, 6 }, { "Crafts", 27, 3 }, { "Common folk", 30, 7 } };
+    { "武器", 0, 4 }, { "贵族", 4, 4 }, { "教堂", 8, 8 }, { "贸易", 16, 5 },
+    { "学习", 21, 6 }, { "工艺", 27, 3 }, { "普通百姓", 30, 7 } };
 
 static CgCtx ctx_of(const CreateModel &c)
 {
@@ -106,11 +106,11 @@ extern "C" void createview_draw(void)
 
     /* the header: who, and where in the making */
     std::string name = ns_gtext(c.name), nick = ns_gtext(c.nick);
-    P.text(f, NsDraw::FS_TITLE, 6, 2.5f, ink, name.empty() ? "A new character" : name, -1, 170);
-    if (c.age > 0) snprintf(b, sizeof b, "%s, called %s, age %d", c.female ? "A woman" : "A man", nick.c_str(), c.age);
-    else snprintf(b, sizeof b, "%s, called %s", c.female ? "A woman" : "A man", nick.c_str());   /* (no age before the childhood) */
+    P.text(f, NsDraw::FS_TITLE, 6, 2.5f, ink, name.empty() ? "新角色" : name, -1, 170);
+    if (c.age > 0) snprintf(b, sizeof b, "%s，名为%s，年龄%d", c.female ? "一位女性" : "一位男性", nick.c_str(), c.age);
+    else snprintf(b, sizeof b, "%s，名为%s", c.female ? "一位女性" : "一位男性", nick.c_str());   /* (no age before the childhood) */
     P.text(fo, NsDraw::FS_BODY, 6, 12, soft, b);
-    static const char *STEP[5] = { "Name", "Childhood", "Attributes", "Profession", "Skills" };
+    static const char *STEP[5] = { "姓名", "童年", "属性", "职业", "技能" };
     for (int i = 0; i < 5; i++) {
         float x0 = 172 + i * 28.8f, x1 = x0 + 28;
         bool cur = i == c.state, done = i < c.state;
@@ -130,9 +130,9 @@ extern "C" void createview_draw(void)
     int new_hover = -1;
 
     if (c.state == 0) {
-        title("Name and gender");
-        note("Type a name or pick a random one, then go on to the childhood.");
-        const char *lab[2] = { "Name", "Short name (the one the cards use)" };
+        title("姓名与性别");
+        note("输入姓名或随机选择一个，然后进入童年阶段。");
+        const char *lab[2] = { "姓名", "简短姓名（卡片上使用的名称）" };
         for (int k = 0; k < 2; k++) {
             P.text(fo, NsDraw::FS_SMALL, LX0 + 3, y, soft, lab[k]);
             y += 6;
@@ -145,16 +145,16 @@ extern "C" void createview_draw(void)
             if (!typing && P.hit(LX0 + 3, y, LX1 - 3, y + 11)) ns_push(CG_TYPE, k + 1, 0, 0);
             y += 14;
         }
-        if (c.typing) note("Enter keeps it, Esc cancels.");
+        if (c.typing) note("按下回车键保存，按Esc取消。");
         float mid = (LX0 + LX1) * 0.5f;
-        if (P.button(LX0 + 3, y, mid - 1.5f, y + 11, "Random name", BROWN, NsDraw::FS_BODY)) ns_push(CG_KEY, 3, 0, 0);
-        if (P.button(mid + 1.5f, y, LX1 - 3, y + 11, c.female ? "Be a man" : "Be a woman", BROWN, NsDraw::FS_BODY)) ns_push(CG_KEY, 2, 0, 0);
+        if (P.button(LX0 + 3, y, mid - 1.5f, y + 11, "随机姓名", BROWN, NsDraw::FS_BODY)) ns_push(CG_KEY, 3, 0, 0);
+        if (P.button(mid + 1.5f, y, LX1 - 3, y + 11, c.female ? "成为男性" : "成为女性", BROWN, NsDraw::FS_BODY)) ns_push(CG_KEY, 2, 0, 0);
         y += 15;
-        if (P.button(LX0 + 3, y, LX1 - 3, y + 13, "On to the childhood", GREEN, NsDraw::FS_HEADBTN)) ns_push(CG_KEY, 1, 0, 0);
-        if (P.button(LX0 + 3, Y1 - 15, LX1 - 3, Y1 - 3, "Cancel and return to the party", RED, NsDraw::FS_BODY)) ns_push(CG_KEY, 6, 0, 0);
+        if (P.button(LX0 + 3, y, LX1 - 3, y + 13, "进入童年阶段", GREEN, NsDraw::FS_HEADBTN)) ns_push(CG_KEY, 1, 0, 0);
+        if (P.button(LX0 + 3, Y1 - 15, LX1 - 3, Y1 - 3, "取消并返回队伍", RED, NsDraw::FS_BODY)) ns_push(CG_KEY, 6, 0, 0);
     } else if (c.state == 1) {
-        title("Childhood");
-        note("The family decides the starting attributes and skills, and which professions are open at first. Point at one to see what it brings (on the right); click to choose it.");
+        title("童年");
+        note("家庭决定初始属性与技能，以及哪些职业在一开始是开放的。指向某一项即可查看其带来的效果（右侧）；点击即可选择。");
         y += 1;
         for (int i = 0; i < c.nlist; i++) {
             float ry = y + i * 12;
@@ -166,8 +166,8 @@ extern "C" void createview_draw(void)
             if (P.hit(LX0 + 1, ry, LX1 - 1, ry + 11.5f)) ns_push(CG_KEY, i + 1, 0, 0);
         }
     } else if (c.state == 3) {
-        title("Profession");
-        note("Five years each. Those in dark letters are open now: click one to take it. Point at any to see what it needs and brings.");
+        title("职业");
+        note("每项五年。以深色字体显示的项目当前已开放：点击一项即可选中。指向任意一项可查看所需条件及带来的收益。");
         /* every profession, by kind, in three columns: the open ones dark and clickable */
         static const int COLS[3][3] = { { 0, 1, 5 }, { 2, 3, -1 }, { 4, 6, -1 } };
         float cw = (LX1 - LX0 - 6) / 3.0f, y0 = y;
@@ -198,11 +198,11 @@ extern "C" void createview_draw(void)
         }
         float ly = Y1 - 9;
         P.dl->AddCircleFilled(NsDraw::w(LX0 + 5, ly + 3.2f), 0.9f * P.k, NsDraw::GREEN);
-        P.text(fo, NsDraw::FS_SMALL, LX0 + 7.5f, ly + 0.5f, dim, "taken before (can be taken again for five more years)");
-        if (!c.nlist) P.text(fo, NsDraw::FS_SMALL, LX0 + 3, ly - 7, NsDraw::RED, "No profession is open to this character now.");
+        P.text(fo, NsDraw::FS_SMALL, LX0 + 7.5f, ly + 0.5f, dim, "之前已选过（可再选一次，为期五年）");
+        if (!c.nlist) P.text(fo, NsDraw::FS_SMALL, LX0 + 3, ly - 7, NsDraw::RED, "此角色目前没有任何职业开放。");
     } else if (c.state == 2) {
-        title("Attributes");
-        snprintf(b, sizeof b, "%d of %d EP (experience points) left. Use + and - on a row (- only takes back this step's points). A point costs 1 EP, 2 at 29+, 3 at 39+; an attribute can reach 40 at most.", c.ep, c.ep_step);
+        title("属性");
+        snprintf(b, sizeof b, "剩余%d点/总%d点经验值。使用+和-按钮调整数值（-仅能撤销本步骤获得的经验）。每点消耗1点经验，29级以上消耗2点，39级以上消耗3点；属性最高可达40点。", c.ep, c.ep_step);
         note(b);
         y += 1;
         for (int i = 0; i < 6; i++) {
@@ -216,17 +216,17 @@ extern "C" void createview_draw(void)
             float vx = LX0 + 70;
             P.text(f, NsDraw::FS_NAME, 0, ry + 3, ink, b, vx);
             if (sp) { snprintf(b, sizeof b, "+%d", sp); P.text(fo, NsDraw::FS_SMALL, vx + 1.5f, ry + 4, NsDraw::GREEN, b); }
-            snprintf(b, sizeof b, "%d EP a point", attr_cost(v));
+            snprintf(b, sizeof b, "每点消耗%d点经验", attr_cost(v));
             P.text(fo, NsDraw::FS_SMALL, vx + 13, ry + 4, dim, b);
             float bw = 9, bx = LX1 - 3;
             bool can_plus = c.ep >= attr_cost(v) && sp < 40 && v < 40;
             if (can_plus && P.button(bx - bw, ry + 1.5f, bx, ry + rh - 1.5f, "+", GREEN, NsDraw::FS_HEAD)) ns_push(CG_ROWPLUS, i, 0, 0);
             if (sp && P.button(bx - 2 * bw - 1.5f, ry + 1.5f, bx - bw - 1.5f, ry + rh - 1.5f, "-", BROWN, NsDraw::FS_HEAD)) ns_push(CG_ROWMINUS, i, 0, 0);
         }
-        if (P.button(LX0 + 3, Y1 - 15, LX1 - 3, Y1 - 3, "On to the profession", GREEN, NsDraw::FS_HEADBTN)) ns_push(CG_KEY, 1, 0, 0);
+        if (P.button(LX0 + 3, Y1 - 15, LX1 - 3, Y1 - 3, "进入职业阶段", GREEN, NsDraw::FS_HEADBTN)) ns_push(CG_KEY, 1, 0, 0);
     } else if (c.state == 4) {
-        title("Skills");
-        snprintf(b, sizeof b, "%d of %d EP left. A point costs 1 EP, 2 at 49+, 3 at 79+. Room: how many more points this profession still lets you add to the skill.", c.ep, c.ep_step);
+        title("技能");
+        snprintf(b, sizeof b, "剩余%d点/总%d点经验值。每点消耗1点经验，49岁以上消耗2点，79岁以上消耗3点。房间：该职业还能让你为技能额外增加多少点。", c.ep, c.ep_step);
         note(b);
         const CgProf &ad = c.adult[c.prof >= 0 && c.prof < 37 ? c.prof : 0];
         float cw = (LX1 - LX0 - 6) / 2.0f, rh = 9.4f;
@@ -255,14 +255,14 @@ extern "C" void createview_draw(void)
             if (can_plus && P.button(bx - bw, ry + 1, bx, ry + rh - 1, "+", GREEN, NsDraw::FS_BODY)) ns_push(CG_ROWPLUS, row, 0, 0);
             if (sp && P.button(bx - 2 * bw - 1, ry + 1, bx - bw - 1, ry + rh - 1, "-", BROWN, NsDraw::FS_BODY)) ns_push(CG_ROWMINUS, row, 0, 0);
             if (h) {
-                snprintf(b, sizeof b, "%s %d: a point costs %d EP now; this profession allows %d more.", gm_skill_short(i), v, skill_cost(v), room < 0 ? 0 : room);
+                snprintf(b, sizeof b, "%s %d：目前每点消耗%d点经验；该职业还允许你再增加%d点。", gm_skill_short(i), v, skill_cost(v), room < 0 ? 0 : room);
                 P.text(fo, NsDraw::FS_SMALL, LX0 + 3, y + 10 * rh + 2, soft, b, -1, LX1 - 3);
             }
         }
         float mid = (LX0 + LX1) * 0.5f;
-        if (P.button(LX0 + 3, Y1 - 29, LX1 - 3, Y1 - 17, "Another profession (five more years)", BROWN, NsDraw::FS_BODY)) ns_push(CG_KEY, 1, 0, 0);
-        if (P.button(LX0 + 3, Y1 - 15, mid - 1.5f, Y1 - 3, "Begin adventuring", GREEN, NsDraw::FS_HEADBTN)) ns_push(CG_KEY, 2, 0, 0);
-        if (P.button(mid + 1.5f, Y1 - 15, LX1 - 3, Y1 - 3, "Start over", RED, NsDraw::FS_BODY)) ns_push(CG_KEY, 3, 0, 0);
+        if (P.button(LX0 + 3, Y1 - 29, LX1 - 3, Y1 - 17, "另一个职业（再过五年）", BROWN, NsDraw::FS_BODY)) ns_push(CG_KEY, 1, 0, 0);
+        if (P.button(LX0 + 3, Y1 - 15, mid - 1.5f, Y1 - 3, "开始冒险", GREEN, NsDraw::FS_HEADBTN)) ns_push(CG_KEY, 2, 0, 0);
+        if (P.button(mid + 1.5f, Y1 - 15, LX1 - 3, Y1 - 3, "重新开始", RED, NsDraw::FS_BODY)) ns_push(CG_KEY, 3, 0, 0);
     }
     if (new_hover >= 0) hover = new_hover;
 
@@ -276,36 +276,36 @@ extern "C" void createview_draw(void)
         std::string head = ns_gtext(c.state == 1 ? c.child_name[hover] : c.prof_name[hover]);
         P.text(f, NsDraw::FS_HEAD, RX0 + 3, ry, ink, head, -1, RX1 - 30);
         if (c.state == 3) {
-            const char *tag = offered ? "open now" : "not open";
+            const char *tag = offered ? "现已开放" : "尚未开放";
             P.tag(RX1 - 3 - P.tag_width(tag), ry - 1.5f, 10, tag, offered ? NsDraw::GREEN : NsDraw::RED);
         }
         ry += 9.5f;
-        snprintf(b, sizeof b, c.state == 1 ? "%d EP for the attributes, then age %d." : "%d EP for the skills, then age %d.", pv.ep, c.age + (c.state == 1 ? 15 : 5));
+        snprintf(b, sizeof b, c.state == 1 ? "属性获得%d点经验值，然后年龄为%d。" : "技能获得%d点经验值，然后年龄为%d。", pv.ep, c.age + (c.state == 1 ? 15 : 5));
         P.text(fo, NsDraw::FS_BODY, RX0 + 3, ry, soft, b);
         ry += 7;
-        if (c.state == 3 && c.age + 5 > 30) { P.text(fo, NsDraw::FS_SMALL, RX0 + 3, ry, NsDraw::RED, "Over 30, aging lowers attributes (shown below)."); ry += 6.5f; }
+        if (c.state == 3 && c.age + 5 > 30) { P.text(fo, NsDraw::FS_SMALL, RX0 + 3, ry, NsDraw::RED, "年龄超过30岁，衰老会降低属性（如下所示）。"); ry += 6.5f; }
         if (c.state == 3) {                                   /* what it needs, what this character lacks, what it leads to */
             CgCtx x = ctx_of(c);
             ry += P.para(fo, NsDraw::FS_SMALL, RX0 + 3, ry, RW, ink, std::string("Needs: ") + cg_prof_needs(hover)) + 1.5f;
             if (!offered) {
                 std::string why;
-                if (cg_prof_rule(hover, x)) why = "This character qualifies, but the game lists at most 15 professions and this one comes after them.";
+                if (cg_prof_rule(hover, x)) why = "该角色符合条件，但游戏最多只列出15种职业，而这一职业排在最后。";
                 else why = cg_prof_why(hover, x);
                 ry += P.para(fo, NsDraw::FS_SMALL, RX0 + 3, ry, RW, NsDraw::RED, why) + 1.5f;
             }
             std::vector<int> lt = cg_prof_leads_to(hover);
-            if (!lt.empty()) ry += P.para(fo, NsDraw::FS_SMALL, RX0 + 3, ry, RW, soft, "Leads to: " + join_profs(c, lt) + ".") + 1.5f;
+            if (!lt.empty()) ry += P.para(fo, NsDraw::FS_SMALL, RX0 + 3, ry, RW, soft, "导致：" + join_profs(c, lt) + ".") + 1.5f;
         } else {                                              /* a childhood: the professions it opens at first */
             CgCtx x = ctx_of(c); x.age = 15; x.child = hover;
             for (int k = 0; k < 6; k++) x.attr[k] = (signed char)pv.attr[k];
             for (int k = 0; k < 19; k++) x.skill[k] = (signed char)(c.skill[k] + pv.gain[k]);
-            ry += P.para(fo, NsDraw::FS_SMALL, RX0 + 3, ry, RW, ink, "Professions open at first: " + join_profs(c, cg_prof_offered(x)) + ".") + 1.5f;
+            ry += P.para(fo, NsDraw::FS_SMALL, RX0 + 3, ry, RW, ink, "初始开放的职业：" + join_profs(c, cg_prof_offered(x)) + ".") + 1.5f;
         }
         ry += 1.5f;
     } else {
-        P.text(f, NsDraw::FS_HEAD, RX0 + 3, ry, ink, "The character so far");
+        P.text(f, NsDraw::FS_HEAD, RX0 + 3, ry, ink, "目前的角色情况");
         ry += 9.5f;
-        if (c.state == 1 || c.state == 3) { P.text(fo, NsDraw::FS_SMALL, RX0 + 3, ry, dim, c.state == 1 ? "Point at a childhood to see what it brings." : "Point at a profession to see what it needs and brings."); ry += 7; }
+        if (c.state == 1 || c.state == 3) { P.text(fo, NsDraw::FS_SMALL, RX0 + 3, ry, dim, c.state == 1 ? "指向某个童年，查看它带来的效果。" : "指向某个职业，查看其所需条件及带来的效果。"); ry += 7; }
     }
 
     /* the attributes (not on the attribute step: they are on the left), with what the row pointed at changes */
@@ -316,7 +316,7 @@ extern "C" void createview_draw(void)
         for (int i = 0; i < 7; i++) {
             float x = RX0 + 3 + (i % ncol) * cw, yy = ry + (i / ncol) * rh;
             ui_attr_icon(P.dl, NsDraw::w(x + 2.8f, yy + 3), 5.0f * P.k, i);
-            P.text(fo, NsDraw::FS_SMALL, x + 7.5f, yy + 0.6f, soft, i == 6 ? "Divine Favor" : gm_attr_name(i));
+            P.text(fo, NsDraw::FS_SMALL, x + 7.5f, yy + 0.6f, soft, i == 6 ? "神恩" : gm_attr_name(i));
             int now = c.attr[i], after = i < 6 ? pv.attr[i] : now;
             snprintf(b, sizeof b, "%d", now);
             float vx = x + (one_col ? 52 : cw * 0.80f);
@@ -362,14 +362,14 @@ extern "C" void createview_draw(void)
             }
         }
         ry += 10 * rh + 2;
-        if (room) { ry += P.para(fo, NsDraw::FS_SMALL - 0.4f, RX0 + 3, ry, RW, dim, "teaches: the points the five years give; room: how many more points skill EP can add afterwards.") + 1.5f; }
+        if (room) { ry += P.para(fo, NsDraw::FS_SMALL - 0.4f, RX0 + 3, ry, RW, dim, "教授：这五年所获得的点数；空间：此后技能经验值还能增加多少点。") + 1.5f; }
     }
 
     /* the past: professions, virtues, saints */
     if (!choosing) {
         std::vector<int> past;
         for (int p = 0; p < 37; p++) if (c.taken[p]) past.push_back(p);
-        if (!past.empty() && ry < Y1 - 8) ry += P.para(fo, NsDraw::FS_SMALL, RX0 + 3, ry, RW, soft, "Has been: " + join_profs(c, past) + ".") + 1;
+        if (!past.empty() && ry < Y1 - 8) ry += P.para(fo, NsDraw::FS_SMALL, RX0 + 3, ry, RW, soft, "已经拥有：" + join_profs(c, past) + ".") + 1;
     }
     if (c.nvirtue || c.nsaint) {
         std::string v;
@@ -377,6 +377,6 @@ extern "C" void createview_draw(void)
         if (!v.empty() && ry < Y1 - 8) ry += P.para(fo, NsDraw::FS_SMALL, RX0 + 3, ry, RW, soft, "Virtues: " + v) + 1;
         std::string s;
         for (int i = 0; i < c.nsaint; i++) { int k = c.saint[i]; if (k >= 0 && k < (int)gamedata.saints.size()) { if (!s.empty()) s += ", "; s += gamedata.saints[k].name; } }
-        if (!s.empty() && ry < Y1 - 8) P.para(fo, NsDraw::FS_SMALL, RX0 + 3, ry, RW, soft, "Saints known: " + s);
+        if (!s.empty() && ry < Y1 - 8) P.para(fo, NsDraw::FS_SMALL, RX0 + 3, ry, RW, soft, "已知的圣人：" + s);
     }
 }

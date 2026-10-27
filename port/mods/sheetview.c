@@ -219,14 +219,14 @@ static int record_of(int m, int id, int q, int unequipped_first)
 static int pack_fetch(int w, int id, int q, const char *nm, char *t, size_t tn)
 {
     int h, i;
-    if (!pack_holder(w, id, q, &h, &i)) { snprintf(t, tn, "No %s is left in the party's pack.", nm); return -1; }
+    if (!pack_holder(w, id, q, &h, &i)) { snprintf(t, tn, "队伍背包中已无 %s。", nm); return -1; }
     if (h != w) {
-        if (gm_item_count(w) >= 64 && record_of(w, id, q, 0) < 0) { snprintf(t, tn, "%s cannot carry another kind of item.", sheet_model.names[w]); return -1; }
+        if (gm_item_count(w) >= 64 && record_of(w, id, q, 0) < 0) { snprintf(t, tn, "%s 无法再携带其他种类的物品。", sheet_model.names[w]); return -1; }
         ns_call(GF_give_one, 4, h, w, i, 9);
         if (ns_unwinding) return -1;
     }
     int r = record_of(w, id, q, 1);
-    if (r < 0) snprintf(t, tn, "The %s could not be handed to %s.", nm, sheet_model.names[w]);
+    if (r < 0) snprintf(t, tn, "%s 未能交给 %s。", nm, sheet_model.names[w]);
     return r;
 }
 
@@ -241,16 +241,16 @@ static void act(const NsAction *a, int *who)
         case SV_PTAKE: {                                 /* a spare mount of the pack to member a->c, to ride (each rides the best they carry) */
             int to = a->c, h, i;
             if (to < 0 || to > 4 || !gm_member_present(to) || gm_member_status(to) == 5) return;
-            if (!pack_holder(-1, id, q, &h, &i)) { snprintf(t, sizeof t, "No spare %s is left in the party's pack.", nm); break; }
+            if (!pack_holder(-1, id, q, &h, &i)) { snprintf(t, sizeof t, "队伍背包中已无备用 %s。", nm); break; }
             GmItem g2; if (!gm_item(h, i, &g2) || g2.type != 108) return;
             int r = h == to ? i : pack_fetch(to, id, q, nm, t, sizeof t);
             if (ns_unwinding) return;
             if (r < 0) break;
             int best = -1; GmItem x;                     /* (the one they ride now: the best they carry) */
             for (int k = 0; k < gm_item_count(to); k++) if (gm_item(to, k, &x) && x.type == 108 && gm_item_riding(to, k)) best = k;
-            if (best == r) snprintf(t, sizeof t, "%s rides the %s.", sheet_model.names[to], nm);
+            if (best == r) snprintf(t, sizeof t, "%s 骑着 %s。", sheet_model.names[to], nm);
             else { char bn[32] = "mount"; if (best >= 0 && gm_item(to, best, &x)) item_name(x.id, bn, sizeof bn);
-                   snprintf(t, sizeof t, "%s carries the %s, but rides the better %s.", sheet_model.names[to], nm, bn); }
+                   snprintf(t, sizeof t, "%s 携带 %s，但骑着更好的 %s。", sheet_model.names[to], nm, bn); }
             break; }
         case SV_KEEP:
             keep_mark(id, q, a->c);                      /* (no note: the button says it, and the strip) */
@@ -263,8 +263,8 @@ static void act(const NsAction *a, int *who)
             Snap s0 = snap(w, r);
             ns_call(GF_item_ready, 2, w, r);
             if (ns_unwinding) return;
-            if (changed(s0, snap(w, r))) snprintf(t, sizeof t, "%s takes up the %s.", sheet_model.names[w], nm);
-            else snprintf(t, sizeof t, "The %s cannot be readied.", nm);
+            if (changed(s0, snap(w, r))) snprintf(t, sizeof t, "%s 占用了 %s。", sheet_model.names[w], nm);
+            else snprintf(t, sizeof t, "%s 无法准备就绪。", nm);
             break; }
         case SV_PDRINK: {
             if (!drinkable(id)) return;
@@ -274,10 +274,10 @@ static void act(const NsAction *a, int *who)
             ns_call(GF_use_potion, 2, w, r);
             if (ns_unwinding) return;
             ns_call(GF_item_take_one, 2, w, r);
-            snprintf(t, sizeof t, "%s drinks the %s.", sheet_model.names[w], nm);
+            snprintf(t, sizeof t, "%s 喝了 %s。", sheet_model.names[w], nm);
             break; }
         case SV_PDROP: {
-            if (keep_is(id, q)) { snprintf(t, sizeof t, "The %s is marked Keep: unmark it before dropping it.", nm); break; }
+            if (keep_is(id, q)) { snprintf(t, sizeof t, "%s 被标记为“保留”：在丢弃前请先取消标记。", nm); break; }
             int want = a->c == 255 ? 9999 : 1, done = 0, h, i;
             while (done < want && pack_holder(-1, id, q, &h, &i)) {
                 GmItem g2; gm_item(h, i, &g2);
@@ -293,7 +293,7 @@ static void act(const NsAction *a, int *who)
                 SvDrop *d = &s->drops[s->ndrops++];
                 d->id = id; d->qual = q; d->count = done; snprintf(d->name, sizeof d->name, "%s", nm);
             }
-            snprintf(t, sizeof t, done > 1 ? "Left behind: the %s (%d). Undo takes them back." : "Left behind: a %s. Undo takes it back.", nm, done);
+            snprintf(t, sizeof t, done > 1 ? "遗落：%s（%d）。撤销操作可将其取回。" : "遗落：一个 %s。撤销操作可将其取回。", nm, done);
             break; }
         }
         if (ns_unwinding) return;
@@ -340,45 +340,45 @@ static void act(const NsAction *a, int *who)
             got++;
         }
         if (ns_unwinding) return;
-        if (got) snprintf(t, sizeof t, got > 1 ? "Taken back: the %s (%d)." : "Taken back: the %s.", d.name, got);
-        else snprintf(t, sizeof t, "The %s cannot be taken back (no room).", d.name);
+        if (got) snprintf(t, sizeof t, got > 1 ? "取回：%s（%d）。" : "取回：%s。", d.name, got);
+        else snprintf(t, sizeof t, "%s 无法取回（空间不足）。", d.name);
         note(t);
         return; }
     case SV_READY:
         ns_call(GF_item_ready, 2, w, idx);
-        if (changed(s0, snap(w, idx))) snprintf(t, sizeof t, "%s takes up the %s.", sheet_model.names[w], nm);
-        else snprintf(t, sizeof t, "The %s cannot be readied.", nm);
+        if (changed(s0, snap(w, idx))) snprintf(t, sizeof t, "%s 占用了 %s。", sheet_model.names[w], nm);
+        else snprintf(t, sizeof t, "%s 无法准备就绪。", nm);
         break;
     case SV_PUTAWAY:
         ns_call(GF_item_unequip, 3, w, idx, 9);
-        snprintf(t, sizeof t, "%s puts the %s away.", sheet_model.names[w], nm);
+        snprintf(t, sizeof t, "%s 将 %s 收好。", sheet_model.names[w], nm);
         break;
     case SV_GIVE: {
         int to = a->b, all = a->c == 255;
         if (to == w || !gm_member_present(to) || gm_member_status(to) == 5) return;
         int before = gm_item_count(to);
-        if (before >= 64 && !all) { snprintf(t, sizeof t, "%s cannot carry another kind of item.", sheet_model.names[to]); break; }
+        if (before >= 64 && !all) { snprintf(t, sizeof t, "%s 无法再携带其他种类的物品。", sheet_model.names[to]); break; }
         if (all) ns_call(GF_give_stack, 4, w, to, idx, 9); else ns_call(GF_give_one, 4, w, to, idx, 9);
-        if (changed(s0, snap(w, idx))) snprintf(t, sizeof t, all ? "%s gives the %s to %s." : "%s gives a %s to %s.", sheet_model.names[w], nm, sheet_model.names[to]);
-        else snprintf(t, sizeof t, "%s cannot take the %s.", sheet_model.names[to], nm);
+        if (changed(s0, snap(w, idx))) snprintf(t, sizeof t, all ? "%s 把 %s 给了 %s。" : "%s 把一个 %s 给了 %s。", sheet_model.names[w], nm, sheet_model.names[to]);
+        else snprintf(t, sizeof t, "%s 不能拿走 %s。", sheet_model.names[to], nm);
         break; }
     case SV_DROP: {
         SheetModel *s = &sheet_model;
-        if (keep_is(g.id, g.qual)) { snprintf(t, sizeof t, "The %s is marked Keep: unmark it before dropping it.", nm); break; }
+        if (keep_is(g.id, g.qual)) { snprintf(t, sizeof t, "%s 被标记为“保留”：在丢弃前请先取消标记。", nm); break; }
         int n = a->b == 255 ? g.count : 1;
         if (a->b == 255) ns_call(GF_item_remove_stack, 2, w, idx); else ns_call(GF_item_take_one, 2, w, idx);
         if (ns_unwinding) return;
         if (s->ndrops == 16) { memmove(&s->drops[0], &s->drops[1], 15 * sizeof s->drops[0]); s->ndrops--; }
         SvDrop *d = &s->drops[s->ndrops++];
         d->id = g.id; d->qual = g.qual; d->count = n; snprintf(d->name, sizeof d->name, "%s", nm);
-        snprintf(t, sizeof t, n > 1 ? "Left behind: the %s (%d). Undo takes them back." : "Left behind: a %s. Undo takes it back.", nm, n);
+        snprintf(t, sizeof t, n > 1 ? "遗落：%s（%d）。撤销操作可将其取回。" : "遗落：一个 %s。撤销操作可将其取回。", nm, n);
         break; }
     case SV_DRINK:
         if (!drinkable(g.id)) return;
         ns_call(GF_use_potion, 2, w, idx);
         if (ns_unwinding) return;
         ns_call(GF_item_take_one, 2, w, idx);
-        snprintf(t, sizeof t, "%s drinks the %s.", sheet_model.names[w], nm);
+        snprintf(t, sizeof t, "%s 喝了 %s。", sheet_model.names[w], nm);
         break;
     default: return;
     }

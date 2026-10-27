@@ -42,7 +42,7 @@ extern "C" void money_cstr(long pf, char *out, size_t n) { snprintf(out, n, "%s"
 
 std::string money_total(long pf)
 {
-    char b[64]; snprintf(b, sizeof b, "%ld pfennig%s in all (1 florin = 20 groschen = 240 pfennigs)", pf, pf == 1 ? "" : "s");
+    char b[64]; snprintf(b, sizeof b, "总计 %ld 芬尼%s（1 弗罗林 = 20 格罗申 = 240 芬尼）", pf, pf == 1 ? "" : "s");
     return b;
 }
 

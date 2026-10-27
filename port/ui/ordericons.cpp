@@ -245,12 +245,12 @@ int ui_order_icon_for(const char *name)
     while (n && t[n - 1] == ' ') n--;
     t[n] = 0;
     static const struct { const char *pre; int icon; } M[] = {
-        { "resume", OI_RESUME }, { "enemy info", OI_INFO }, { "walk towards", OI_WALK }, { "flee towards", OI_FLEE },
-        { "halt", OI_HALT }, { "travel as group", OI_GROUP }, { "travel single file", OI_FILE }, { "use door", OI_DOOR },
-        { "use stairs", OI_STAIRS }, { "open chest", OI_CHEST }, { "pick lock", OI_PICK }, { "dissolve lock", OI_DISSOLVE },
-        { "disarm", OI_DISARM }, { "surrender", OI_SURRENDER }, { "loot bodies", OI_LOOT }, { "exit battlefield", OI_EXIT },
-        { "cancel giving order", OI_CANCEL }, { "std attack", OI_ATTACK }, { "vulnerable", OI_VULNERABLE },
-        { "berserk", OI_BERSERK }, { "parry", OI_PARRY }, { "use missile", OI_MISSILE },
+        { "resume", OI_RESUME }, { "敌人信息", OI_INFO }, { "向……走去", OI_WALK }, { "逃向……", OI_FLEE },
+        { "halt", OI_HALT }, { "团体行动", OI_GROUP }, { "单列行进", OI_FILE }, { "使用门", OI_DOOR },
+        { "使用楼梯", OI_STAIRS }, { "打开宝箱", OI_CHEST }, { "开锁", OI_PICK }, { "溶解锁", OI_DISSOLVE },
+        { "disarm", OI_DISARM }, { "surrender", OI_SURRENDER }, { "掘尸", OI_LOOT }, { "离开战场", OI_EXIT },
+        { "取消下达命令", OI_CANCEL }, { "普通攻击", OI_ATTACK }, { "vulnerable", OI_VULNERABLE },
+        { "berserk", OI_BERSERK }, { "parry", OI_PARRY }, { "使用投射物", OI_MISSILE },
     };
     for (const auto &m : M) if (!strncmp(t, m.pre, strlen(m.pre))) return m.icon;
     if (n > 9 && !strcmp(t + n - 9, " finished")) return OI_DONE;          /* ("<name> finished": the order given) */

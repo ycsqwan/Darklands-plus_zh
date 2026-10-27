@@ -129,8 +129,8 @@ static void buy(int i, int times)
     char nm[32]; gm_itemdef_name((s16)g_rw((u16)(GV_barter_wares + 2 * i)), nm, sizeof nm);
     char t[120];
     int mw = -1; for (int k = 0; k < barter_model.nwares; k++) if (barter_model.ware[k].src == i) mw = k;
-    if (!done) snprintf(t, sizeof t, mw >= 0 && barter_model.ware[mw].price > purse() ? "Not bought: the purse holds too little." : "Not bought: %s has no room for another kind of item.", barter_model.names[m]);
-    else snprintf(t, sizeof t, "Bought %d %s.", done, nm);
+    if (!done) snprintf(t, sizeof t, mw >= 0 && barter_model.ware[mw].price > purse() ? "未购买：钱包余额不足。" : "未购买：%s已无空间再容纳其他物品。", barter_model.names[m]);
+    else snprintf(t, sizeof t, "购买了%d个%s。", done, nm);
     note(t);
 }
 
@@ -138,8 +138,8 @@ static void sell(int idx, int all)
 {
     int m = (s16)g_rw(GV_barter_who), done = 0;
     GmItem first; if (!gm_item(m, idx, &first)) return;
-    if (gm_itemdef_no_trade(first.id)) { note("The merchants of the Empire will not buy that."); return; }
-    if (keep_is(first.id, first.qual)) { note("Not sold: it is marked Keep on the character sheet (unmark it there first)."); return; }
+    if (gm_itemdef_no_trade(first.id)) { note("帝国的商人不会收购该物品。"); return; }
+    if (keep_is(first.id, first.qual)) { note("未售出：角色卡上标注“保留”（请先在卡上取消此标记）。"); return; }
     for (int t = 0; t < (all ? 255 : 1); t++) {
         GmItem g;
         if (!gm_item(m, idx, &g) || g.id != first.id || g.qual != first.qual) break;   /* the stack is gone */
@@ -153,16 +153,16 @@ static void sell(int idx, int all)
     }
     char nm[32]; gm_itemdef_name(first.id, nm, sizeof nm);
     char t[120];
-    if (!done) snprintf(t, sizeof t, "Not sold: this merchant pays nothing for it.");
-    else snprintf(t, sizeof t, "Sold %d %s.", done, nm);
+    if (!done) snprintf(t, sizeof t, "未售出：该商人对此不支付任何费用。");
+    else snprintf(t, sizeof t, "卖出了%d个%s。", done, nm);
     note(t);
 }
 
 /* the pack's (id, q): sold from whoever carries a spare, one at a time, as that member's own sale */
 static void psell(int id, int q, int all)
 {
-    if (gm_itemdef_no_trade(id)) { note("The merchants of the Empire will not buy that."); return; }
-    if (keep_is(id, q)) { note("Not sold: it is marked Keep on the character sheet (unmark it there first)."); return; }
+    if (gm_itemdef_no_trade(id)) { note("帝国的商人不会收购该物品。"); return; }
+    if (keep_is(id, q)) { note("未售出：角色卡上标注“保留”（请先在卡上取消此标记）。"); return; }
     int who = (s16)g_rw(GV_barter_who), done = 0, h, i;
     for (int t = 0; t < (all ? 999 : 1); t++) {
         if (!gm_pack_find(who, id, q, &h, &i)) break;
@@ -178,8 +178,8 @@ static void psell(int id, int q, int all)
     }
     char nm[32]; gm_itemdef_name(id, nm, sizeof nm);
     char t[120];
-    if (!done) snprintf(t, sizeof t, "Not sold: this merchant pays nothing for it.");
-    else snprintf(t, sizeof t, "Sold %d %s.", done, nm);
+    if (!done) snprintf(t, sizeof t, "未售出：该商人对此不支付任何费用。");
+    else snprintf(t, sizeof t, "卖出了%d个%s。", done, nm);
     note(t);
 }
 
@@ -274,11 +274,11 @@ void barterview_run(void)
                 batch = 0;
                 long got = purse() - batch_purse;
                 char t[120];
-                if (got <= 0) snprintf(t, sizeof t, "Nothing sold: this merchant pays nothing for those items.");
+                if (got <= 0) snprintf(t, sizeof t, "未售出：该商人对这些物品不支付任何费用。");
                 else {
                     int now = 0; for (int h = 0; h < 5; h++) if (gm_member_present(h)) now += gm_item_count(h);
                     char mo[64]; money_cstr(got, mo, sizeof mo);
-                    snprintf(t, sizeof t, "Sold the spare gear (%d kind%s of items) for %s.", batch_items - now, batch_items - now == 1 ? "" : "s", mo);
+                    snprintf(t, sizeof t, "将备用装备（%d种%s）以%s售出。", batch_items - now, batch_items - now == 1 ? "" : "s", mo);
                 }
                 note(t);
                 break;

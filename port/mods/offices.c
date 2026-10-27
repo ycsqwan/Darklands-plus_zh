@@ -57,45 +57,45 @@ int office_status(int loc, int g, int hall, OfficeStatus *o)
     if (!lr) return 0;
     u16 ls = (u16)(lr >> 16), lo = (u16)lr;
     int rep = (s16)rw(ls, (u16)(lo + 0x12)), fame = (s16)g_rw(GV_party_fame);
-    if (g != 10 && reward_waiting(g, loc)) { o->state = OFS_REWARD; snprintf(o->note, sizeof o->note, "You finished a quest for them: your reward is waiting."); return 1; }
-    if (g != 10 && task_running(g, loc)) { o->state = OFS_ON_TASK; snprintf(o->note, sizeof o->note, "You are on a quest for them. They offer no other until it is done."); return 1; }
+    if (g != 10 && reward_waiting(g, loc)) { o->state = OFS_REWARD; snprintf(o->note, sizeof o->note, "你为他们完成了一项任务：你的奖励正在等待。"); return 1; }
+    if (g != 10 && task_running(g, loc)) { o->state = OFS_ON_TASK; snprintf(o->note, sizeof o->note, "你正在为他们执行一项任务。在任务完成之前，他们不会提供其他任务。"); return 1; }
     u32 lock = g == 10 ? find(0x3c, G_EV_LOC, loc, G_EV_LOC, loc, -1) : find(7, G_EV_TYPE0, g, G_EV_LOC, loc, -1);
     switch (g) {
     case 8: case 6: case 7: {
-        if (lock) return shut(o, lock, "You asked lately, or were paid a reward: no new quest for three days.");
+        if (lock) return shut(o, lock, "你最近曾请求过，或已领取过奖励：三天内无新任务。");
         int standing = (s16)g_rw(g == 8 ? GV_standing_fugger : g == 6 ? GV_standing_medici : GV_standing_hanse);
-        if (g == 7 && (rep <= -75 || standing + rep <= -50)) { o->state = OFS_BARRED; snprintf(o->note, sizeof o->note, "The Hanse will not deal with you: your reputation in this town is too low."); return 1; }
-        if (g != 7 && (rep < 0 || standing + (g == 8 && standing <= 0 ? 1 : 0) < 0)) { o->state = OFS_BARRED; snprintf(o->note, sizeof o->note, "No quests while your reputation in this town, or your standing with the bank, is below zero."); return 1; }
+        if (g == 7 && (rep <= -75 || standing + rep <= -50)) { o->state = OFS_BARRED; snprintf(o->note, sizeof o->note, "汉萨同盟不愿与你交易：你在该城镇的声望过低。"); return 1; }
+        if (g != 7 && (rep < 0 || standing + (g == 8 && standing <= 0 ? 1 : 0) < 0)) { o->state = OFS_BARRED; snprintf(o->note, sizeof o->note, "当你在该城镇的声望或与银行的信誉低于零时，无法接取任何任务。"); return 1; }
         int p = g == 8 ? clampi(10, 50, rep + (s8)rb(ls, (u16)(lo + 0x15)) + fame)
               : g == 6 ? clampi(10, 50, fame + standing + rep)
               : clampi(10, 50, rep + fame > rep / 2 + standing / 2 + fame ? rep + fame : rep / 2 + standing / 2 + fame);
         o->state = OFS_ASK; o->chance = p + 1;
-        snprintf(o->note, sizeof o->note, "Each time you ask (by day), there is %s %d%% chance of a quest: %s. If none comes, or you turn it down, there is no new quest for three days.", gm_a_an(p + 1), p + 1,
-                 g == 7 ? "3 in 10 are robber knights to hunt, the rest items to fetch" : "a robber knight to hunt or an item to fetch, half and half");
+        snprintf(o->note, sizeof o->note, "每次请求（按天计算），有%s %d%%的概率触发任务：%s。若无任务或拒绝，则三天内不再出现新任务。", gm_a_an(p + 1), p + 1,
+                 g == 7 ? "十个中有三个是需要猎杀的强盗骑士，其余则是需要取回的物品。" : "需要猎杀的强盗骑士或需要取回的物品，各占一半。");
         return 1; }
     case 3: {
-        if (!(s16)rw(ls, (u16)(lo + 0x1c))) { snprintf(o->note, sizeof o->note, "This cathedral keeps no relic, so its canon has no quests."); return 1; }
-        if (lock) return shut(o, lock, "You asked lately: the canon will offer no quest for three days.");
+        if (!(s16)rw(ls, (u16)(lo + 0x1c))) { snprintf(o->note, sizeof o->note, "这座大教堂不供奉任何圣物，因此其教规中没有任务。"); return 1; }
+        if (lock) return shut(o, lock, "你最近曾请求过：教规将在三天内不提供任何任务。");
         int p = clampi(1, 99, rep - 50);
         o->state = OFS_ASK; o->chance = p + 1;
-        snprintf(o->note, sizeof o->note, "Each time you ask the canon (by day), there is %s %d%% chance of a quest (your reputation in this town minus 50): a robber knight to hunt or an item to fetch. If none comes, or you turn it down, there is no new quest for three days.", gm_a_an(p + 1), p + 1);
+        snprintf(o->note, sizeof o->note, "每次向教规委员会请求（按天计算），有%s %d%%的概率触发任务（取决于你在该镇的声望减去50点）：要么追捕一名强盗骑士，要么取回一件物品。若无任务或拒绝，则三天内不再出现新任务。", gm_a_an(p + 1), p + 1);
         return 1; }
     case 10: {
-        if (lock) return shut(o, lock, "You asked for an audience lately: for a week the chance is only 1%.");
-        if (rep <= -40) { o->state = OFS_BARRED; snprintf(o->note, sizeof o->note, "The lord grants no audience while your reputation in this town is -40 or lower."); return 1; }
+        if (lock) return shut(o, lock, "你最近曾请求觐见：一周内仅有1%的成功几率。");
+        if (rep <= -40) { o->state = OFS_BARRED; snprintf(o->note, sizeof o->note, "当你在该城镇的声望降至-40或更低时，领主将不予接见。"); return 1; }
         int p = (rep + speaker() / 2) / 2;
         p = hall ? clampi(1, 70, p) : clampi(0, 99, p);
-        if (hall && reward_waiting(10, loc)) { o->state = OFS_REWARD; snprintf(o->note, sizeof o->note, "You finished a quest for the lord: your reward is waiting (an audience is certain)."); return 1; }
+        if (hall && reward_waiting(10, loc)) { o->state = OFS_REWARD; snprintf(o->note, sizeof o->note, "你为领主完成了一项任务：你的奖励正在等待（觐见已成定局）。"); return 1; }
         o->state = OFS_ASK; o->chance = p;               /* (the number the card itself shows on the option: the same) */
-        if (!hall && reward_waiting(10, loc)) { snprintf(o->note, sizeof o->note, "You finished a quest for the lord. In a town without a council the original game never pays this reward; with the fix \"The lord pays for his quests\" on, he pays it at an audience."); return 1; }
-        snprintf(o->note, sizeof o->note, hall ? "Each request for an audience with the council has %s %d%% chance of success (it depends on your reputation in this town, and the speaker's {Charisma} and {Speak Common}). An audience brings a robber knight to hunt or an item to fetch, half and half. After a request the chance is 1%% for a week."
-                                               : "Each request for an audience with the lord has %s %d%% chance of success (it depends on your reputation in this town, and the speaker's {Charisma} and {Speak Common}). An audience brings a robber knight to hunt. After a request the chance is 1%% for a week.", gm_a_an(p), p);
+        if (!hall && reward_waiting(10, loc)) { snprintf(o->note, sizeof o->note, "你为领主完成了一项任务。在没有议会的城镇中，原版游戏从不支付此项奖励；启用“领主为其任务付费”补丁后，他会在觐见时支付。"); return 1; }
+        snprintf(o->note, sizeof o->note, hall ? "每次请求觐见议会，成功几率为 %s %d%%（取决于你在本镇的声望，以及发言者的 {魅力} 和 {通用语}）。觐见时，会带来一名强盗骑士去追捕，或取回一件物品，各占一半。每次请求后，该几率在一周内维持 1%%。"
+                                               : "每次请求觐见领主，成功几率为 %s %d%%（取决于你在本镇的声望，以及发言者的 {魅力} 和 {通用语}）。觐见时，只会带来一名强盗骑士去追捕。每次请求后，该几率在一周内维持 1%%。", gm_a_an(p), p);
         return 1; }
     case 0: case 4: case 5: {
-        if (lock) return shut(o, lock, "No quests for three days: at your last visit none came, one was turned down, or a reward was paid.");
+        if (lock) return shut(o, lock, "三天内无任务：上次来访时，既未获任务，也未被拒绝，或已支付奖励。");
         o->state = OFS_ASK; o->chance = 14;
-        snprintf(o->note, sizeof o->note, "The offer comes after shopping: as the party leaves the stalls, about one time in seven a trader takes it aside with a purse and a job "
-                                          "(mostly an item to fetch, sometimes a robber knight to hunt). If none comes, there is no other offer for three days.");
+        snprintf(o->note, sizeof o->note, "优惠在购物后出现：当队伍离开摊位时，约七分之一的商贩会带着钱包和任务单独与你交谈。"
+                                          "（多数为取回物品，有时则是猎杀强盗骑士）。若未获任务，则三天内无其他优惠。");
         return 1; }
     }
     return 0;

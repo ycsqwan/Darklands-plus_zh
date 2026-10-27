@@ -64,7 +64,7 @@ static void build(void)
             g_str((u16)(r >> 16), (u16)(r + 0x26), name, sizeof name);
         }
         m->here = nc >= 0 && nc < IV_CITIES ? nc : -1;
-        snprintf(m->where, sizeof m->where, "%s of %s", dir, name);
+        snprintf(m->where, sizeof m->where, "%s的%s", dir, name);
     }
     for (int i = 0; i < 3; i++) m->money[i] = (s16)g_rw((u16)(GV_party_money + 2 * i));
     { u16 lo = (u16)ns_call(GF_money_pfennigs, 1, GV_party_money); m->total_pf = (long)(((u32)(u16)ns_call_dx() << 16) | lo); }   /* (the game's own sum) */

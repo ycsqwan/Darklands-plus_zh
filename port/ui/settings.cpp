@@ -71,25 +71,25 @@ extern "C" int encounters_errors(void);
 static void replacement_art(void)
 {
     bool ha = hdart_on;
-    if (ImGui::Checkbox("Use replacement art from the \"art\" folder", &ha)) { hdart_set(ha); ui_dirty_config = 1; }
+    if (ImGui::Checkbox("使用“art”文件夹中的替换素材", &ha)) { hdart_set(ha); ui_dirty_config = 1; }
     {
         int n = hdart_count();
         extern char dlp_user_dir[];
-        if (n) ui_hint("%d replacement picture%s in %s%sart.", n, n == 1 ? "" : "s", dlp_user_dir, PATH_SEP);
-        else ui_hint("No replacement pictures yet (%s%sart).", dlp_user_dir, PATH_SEP);
+        if (n) ui_hint("%d 张替换图片%s 在 %s%sart 中。", n, n == 1 ? "" : "s", dlp_user_dir, PATH_SEP);
+        else ui_hint("尚无替换图片（%s%sart）。", dlp_user_dir, PATH_SEP);
         static char msg[600];
-        if (ImGui::Button("Look again")) { hdart_rescan(); snprintf(msg, sizeof msg, "%d replacement pictures found.", hdart_count()); }
+        if (ImGui::Button("再次查看")) { hdart_rescan(); snprintf(msg, sizeof msg, "找到 %d 张替换图片。", hdart_count()); }
         ImGui::SameLine();
-        if (ImGui::Button("Export the original pictures")) hdart_export(msg, sizeof msg);
+        if (ImGui::Button("导出原始图片")) hdart_export(msg, sizeof msg);
         if (msg[0]) ui_hint("%s", msg);
         bool sn = hdart_show_names;
-        if (ImGui::Checkbox("Show the name of the picture under the mouse", &sn)) { hdart_show_names = sn; config_set_int("display.art_names", sn); ui_dirty_config = 1; }
-        ui_hint("For artists: a file art%sNAME.png (any size; transparency where the picture has color 0) replaces the "
-             "game's picture NAME wherever it is shown, at the window's resolution. Export writes every original picture "
-             "to art%soriginal as a template, in its own colors. Whatever the game draws over a picture (text, the "
-             "mouse pointer, other pictures) stays on top.", PATH_SEP, PATH_SEP);
-        ui_hint("More crests: art%sSHIELDP.png, SHIELDQ.png ... up to SHIELDZ.png add crests after the game's fifteen "
-             "(Heraldry, when making a party). A save with a member using one of these crests loads only in Darklands+.", PATH_SEP);
+        if (ImGui::Checkbox("鼠标悬停时显示图片名称", &sn)) { hdart_show_names = sn; config_set_int("display.art_names", sn); ui_dirty_config = 1; }
+        ui_hint("供美术师使用：一个名为 art%sNAME.png 的文件（任意尺寸；在图片颜色为0处保留透明度）将替换"
+             "游戏中任何位置显示的 NAME 图片，按窗口分辨率进行替换。导出时会将每张原始图片"
+             "以自身色彩保存为模板，存入 art%soriginal 文件夹。无论游戏在图片上绘制了什么内容（文字、"
+             "鼠标指针、其他图片），这些内容都将保持在最上层。", PATH_SEP, PATH_SEP);
+        ui_hint("更多徽章：art%sSHIELDP.png、SHIELDQ.png……直至 SHIELDZ.png，可在游戏原有的十五个徽章之后再添加"
+             "（纹章学，组建队伍时）。使用其中某个徽章的成员所保存的游戏存档，仅能在 Darklands+ 中加载。", PATH_SEP);
     }
 
 }
@@ -97,15 +97,15 @@ static void option_row(const Option *o, int depth);
 int ui_original_mode(void);
 void tab_mods(void)
 {
-    ImGui::PushFont(ui_font_head); orn_septext("Mod folders"); ImGui::PopFont();
+    ImGui::PushFont(ui_font_head); orn_septext("模组文件夹"); ImGui::PopFont();
     {
         static char msg[1400];
         char md[1100]; datamods_folder(md, sizeof md);
         extern char dlp_user_dir[];
-        ImGui::TextWrapped("A mod is a folder in %s" PATH_SEP "mods with files laid out like the game folder: "
-                           "while the mod is ticked, the game reads the mod's files in place of the originals (the game folder is never changed).", dlp_user_dir);
-        if (!datamods_n) ui_hint("No mods found yet.");
-        else if (datamods_n > 1) ui_hint("Where two mods change the same file, the one lower in the list wins. Drag a mod by its handle (or use its arrows) to reorder.");
+        ImGui::TextWrapped("模组是 %s 中的一个文件夹" PATH_SEP "模组的文件布局与游戏文件夹相同："
+                           "当勾选该模组时，游戏会用模组文件替换原版文件（游戏文件夹本身不会被修改）。", dlp_user_dir);
+        if (!datamods_n) ui_hint("尚未找到任何模组。");
+        else if (datamods_n > 1) ui_hint("当两个模组同时修改同一文件时，列表中位置靠下的模组优先生效。可通过拖动模组手柄（或使用箭头）来调整顺序。");
         int move_from = -1, move_to = -1;
         for (int i = 0; i < datamods_n; i++) {
             ImGui::PushID(1000 + i);
@@ -139,7 +139,7 @@ void tab_mods(void)
             if (ImGui::Checkbox(datamods[i].title, &on)) { datamods_set(i, on); ui_dirty_config = 1; }
             ImGui::Indent(datamods_n > 1 ? ImGui::GetFrameHeight() * 2.7f + ImGui::GetStyle().ItemSpacing.x * 3 + UIS(34) : UIS(34));
             if (datamods[i].desc[0]) ui_hint("%s", datamods[i].desc);
-            { std::string fp = datamods[i].path; for (char &c : fp) if (c == '/' || c == '\\') c = PATH_SEP[0]; ui_hint("folder: %s", fp.c_str()); }
+            { std::string fp = datamods[i].path; for (char &c : fp) if (c == '/' || c == '\\') c = PATH_SEP[0]; ui_hint("文件夹：%s", fp.c_str()); }
             ImGui::Unindent(datamods_n > 1 ? ImGui::GetFrameHeight() * 2.7f + ImGui::GetStyle().ItemSpacing.x * 3 + UIS(34) : UIS(34));
             ImGui::EndGroup();
             if (ImGui::BeginDragDropTarget()) {                  /* (dropped on a mod: takes its place) */
@@ -159,55 +159,55 @@ void tab_mods(void)
             int ne = encounters_count(), nerr = encounters_errors();
             if (ne || nerr) {
                 ImGui::Spacing();
-                ImGui::TextWrapped("New encounters from mods: %d%s", ne, nerr ? "" : ".");
-                if (nerr) { ImGui::SameLine(); ImGui::TextColored(ImVec4(1, 0.6f, 0.4f, 1), "(%d file%s with errors left out: see darklands_port.log)", nerr, nerr == 1 ? "" : "s"); }
+                ImGui::TextWrapped("来自模组的新遭遇：%d%s", ne, nerr ? "" : ".");
+                if (nerr) { ImGui::SameLine(); ImGui::TextColored(ImVec4(1, 0.6f, 0.4f, 1), "（%d 个含错误的文件%s已被排除：请参阅 darklands_port.log）", nerr, nerr == 1 ? "" : "s"); }
                 ImGui::Indent(UIS(34));
                 int share = config_get_int("encounters.share", 100);
                 ImGui::SetNextItemWidth(UIS(220));
                 if (ImGui::SliderInt("How often new encounters come up##encshare", &share, 0, 300, "%d%%")) { config_set_int("encounters.share", share); ui_dirty_config = 1; }
-                ui_hint("At 100%%, each new encounter is as likely as any one of the original encounters for that terrain (or more, if its file gives it a weight).");
+                ui_hint("在 100%% 的情况下，每次新遭遇出现的概率与该地形原有遭遇的概率相同（若其文件赋予了权重，则概率更高）。");
                 bool seal = config_get_int("encounters.seal", 1) != 0;
-                if (ImGui::Checkbox("Mark new encounters with a seal in the corner of the card", &seal)) { config_set_int("encounters.seal", seal); ui_dirty_config = 1; }
+                if (ImGui::Checkbox("在卡片角落用印章标记新遭遇", &seal)) { config_set_int("encounters.seal", seal); ui_dirty_config = 1; }
                 ImGui::Unindent(UIS(34));
             }
         }
-        if (ImGui::Button("Look for mods again")) { datamods_scan(); hdart_rescan(); msg[0] = 0; }
+        if (ImGui::Button("再次查找模组")) { datamods_scan(); hdart_rescan(); msg[0] = 0; }
         ImGui::SameLine();
-        static char newname[64] = "My mod";
+        static char newname[64] = "我的模组";
         ImGui::SetNextItemWidth(UIS(200)); ImGui::InputText("##newmod", newname, sizeof newname);
         ImGui::SameLine();
-        if (ImGui::Button("Make a new mod folder") && newname[0]) {
+        if (ImGui::Button("创建一个新的模组文件夹") && newname[0]) {
             char w[1300]; int r = datamods_new(newname, w, sizeof w);
-            snprintf(msg, sizeof msg, r > 0 ? "Made %s (with a mod.txt that explains what goes where)." : r == 0 ? "%s is there already." : "Could not make %s.", w);
+            snprintf(msg, sizeof msg, r > 0 ? "已创建 %s（附带一份 mod.txt，说明各部分用途）。" : r == 0 ? "%s 已存在。" : "无法创建 %s。", w);
         }
-        if (ImGui::Button("Export the card texts")) {
+        if (ImGui::Button("导出卡片文本")) {
             char w[1300]; int r = datamods_export_cards(w, sizeof w);
-            if (r >= 0) snprintf(msg, sizeof msg, "%d card files written to %s as text. Copy the ones you change into your mod's MSGFILES folder.", r, w);
-            else snprintf(msg, sizeof msg, "Could not read MSGFILES.");
+            if (r >= 0) snprintf(msg, sizeof msg, "%d 张卡片文件已写入 %s，以文本形式保存。请将您修改过的文件复制到您的模组 MSGFILES 文件夹中。", r, w);
+            else snprintf(msg, sizeof msg, "无法读取 MSGFILES。");
         }
-        ImGui::SameLine(); ui_hint("every town and encounter text, editable, with its options");
+        ImGui::SameLine(); ui_hint("每个城镇和遭遇的文本均可编辑，并带有相应选项");
         { extern int ui_collect_texts; bool ct = ui_collect_texts != 0, click = false;   /* (the words wrapped beside the box) */
           ImGui::PushID("collect");
           if (ImGui::Checkbox("##ct", &ct)) click = true;
           ImGui::SameLine();
-          if (ui_title_desc("Write every text shown to a file", "for a translation: mods" PATH_SEP "_export" PATH_SEP "texts_seen.txt.")) { ct = !ct; click = true; }
+          if (ui_title_desc("将显示的每段文本写入文件", "用于翻译：模组" PATH_SEP "_export" PATH_SEP "texts_seen.txt.")) { ct = !ct; click = true; }
           if (click) ui_collect_texts = ct;
           ImGui::PopID(); }
-        ui_hint("A mod's text.txt replaces the texts built into the game's menus, one per line, e.g. Purchase an item => Kaufen (needs New text: F12 > Settings > Text).");
+        ui_hint("模组的 text.txt 文件会替换游戏菜单中内置的文本，每行一条，例如：购买物品 => Kaufen（需要新文本：F12 > 设置 > 文本）。");
         if (msg[0]) ImGui::TextWrapped("%s", msg);
-        ui_hint("Mods are applied in the order of the list above: where two change the same file, the lower one wins. "
-             "Single files inside MSGFILES and the .CAT catalogs can be replaced by a folder of that name holding just those files. "
-             "Card texts and pictures change at once; the item list, saints, cities and the like change the next time the game starts.");
+        ui_hint("模组按上述列表顺序应用；若两个模组修改同一文件，则位置靠下的优先。"
+             "MSGFILES 和 .CAT 目录中的单个文件，可用同名文件夹替换，仅保留这些文件。"
+             "卡牌文本和图片会同时更新；物品列表、圣人、城市等则在下次启动游戏时更新。");
     }
     ImGui::Spacing();
-    ImGui::PushFont(ui_font_head); orn_septext("Replacement art (for artists)"); ImGui::PopFont();
+    ImGui::PushFont(ui_font_head); orn_septext("替换美术素材（供美术师使用）"); ImGui::PopFont();
     replacement_art();
     /* the built-in mods: easier play, no preset's (each its own switch, as a mod folder is) */
     ImGui::Spacing();
-    ImGui::PushFont(ui_font_head); orn_septext("Built-in mods: easier play"); ImGui::PopFont();
-    if (ui_original_mode()) { ui_hint("Off while playing the original game (Full Original): pick another preset to tick these."); return; }
-    ui_hint("For the story more than the struggle. Each is its own switch; no preset turns them on, and Full Original and Purist turn them off. "
-            "Some take effect only when the next new game starts (their note says so).");
+    ImGui::PushFont(ui_font_head); orn_septext("内置模组：让游戏更易上手"); ImGui::PopFont();
+    if (ui_original_mode()) { ui_hint("原版游戏运行时关闭（全原版）：可选择其他预设来启用这些功能。"); return; }
+    ui_hint("更注重剧情而非战斗。每个选项都是独立开关；无预设会全部开启，而“全原版”和“纯粹派”则会全部关闭。"
+            "部分效果仅在下一次新游戏开始时生效（其说明如此注明）。");
     int n = options_count();
     for (int i = 0; i < n; i++) { const Option *o = options_get(i); if (o->cls == OC_EASY) option_row(o, 0); }
 }
@@ -326,21 +326,21 @@ static void option_row(const Option *o, int depth)
         float pw = fminf(UIS(480), ImGui::GetContentRegionAvail().x), ph = pw * 9 / 16;
         ImVec2 a = ImGui::GetCursorScreenPos();
         if (screenpics_draw(ImGui::GetWindowDrawList(), a, ImVec2(a.x + pw, a.y + ph))) ImGui::Dummy(ImVec2(pw, ph + UIS(4)));
-        else ui_hint("Pictures of the new screens appear here as you meet them in your game: a card, a shop, the character sheet, the inn, alchemy.");
+        else ui_hint("新界面的图片会在你游戏中遇到时在此处显示：卡牌、商店、角色面板、旅店、炼金术等。");
         ImGui::Unindent(ti);
     } else if (!strcmp(o->key, "map.key_m")) {          /* the world map as the player last saw it (ui/screenpics.cpp) */
         ImGui::Indent(ti);
         float pw = fminf(UIS(420), ImGui::GetContentRegionAvail().x), ph = pw * 9 / 16;
         ImVec2 a = ImGui::GetCursorScreenPos();
         if (screenpics_map_draw(ImGui::GetWindowDrawList(), a, ImVec2(a.x + pw, a.y + ph))) ImGui::Dummy(ImVec2(pw, ph + UIS(4)));
-        else ui_hint("A picture of the world map appears here once you have opened it (M) in your game.");
+        else ui_hint("世界地图的图片会在你游戏中首次打开（M）后在此处出现。");
         ImGui::Unindent(ti);
     } else if (!strcmp(o->key, "map.overland_marks")) {          /* the overland view as the player last saw it, names and quest marks on it */
         ImGui::Indent(ti);
         float pw = fminf(UIS(420), ImGui::GetContentRegionAvail().x), ph = pw * 9 / 16;
         ImVec2 a = ImGui::GetCursorScreenPos();
         if (screenpics_land_draw(ImGui::GetWindowDrawList(), a, ImVec2(a.x + pw, a.y + ph))) ImGui::Dummy(ImVec2(pw, ph + UIS(4)));
-        else ui_hint("A picture of the overland view, with the names and quest markers on it, appears here once the party has been out in the land.");
+        else ui_hint("陆地视图的图片，带有名称和任务标记，会在队伍外出探索后在此处显示。");
         ImGui::Unindent(ti);
     } else if (int np = ui_option_pics(o->key, pcaps)) {   /* what it turns on, in pictures */
         ImGui::Indent(ti);
@@ -388,7 +388,7 @@ static void presets_block(void)
     bool kept = config_get_int("custom.saved", 0) != 0;
     if (cur == PRESET_CUSTOM) {
         int d = 0, near = preset_nearest(&d), shown = 0;
-        std::string t = std::string("your own choices: ") + PRESETS[near].name + ", but ";
+        std::string t = std::string("你自己的选择：") + PRESETS[near].name + "，但";
         int n = options_count();
         for (int i = 0; i < n; i++) {                   /* (the switches that differ, by name: the first few) */
             const Option *o = options_get(i); int pv = preset_value(o, near), v = option_value(o);
@@ -400,15 +400,15 @@ static void presets_block(void)
             }
             shown++;
         }
-        if (config_get_int("original", 0) && near != PRESET_BUGGY_PURIST) { t += shown ? ", " : ""; t += "the original game"; shown++; }
-        if (shown > 3) { char b[48]; snprintf(b, sizeof b, " and %d more", shown - 3); t += b; }
+        if (config_get_int("original", 0) && near != PRESET_BUGGY_PURIST) { t += shown ? ", " : ""; t += "原版游戏"; shown++; }
+        if (shown > 3) { char b[48]; snprintf(b, sizeof b, "以及 %d 个更多", shown - 3); t += b; }
         t += ".";
-        ImGui::RadioButton("##p", true); ImGui::SameLine(); ui_title_desc("Custom", t.c_str());
+        ImGui::RadioButton("##p", true); ImGui::SameLine(); ui_title_desc("自定义", t.c_str());
     } else if (kept) {
         bool c = false;
         if (ImGui::RadioButton("##p", false)) c = true;
         ImGui::SameLine();
-        if (ui_title_desc("Custom", "your own choices from before you picked a preset, kept: click to restore them.") || c) { preset_restore_custom(); ui_dirty_config = 1; }
+        if (ui_title_desc("自定义", "你在选择预设前的个人设置，仍被保留：点击即可恢复。") || c) { preset_restore_custom(); ui_dirty_config = 1; }
     }
     ImGui::PopID();
     ImGui::Spacing();
@@ -417,37 +417,37 @@ static void presets_block(void)
         bool im = config_get_int("saves.ironman", 0) != 0, click = false;
         if (ImGui::Checkbox("##iron", &im)) click = true;
         ImGui::SameLine();
-        if (ui_title_desc("Ironman, for your next new game", "one save, kept by the game itself: saved over on every card, on arriving at a place, before each battle and when you quit. "
-                          "No loading back while that game runs, and when the party's journey ends, its save is deleted. Any preset.")) { im = !im; click = true; }
+        if (ui_title_desc("铁人模式，适用于你的下一次新游戏", "一份存档，由游戏本身保存：每次翻牌、到达地点、每场战斗前以及退出时都会自动覆盖保存。"
+                          "在该局游戏进行期间无法加载回退，且当队伍旅程结束时，存档将被删除。无论何种预设。")) { im = !im; click = true; }
         if (click) { config_set_int("saves.ironman", im); config_save(); }
-        if (saves_ironman()) ImGui::TextColored(ImVec4(0.62f, 0.32f, 0.08f, 1), "The game under way is an Ironman game.");
+        if (saves_ironman()) ImGui::TextColored(ImVec4(0.62f, 0.32f, 0.08f, 1), "正在进行的游戏即为铁人模式。");
         ImGui::PopID();
     }
     ImGui::Spacing();
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.18f, 0.40f, 0.16f, 1));
-    ImGui::TextWrapped("Saved games stay compatible with the original game both ways, whatever the preset.");   /* (wrapped: a narrow window has no room for it on one line) */
+    ImGui::TextWrapped("存档与原版游戏双向兼容，不受预设影响。");   /* (wrapped: a narrow window has no room for it on one line) */
     ImGui::PopStyleColor();
     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
-    ImGui::TextWrapped("Darklands+ saves in the original game's format: its saves load in the original (on DOS too), and the original's saves load here; "
-                       "what Darklands+ records on top (what the party has learned of the witches' Sabbats, items marked Keep, sprites and colors) goes into separate files of its own. Switching presets "
-                       "or single switches at any time is safe.");
+    ImGui::TextWrapped("Darklands+ 以原版游戏格式保存：其存档可在原版中加载（包括 DOS 版），而原版的存档也可在此加载；"
+                       "Darklands+ 在此基础上记录的内容（如队伍对女巫安息日的了解、标记为“保留”的物品、精灵与色彩等）会单独存入专属文件。切换预设"
+                       "或随时单独开关均安全。");
     ImGui::PopStyleColor();
-    ImGui::TextColored(ImVec4(0.62f, 0.32f, 0.08f, 1), "One exception:");
+    ImGui::TextColored(ImVec4(0.62f, 0.32f, 0.08f, 1), "唯一例外：");
     ImGui::SameLine();
-    ImGui::TextWrapped("a save with a member using an enemy sprite or an added crest (Darklands+ offers both) loads only in Darklands+.");
+    ImGui::TextWrapped("若存档中有成员使用了敌方精灵或添加了徽章（Darklands+ 同时提供这两项功能），则只能在 Darklands+ 中加载。");
 }
 
 /* the frames, the buttons, the clock and the potions' grade marks: one section */
 static void look_all(void)
 {
-    ImGui::TextUnformatted("The band around the windows");
+    ImGui::TextUnformatted("窗户周围的边框");
     look_ornaments();
-    ImGui::Spacing(); ImGui::TextUnformatted("The clock while hours pass");
+    ImGui::Spacing(); ImGui::TextUnformatted("时间流逝时的时钟");
     look_clock();
     ImGui::Spacing();
     display_icons();
 }
-static const char *const LOOKS[] = { "Text", "Frames and clock" };
+static const char *const LOOKS[] = { "文本", "框架与时钟" };
 static void (*const LOOK_FN[])(void) = { look_text, look_all };
 static int look_index(const char *s) { for (int i = 0; i < 2; i++) if (!strcmp(s, LOOKS[i])) return i; return -1; }
 void ui_section_icon(ImDrawList *dl, ImVec2 c, float s, const char *name);   /* ui/skillicons.cpp */
@@ -458,19 +458,19 @@ void tab_helpers(void)
     /* the sections, from the switches' table: bookmarks at the left (a click opens the section and
        brings it to the top), each section folding away under its heading; the bookmark of the
        section at the top of the view is marked */
-    std::vector<const char *> sect; sect.push_back("Preset");
+    std::vector<const char *> sect; sect.push_back("预设");
     bool orig = ui_original_mode();
-    static const char *const SETUP[] = { "Screen", "Intro", "Sound", "Controller" };   /* (the computer's side: shown in every preset) */
+    static const char *const SETUP[] = { "屏幕", "开场", "音效", "控制器" };   /* (the computer's side: shown in every preset) */
     static void (*const SETUP_FN[])(void) = { setup_screen, setup_intro, setup_sound, controller_prefs };
     auto setup_index = [](const char *s) { for (int i = 0; i < 4; i++) if (!strcmp(s, SETUP[i])) return i; return -1; };
     if (!orig) {
         int n = options_count();
         for (int i = 0; i < n; i++) {
             const Option *o = options_get(i);
-            if ((o->flags & OF_ELSEWHERE) || option_bundled(o) || o->cls == OC_EASY || !strcmp(o->section, "Reconstructed Content")) continue;   /* (those: their own pages, tab_restored, tab_mods) */
+            if ((o->flags & OF_ELSEWHERE) || option_bundled(o) || o->cls == OC_EASY || !strcmp(o->section, "重建内容")) continue;   /* (those: their own pages, tab_restored, tab_mods) */
             bool seen = false; for (const char *s : sect) if (!strcmp(s, o->section)) seen = true;
             if (!seen) sect.push_back(o->section);
-            if (!seen && !strcmp(o->section, "New screens"))      /* what things look like, after the screens */
+            if (!seen && !strcmp(o->section, "新屏幕"))      /* what things look like, after the screens */
                 for (const char *l : LOOKS) sect.push_back(l);
         }
     }
@@ -485,7 +485,7 @@ void tab_helpers(void)
     float ih = ImGui::GetTextLineHeight();
     for (int i = 0; i < NSECT; i++) {
         const char *s = sect[i]; char lab[80];
-        snprintf(lab, sizeof lab, "%s###nav%d", !strcmp(s, "Fixes for bugs of the original") ? "Fixes" : s, i);
+        snprintf(lab, sizeof lab, "%s###nav%d", !strcmp(s, "Fixes for bugs of the original") ? "修复内容" : s, i);
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ih * 1.5f);           /* (room for the section's picture) */
         if (ImGui::Selectable(lab, i == at_top)) jump = i;
         ImVec2 a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
@@ -515,17 +515,17 @@ void tab_helpers(void)
         float over = ImGui::GetItemRectMax().x - (ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x);
         if (over > 0.5f) fprintf(stderr, "settings: \"%s\" is %.0f px wider than the page\n", name, over);
     };
-    section("Preset", false);
+    section("预设", false);
     if (wlog) { ImGui::BeginGroup(); open_group = -1; }
     presets_block();
     if (orig) {
         ImGui::Spacing();
-        ui_hint("Everything Darklands+ adds is off, and its switches are hidden: pick another preset to change single switches.");
+        ui_hint("Darklands+ 所有新增内容均处于关闭状态，其开关也隐藏；如需更改个别开关，请选择其他预设。");
     }
     {
         int n = options_count();
         for (int k = 1; k < NSECT; k++) {
-            if (open_group > -2) { too_wide(open_group < 0 ? "Preset" : sect[open_group]); open_group = -2; }
+            if (open_group > -2) { too_wide(open_group < 0 ? "预设" : sect[open_group]); open_group = -2; }
             ImGui::Spacing();
             if (!section(sect[k], true)) continue;
             if (wlog) { ImGui::BeginGroup(); open_group = k; }
@@ -537,8 +537,8 @@ void tab_helpers(void)
             if (fixes) {                                  /* (a long list, each its own switch since what counts as a bug is open to argument: folded) */
                 int nf = 0, on = 0;
                 for (int i = 0; i < n; i++) { const Option *o = options_get(i); if (o->cls == OC_FIX && !strcmp(o->section, sect[k])) { nf++; on += option_value(o) != 0; } }
-                ui_hint("The original game's bugs put right (%d of %d on). Each is its own switch, since what counts as a bug (and how to mend it) is open to argument; "
-                        "they are sorted from the plainly broken to the arguable.", on, nf);
+                ui_hint("原版游戏的漏洞已修复（%d 个中的 %d）。每个漏洞都有独立开关，因为何谓漏洞（以及如何修补）尚存争议；"
+                        "漏洞按严重程度从明显破损到存疑分类排列。", on, nf);
                 for (int g = 0; g < FIX_NGROUPS; g++) {     /* (fixgroups.c) */
                     int gn = 0, gon = 0;
                     for (int i = 0; i < n; i++) { const Option *o = options_get(i); if (o->cls == OC_FIX && !strcmp(o->section, sect[k]) && fix_group(o->key + 4) == g) { gn++; gon += option_value(o) != 0; } }
@@ -562,7 +562,7 @@ void tab_helpers(void)
                 option_row(o, 0);
             }
         }
-        if (open_group > -2) { too_wide(open_group < 0 ? "Preset" : sect[open_group]); open_group = -2; }
+        if (open_group > -2) { too_wide(open_group < 0 ? "预设" : sect[open_group]); open_group = -2; }
     }
     at_top = top_found < 0 ? 0 : top_found;
     fold_all = false;
@@ -576,24 +576,24 @@ void tab_helpers(void)
    in two parts, by how much Darklands+ had to supply (docs/cut_content.md) */
 void tab_restored(void)
 {
-    ImGui::PushFont(ui_font_head); orn_septext("Reconstructed Content"); ImGui::PopFont();
+    ImGui::PushFont(ui_font_head); orn_septext("重建内容"); ImGui::PopFont();
     ImGui::TextColored(ImVec4(0.75f, 0.35f, 0.1f, 1), "Experimental.");
     ImGui::SameLine();
-    ImGui::TextWrapped("What MicroProse wrote or coded for Darklands and never switched on, put back by Darklands+. Nobody played it in 1992: "
-                       "expect rough edges. Every switch here is off unless you tick it, and every preset turns them off again.");
-    ui_hint("What each one was in the game's files, and what Darklands+ had to add or put right, is in docs/cut_content.md (and docs/cut_politics.md).");
+    ImGui::TextWrapped("MicroProse 曾为 Darklands 编写或编码但从未启用的内容，现由 Darklands+ 重新补足。1992 年无人实际体验过："
+                       "请做好心理准备，可能存在粗糙之处。此处所有开关默认关闭，除非你主动勾选；而每个预设也会再次将其全部关闭。");
+    ui_hint("每个内容在游戏文件中的原貌，以及 Darklands+ 必须补充或修正的部分，均记录于 docs/cut_content.md（及 docs/cut_politics.md）。");
     ImGui::Spacing();
-    if (ui_original_mode()) { ui_hint("Off while playing the original game (Full Original): pick another preset to tick these."); return; }
+    if (ui_original_mode()) { ui_hint("原版游戏运行时关闭（全原版）：可选择其他预设来启用这些功能。"); return; }
     static const char *const FINISHED[] = { "rules.politics", "rules.war", "battle.black_cloud", 0 };   /* (the rest: rules.fehde, rules.hospice, assist.hall_of_fame) */
     auto finished = [](const char *k) { for (int i = 0; FINISHED[i]; i++) if (!strcmp(FINISHED[i], k)) return true; return false; };
     int n = options_count();
     for (int part = 0; part < 2; part++) {
-        ImGui::PushFont(ui_font_head); orn_septext(part ? "Written, but never finished" : "Finished, but never switched on"); ImGui::PopFont();
-        ui_hint(part ? "The texts or pictures are in the game's files, but the game never shows them: Darklands+ supplies the missing pieces."
-                     : "Written and coded by MicroProse, only never turned on (or, for Black Cloud, left out of a menu): Darklands+ turns it on.");
+        ImGui::PushFont(ui_font_head); orn_septext(part ? "已编写，但从未完成" : "已完成，但从未启用"); ImGui::PopFont();
+        ui_hint(part ? "文本或图片存在于游戏文件中，但游戏从未显示它们：Darklands+ 提供了缺失的部分。"
+                     : "由 MicroProse 编写并编码，只是从未启用（或者对于 Black Cloud 而言，被排除在菜单之外）：Darklands+ 将其启用。");
         for (int i = 0; i < n; i++) {
             const Option *o = options_get(i);
-            if ((o->flags & OF_ELSEWHERE) || option_bundled(o) || o->parent || strcmp(o->section, "Reconstructed Content") || finished(o->key) != (part == 0)) continue;
+            if ((o->flags & OF_ELSEWHERE) || option_bundled(o) || o->parent || strcmp(o->section, "重建内容") || finished(o->key) != (part == 0)) continue;
             option_row(o, 0);
         }
         ImGui::Spacing();

@@ -77,29 +77,29 @@ extern int ui_battle_info;                       /* ui/battleoverlay.cpp: battle
 static const char *order_tip(int kind)
 {
     switch (kind) {
-    case OI_RESUME: return "The battle runs again (the key: Space). Any order being given is given first.";
-    case OI_DONE: return "This member's order is given; the battle stays paused, to give others theirs (the key: Enter).";
-    case OI_INFO: return "Every kind of enemy on the field: attributes, weapons, armor (the key: E).";
-    case OI_WALK: return "Then click a spot: the member walks there.";
-    case OI_FLEE: return "Then click a spot: the member runs there without stopping to fight or striking back (to get out of a melee).";
-    case OI_HALT: return "The member stops where they are and waits.";
-    case OI_GROUP: return "The party moves together as a group.";
-    case OI_FILE: return "The party moves in single file, the leader first.";
-    case OI_DOOR: return "Open or shut the door beside the member.";
-    case OI_STAIRS: return "Take the stairs beside the member to another floor.";
-    case OI_CHEST: return "Open the chest beside the member.";
-    case OI_PICK: return "Pick the lock beside the member.";
-    case OI_DISSOLVE: return "Dissolve the lock beside the member with an Eater-Water potion.";
-    case OI_DISARM: return "Disarm the trap on the chest beside the member.";
-    case OI_SURRENDER: return "The whole party gives up the fight.";
-    case OI_LOOT: return "Search the fallen for their belongings.";
-    case OI_EXIT: return "Leave the battlefield by the way out beside the member.";
-    case OI_CANCEL: return "Stop giving this member an order (the key: Esc); the battle stays paused.";
-    case OI_ATTACK: return "Then click an enemy: a standard attack, balanced between blows and guard.";
-    case OI_VULNERABLE: return "Then click an enemy: blows aimed at the gaps in the armor (1 to 4 more penetration), but slower and a little less likely to land.";
-    case OI_BERSERK: return "Then click an enemy: quick, furious blows without thought of defense.";
-    case OI_PARRY: return "Then click an enemy: the member mostly defends, hard to hit, striking back only now and then.";
-    case OI_MISSILE: return "Then click an enemy: shoot or throw at it with the missile weapon (a clear line needed).";
+    case OI_RESUME: return "战斗再次开始（按键：空格）。任何指令均优先执行。";
+    case OI_DONE: return "该成员的指令已下达；战斗暂停，以便其他成员执行各自指令（按键：回车）。";
+    case OI_INFO: return "场上各类敌人：属性、武器、护甲（按键：E）。";
+    case OI_WALK: return "然后点击某处：该成员将前往那里。";
+    case OI_FLEE: return "然后点击某处：该成员直接跑向那里，中途不停止战斗或反击（以脱离混战）。";
+    case OI_HALT: return "该成员停留在原地等待。";
+    case OI_GROUP: return "队伍作为一个整体共同行动。";
+    case OI_FILE: return "队伍排成单列，领队在前。";
+    case OI_DOOR: return "打开或关闭该成员身旁的门。";
+    case OI_STAIRS: return "沿着该成员旁的楼梯前往另一层楼。";
+    case OI_CHEST: return "打开成员旁边的宝箱。";
+    case OI_PICK: return "解开成员旁边的锁。";
+    case OI_DISSOLVE: return "用食水药剂解除成员旁边的锁。";
+    case OI_DISARM: return "拆除成员旁边宝箱上的陷阱。";
+    case OI_SURRENDER: return "整个队伍放弃战斗。";
+    case OI_LOOT: return "在倒下的敌人身上搜寻他们的物品。";
+    case OI_EXIT: return "从成员旁边的出口离开战场。";
+    case OI_CANCEL: return "停止给该成员下达指令（快捷键：Esc）；战斗仍处于暂停状态。";
+    case OI_ATTACK: return "然后点击一名敌人：进行一次标准攻击，攻防平衡。";
+    case OI_VULNERABLE: return "然后点击一名敌人：攻击瞄准盔甲的缝隙（可造成1至4次额外穿透），但速度较慢且命中率略低。";
+    case OI_BERSERK: return "然后点击一名敌人：快速而猛烈的攻击，不考虑防御。";
+    case OI_PARRY: return "然后点击一名敌人：该成员以防守为主，难以击中，仅偶尔反击。";
+    case OI_MISSILE: return "然后点击一名敌人：使用远程武器向其射击或投掷（需要一条清晰的瞄准线）。";
     }
     return nullptr;
 }
@@ -126,7 +126,7 @@ static std::vector<OrderEntry> order_entries(void)
                 if (s2 >= 0) o.label = game_text(it.name, strlen(it.name)) + ": " + (e.count > 1 ? std::to_string(e.count) + " " : "") + o.label;
                 o.pid = s2 >= 0 ? potion_of(game_text(e.name, strlen(e.name)), e.key, &o.pq) : -1;
                 o.kind = s2 < 0 ? ui_order_icon_for(game_text(e.name, strlen(e.name)).c_str()) : OI_NONE;
-                if (o.kind == OI_ATTACK) o.label = "Standard";                  /* (the game's "Std Attack") */
+                if (o.kind == OI_ATTACK) o.label = "标准";                  /* (the game's "Std Attack") */
                 if (e.key[0] && o.pid < 0) o.label += std::string(" (") + e.key + ")";   /* (a potion's quality: the dots on its picture) */
                 v.push_back(o);
             }
@@ -196,8 +196,8 @@ static void order_buttons(float width, bool with_resume)
         if (e.kind == OI_RESUME && !with_resume) continue;
         grp[order_group(e)].push_back(e);
     }
-    static const char *GNAME[5] = { "Attack", "Move", "Here", "Potions and items", "Battle" };
-    heading(("Orders for " + who).c_str());
+    static const char *GNAME[5] = { "攻击", "移动", "这里", "药剂与道具", "战斗" };
+    heading(("针对……的指令" + who).c_str());
     ImDrawList *dl = ImGui::GetWindowDrawList();
     ImVec2 o0 = ImGui::GetCursorScreenPos();
     float lh = ImGui::GetTextLineHeight(), pad = lh * 0.3f, gap = lh * 0.25f, cap = lh * 0.85f, ggap = lh * 0.9f;
@@ -236,7 +236,7 @@ static void top_buttons(void)
     float lh = ImGui::GetTextLineHeight(), pad = lh * 0.3f, gap = lh * 0.4f;
     float bx = p.x;
     if (config_get_int("battle.fast_key", 1) && game_mode() == GM_BATTLE) {   /* fast forward (Z, mods/pathfix.c): on the field (not over a sheet or the loot) */
-        const char *t = battle_fast ? (padp ? "Back to the chosen speed" : "Back to the chosen speed (Z)") : (padp ? "Fast forward" : "Fast forward (Z)");
+        const char *t = battle_fast ? (padp ? "返回所选速度" : "返回所选速度（Z）") : (padp ? "快进" : "快进（Z）");
         ImVec2 ts = ImGui::CalcTextSize(t);
         float gh = ts.y * 1.05f, gw = padp ? ui_pad_glyph_width(gh, PB_RSTICK) + pad : 0;
         float iw = !padp && config_get_int("battle.order_icons", 1) ? lh * 1.15f : 0;   /* (its picture, as the orders') */
@@ -251,14 +251,14 @@ static void top_buttons(void)
     }
     if (menuview_is_on() && game_mode() == GM_BATTLE) {           /* Resume: the Orders menu's own entry, given as a click on it */
         bool paused = g_rb(GV_order_mode) == 1;
-        OrderEntry r{ -1, -1, -1, OI_RESUME, -1, -1, padp ? "Resume" : "Resume (Space)" };
+        OrderEntry r{ -1, -1, -1, OI_RESUME, -1, -1, padp ? "继续" : "继续（空格键）" };
         if (paused) for (const OrderEntry &e : order_entries()) if (e.kind == OI_RESUME) { r.j = e.j; r.k = e.k; r.s2 = e.s2; }
         bool ok = paused && r.j >= 0;
         if (bar_frame != ImGui::GetFrameCount()) order_btns.clear();   /* (no order strip this frame: the list holds Resume alone) */
         order_button(dl, ImVec2(bx, p.y), r, ok);
         if (ok) order_btns_frame = ImGui::GetFrameCount();
         ImVec2 rs = order_button_size(r);
-        if (!ok && mp.x >= bx && mp.x < bx + rs.x && mp.y >= p.y && mp.y < p.y + rs.y) ui_tip_beside(ImVec2(bx, p.y), ImVec2(bx + rs.x, p.y + rs.y)), margin_tip("The battle is running: Space pauses it, or click one of the party.");
+        if (!ok && mp.x >= bx && mp.x < bx + rs.x && mp.y >= p.y && mp.y < p.y + rs.y) ui_tip_beside(ImVec2(bx, p.y), ImVec2(bx + rs.x, p.y + rs.y)), margin_tip("战斗正在进行：按空格键可暂停，或点击队伍中的任意一人。");
         p.y += rs.y + gap;
     }
     ImGui::SetCursorScreenPos(ImVec2(bx, p.y));
@@ -275,24 +275,24 @@ static void foes_left_section(void)
     for (int f = 0; f < fl.floors; f++) if (f != fl.floor && fl.known[f]) others += fl.foes[f];
     if (fl.floors <= 1 && !here) return;                     /* (an open field with no one waiting: nothing to say) */
     ImGui::Spacing();
-    heading("Enemies not yet met");
+    heading("尚未遇到的敌人");
     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-    if (!here && !others) ImGui::TextWrapped("No one else waits in this place.");
+    if (!here && !others) ImGui::TextWrapped("此地无人等待。");
     else {
-        if (here && fl.floors <= 1) ImGui::TextWrapped("Here: %d more %s, in %d %s.", here, here == 1 ? "enemy" : "enemies", fl.groups[fl.floor], fl.groups[fl.floor] == 1 ? "group" : "groups");
-        else if (here) ImGui::TextWrapped("On this floor (%d): %d %s, in %d %s.", fl.floor + 1, here, here == 1 ? "enemy" : "enemies", fl.groups[fl.floor], fl.groups[fl.floor] == 1 ? "group" : "groups");
-        else ImGui::TextWrapped("No one on this floor (%d).", fl.floor + 1);
+        if (here && fl.floors <= 1) ImGui::TextWrapped("这里：%d个%s，位于%d%s。", here, here == 1 ? "enemy" : "enemies", fl.groups[fl.floor], fl.groups[fl.floor] == 1 ? "group" : "groups");
+        else if (here) ImGui::TextWrapped("在这一层（%d）：%d%s，位于%d%s。", fl.floor + 1, here, here == 1 ? "enemy" : "enemies", fl.groups[fl.floor], fl.groups[fl.floor] == 1 ? "group" : "groups");
+        else ImGui::TextWrapped("这一层（%d）无人。", fl.floor + 1);
         std::string o;
         for (int f = 0; f < fl.floors; f++) {
             if (f == fl.floor || !fl.known[f] || !fl.foes[f]) continue;
-            char b[48]; snprintf(b, sizeof b, "%sfloor %d: %d", o.empty() ? "" : ", ", f + 1, fl.foes[f]);
+            char b[48]; snprintf(b, sizeof b, "%s第%d层：%d", o.empty() ? "" : ", ", f + 1, fl.foes[f]);
             o += b;
         }
-        if (!o.empty()) ImGui::TextWrapped("Elsewhere: %s.", o.c_str());
+        if (!o.empty()) ImGui::TextWrapped("其他地方：%s。", o.c_str());
         if (fl.master_floor >= 0) {
             ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(214, 120, 90, 255));
-            if (fl.master_floor == fl.floor) ImGui::TextWrapped("The master of this place waits on this floor.");
-            else ImGui::TextWrapped("The master of this place waits on floor %d.", fl.master_floor + 1);
+            if (fl.master_floor == fl.floor) ImGui::TextWrapped("此地的主人在这一层等待。");
+            else ImGui::TextWrapped("此地的主人在第%d层等待。", fl.master_floor + 1);
             ImGui::PopStyleColor();
         }
     }
@@ -310,7 +310,7 @@ void battle_panel(float width, float fs)
     for (int k = 0; k < n && k < 40; k++) { int m = g_rb((u16)(GV_hotspot_cbt + k)); if (m < 13) seen[m] = true; }
     float bw = width - fs * 1.6f, bh = fs * 0.32f;
     if (!config_get_int("original", 0)) top_buttons();
-    if (!partypanel_shown()) heading("The party");      /* (the party panel drawn anew has them already) */
+    if (!partypanel_shown()) heading("队伍");      /* (the party panel drawn anew has them already) */
     for (int i = 0; i < 5 && !partypanel_shown(); i++) {
         u16 b = (u16)(0x9c55 + 0x80 * i);
         int st = g_rb((u16)(b + 0x14));
@@ -326,7 +326,7 @@ void battle_panel(float width, float fs)
         }
     }
     if (!partypanel_shown()) ImGui::Separator();
-    heading("Enemies");
+    heading("敌人");
     int shown = 0, down = 0;
     for (int i = 5; i < 13; i++) {
         u16 b = (u16)(0x9c55 + 0x80 * i);
@@ -339,30 +339,30 @@ void battle_panel(float width, float fs)
         int end = (s8)g_rb((u16)(b + 0x5d)), str = (s8)g_rb((u16)(b + 0x5e)), strm = (s8)g_rb((u16)(b + 0x65));
         std::string nm = battlelog_name(i);
         last_st[i] = st; last_name[i] = nm;
-        const char *cond = st == 3 ? "dead" : st == 2 ? "unconscious" : st == 5 ? "fled" : end * 4 <= endm ? "badly hurt" : end * 2 <= endm ? "hurt" : end < endm ? "a little hurt" : "unhurt";
-        if (st == 1 && strm > 0 && str * 2 <= strm) cond = "gravely wounded";
+        const char *cond = st == 3 ? "dead" : st == 2 ? "unconscious" : st == 5 ? "fled" : end * 4 <= endm ? "重伤" : end * 2 <= endm ? "hurt" : end < endm ? "轻伤" : "unhurt";
+        if (st == 1 && strm > 0 && str * 2 <= strm) cond = "重伤";
         if (st != 1) { ImGui::TextDisabled("%s - %s", nm.c_str(), cond); down++; }
         else {
             ImGui::TextUnformatted(nm.c_str()); ImGui::SameLine(); ImGui::TextDisabled("%s", cond);
             bar((float)end / endm, IM_COL32(200, 90, 70, 255), bw, bh);
-            if (g_rb((u16)(GV_cbt_ends_battle + i)) == 1) { ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(214, 120, 90, 255)); ImGui::TextWrapped("The master of this place: once this one has fallen and the fight is over, the place is won."); ImGui::PopStyleColor(); }
+            if (g_rb((u16)(GV_cbt_ends_battle + i)) == 1) { ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(214, 120, 90, 255)); ImGui::TextWrapped("此地的主人：一旦此人倒下、战斗结束，此地即告胜利。"); ImGui::PopStyleColor(); }
         }
         shown++;
     }
     if (!shown) {
-        ImGui::TextDisabled("None in sight yet.");
+        ImGui::TextDisabled("目前仍未见人影。");
         ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-        ImGui::TextWrapped("To explore: in Single File (Q) or as a Group (G), click a door, a passage or stairs and the party walks there%s.",
-                           !levelmap_available() ? "" : "; Tab shows the level map (as far as the party has seen it), and a click on it walks the party there");
+        ImGui::TextWrapped("探索方式：单列前进（Q）或结队行动（G），点击一扇门、一条通道或一段楼梯，队伍便会前往%s。",
+                           !levelmap_available() ? "" : "; Tab 显示等级地图（仅限队伍已探索的部分），点击即可带领队伍前往该处");
         ImGui::PopStyleColor();
     }
     else if (down == shown) {
-        ImGui::TextDisabled("All down.");
+        ImGui::TextDisabled("全部向下。");
         /* a fight in a street or a dungeon: the party stays there afterwards (combat_flags 1) and the
            game goes on only when it walks out through a way out (s014 combat_over) */
         if ((g_rb(GV_combat_flags) & 1) && !g_rb(GV_real_combat)) {
             ImGui::Spacing();
-            ImGui::TextWrapped("The fight is won. To go on, walk the party out of this place: click a way out (the edge of the street, a door, stairs).");
+            ImGui::TextWrapped("战斗已获胜。要继续，请带领队伍走出此地：点击出口方向（街道边缘、门或楼梯）。");
         }
     }
     foes_left_section();

@@ -14,8 +14,8 @@ using pen::C;
 using pen::Pen;
 
 const char *QUEST_CAT_NAME[QC_N] = {
-    "Quest", "Robber knight", "Reward waiting", "A treasure to fetch", "Papers to get in a town", "Mine",
-    "Dragon", "Wild Hunt", "Unwelcome in a town", "Wanted in a town", "Sabbat", "City politics", "City at war", "Town on alert"
+    "任务", "抢劫骑士", "奖励待领", "需要取回的宝物", "在城镇中需要获取的文件", "矿井",
+    "龙", "野性狩猎", "在城镇中不受欢迎", "在城镇中被通缉", "萨巴特", "城市政治", "处于战争状态的城市", "处于警戒状态的城镇"
 };
 
 namespace {

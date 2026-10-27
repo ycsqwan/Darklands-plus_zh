@@ -117,12 +117,12 @@ static void take(int i, int all)
     if (shared) g_ww(GV_loot_who, (u16)shown);
     char t[160];
     if (shared) {
-        if (done && gm_is_potion(id)) snprintf(t, sizeof t, "%d %s to %s (to give it to another member, drag it from the character sheet onto them in the party panel).", done, nm, loot_model.names[m]);
-        else if (done) snprintf(t, sizeof t, "%d %s into the party's pack.", done, nm);
-        else snprintf(t, sizeof t, "No room: every member already carries 64 kinds of items.");
+        if (done && gm_is_potion(id)) snprintf(t, sizeof t, "%d %s 转移至 %s（要将其赠予其他成员，可从角色面板拖拽至队伍面板中的对应成员）。", done, nm, loot_model.names[m]);
+        else if (done) snprintf(t, sizeof t, "%d %s 放入队伍背包。", done, nm);
+        else snprintf(t, sizeof t, "容量已满：每位成员已携带64种物品。");
     }
-    else if (done) snprintf(t, sizeof t, "%s takes %d %s.", loot_model.names[m], done, nm);
-    else snprintf(t, sizeof t, "%s has no room for another kind of item (64 at most).", loot_model.names[m]);
+    else if (done) snprintf(t, sizeof t, "%s 需要 %d %s。", loot_model.names[m], done, nm);
+    else snprintf(t, sizeof t, "%s 已无空间再容纳另一种物品（最多64种）。", loot_model.names[m]);
     note(t);
 }
 
@@ -132,7 +132,7 @@ static void pack_put(int r, int all)
     if (r < 0 || r >= loot_model.nitems) return;
     int id = loot_model.item[r].id, q = loot_model.item[r].qual, shown = who_now(), done = 0;
     char nm[32], t[160]; gm_itemdef_name(id, nm, sizeof nm);
-    if (keep_is(id, q)) { snprintf(t, sizeof t, "The %s is marked Keep on the character sheet: it stays in the party's pack.", nm); note(t); return; }
+    if (keep_is(id, q)) { snprintf(t, sizeof t, "%s在角色卡上标记为“保留”：它会留在队伍的背包里。", nm); note(t); return; }
     for (int k = 0; k < (all ? 255 * 5 : 1); k++) {
         int m, rec;
         if (!gm_pack_find(shown, id, q, &m, &rec)) break;
@@ -146,8 +146,8 @@ static void pack_put(int r, int all)
         done++;
     }
     g_ww(GV_loot_who, (u16)shown);
-    if (done) snprintf(t, sizeof t, "%d %s back into the pile.", done, nm);
-    else snprintf(t, sizeof t, "The %s stays in the party's pack.", nm);
+    if (done) snprintf(t, sizeof t, "%d %s放回堆里。", done, nm);
+    else snprintf(t, sizeof t, "%s留在队伍的背包里。", nm);
     note(t);
 }
 
@@ -170,8 +170,8 @@ static void put(int m, int idx, int all)
     }
     g_ww(GV_loot_who, (u16)shown);
     char t[160];
-    if (done) snprintf(t, sizeof t, "%s puts %d %s into the pile.", loot_model.names[m], done, nm);
-    else snprintf(t, sizeof t, "The %s stays with %s.", nm, loot_model.names[m]);
+    if (done) snprintf(t, sizeof t, "%s把%d %s放入堆里。", loot_model.names[m], done, nm);
+    else snprintf(t, sizeof t, "%s 留在 %s 身上。", nm, loot_model.names[m]);
     note(t);
 }
 
@@ -248,12 +248,12 @@ static void loop_hook(void)                  /* loot_loop(items far, count near,
                 else put(loot_model.shared ? loot_model.item[a.a].owner : who_now(), loot_model.item[a.a].idx, a.b == 255);
                 break;
             case LV_WHO: set_who(a.a); break;
-            case LV_TAKEALL: key(0x1e61); if (!ns_unwinding) note(pile_n() ? "Took what fits." : "Took everything."); break;
+            case LV_TAKEALL: key(0x1e61); if (!ns_unwinding) note(pile_n() ? "拿走了合适的物品。" : "把所有东西都拿走了。"); break;
             case LV_SHARE:
                 if (loot_model.shared) {                      /* everything into the pack (a potion to whoever carries the same, or has the most room) */
                     for (int i = 0; i < pile_n() && !ns_unwinding; ) { int n0 = pile_n(), u0 = pile_units(); take(i, 1); if (pile_n() >= n0 && pile_units() >= u0) i++; }
-                    if (!ns_unwinding) note(pile_n() ? "Took what fits." : "Took everything.");
-                } else { key(0x1f73); if (!ns_unwinding) note(pile_n() ? "Shared out what fits." : "Shared out everything."); }
+                    if (!ns_unwinding) note(pile_n() ? "拿走了合适的物品。" : "把所有东西都拿走了。");
+                } else { key(0x1f73); if (!ns_unwinding) note(pile_n() ? "分配了合适的物品。" : "分配了所有物品。"); }
                 break;
             case LV_LEAVE: leave = 1; break;
             }

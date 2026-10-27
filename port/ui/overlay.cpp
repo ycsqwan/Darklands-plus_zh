@@ -43,6 +43,7 @@ void plat_game_to_win(float gx, float gy, float *wx, float *wy);
 
 extern ImFont *ui_font_small, *ui_font_text;
 extern ImFont *ui_font_overlay;          /* ui.cpp: the text over and beside the picture */
+extern ImFont *ui_font_cjk;               /* ui/ui.cpp: Han glyphs live only here */
 static ImDrawList *ovl_dl;               /* the overlay layer (ui_overlay): under tooltips and windows, over the picture */
 ImDrawList *ovl_list(void) { return ovl_dl ? ovl_dl : ImGui::GetForegroundDrawList(); }
 ImDrawList *ui_overlay_list(void) { return ovl_list(); }
@@ -55,19 +56,33 @@ extern int ui_game_font, ui_text_edge;
  * parchment a faint light one */
 void text_edged(ImDrawList *dl, ImFont *f, float size, ImVec2 p, ImU32 c, const char *t, int edge, int bg)
 {
+    ImU32 e = c;
+    float th = 0.0f;
     if (edge) {
         int r = (c >> IM_COL32_R_SHIFT) & 255, g = (c >> IM_COL32_G_SHIFT) & 255, b = (c >> IM_COL32_B_SHIFT) & 255, a = (c >> IM_COL32_A_SHIFT) & 255;
         int lum = r * 299 + g * 587 + b * 114;
         bool light = bg < 0 ? lum > 115000 : lum >= ((bg >> 16 & 255) * 299 + (bg >> 8 & 255) * 587 + (bg & 255) * 114);
-        ImU32 e = light ? IM_COL32(0, 0, 0, (int)(a * 0.80f)) : IM_COL32(255, 244, 225, (int)(a * 0.45f));
-        float th = size * 0.055f; if (th < 1.0f) th = 1.0f;
-        if (edge == 1) dl->AddText(f, size, ImVec2(p.x + th, p.y + th), e, t);
-        else {
-            static const float D[8][2] = { {1,0},{-1,0},{0,1},{0,-1},{0.7f,0.7f},{-0.7f,0.7f},{0.7f,-0.7f},{-0.7f,-0.7f} };
-            for (int i = 0; i < 8; i++) dl->AddText(f, size, ImVec2(p.x + D[i][0] * th, p.y + D[i][1] * th), e, t);
-        }
+        e = light ? IM_COL32(0, 0, 0, (int)(a * 0.80f)) : IM_COL32(255, 244, 225, (int)(a * 0.45f));
+        th = size * 0.055f; if (th < 1.0f) th = 1.0f;
     }
-    dl->AddText(f, size, p, c, t);
+    static const float D[8][2] = { {1,0},{-1,0},{0,1},{0,-1},{0.7f,0.7f},{-0.7f,0.7f},{0.7f,-0.7f},{-0.7f,-0.7f} };
+    const char *st = t;
+    while (*t) {
+        /* An ASCII run: one call, whatever it is.  A UTF-8 lead byte >= 0x80 means a
+         * Han glyph: those only exist in the CJK font (the game fonts have none),
+         * so the runs alternate between the two faces. */
+        bool cjk = ((unsigned char)*t) >= 0x80;
+        const char *en = t + 1;
+        while (*en && (((unsigned char)*en >= 0x80) == cjk)) en++;
+        ImFont *f2 = cjk ? ui_font_cjk : f;
+        if (edge) {
+            if (edge == 1) dl->AddText(f2, size, ImVec2(p.x + th, p.y + th), e, st, en);
+            else for (int k = 0; k < 8; k++) dl->AddText(f2, size, ImVec2(p.x + D[k][0] * th, p.y + D[k][1] * th), e, st, en);
+        }
+        dl->AddText(f2, size, p, c, st, en);
+        p.x += f2->CalcTextSizeA(size, FLT_MAX, 0.0f, st, en).x;
+        t = en;
+    }
 }
 
 /* text colours with too little contrast to the picture behind them (grey on parchment) move
@@ -162,7 +177,7 @@ static void draw_new_encounter_seal(void)
     dl->AddRectFilled(ImVec2(c.x - k, c.y - w), ImVec2(c.x + k, c.y + w), IM_COL32(196, 84, 64, 240));
     ImVec2 mp = ImGui::GetIO().MousePos;
     if ((mp.x - c.x) * (mp.x - c.x) + (mp.y - c.y) * (mp.y - c.y) < r * r * 1.4f) {
-        char t[200]; snprintf(t, sizeof t, "A new encounter: %s\n(from a mod, not the original game)", encounters_title(a - 1));
+        char t[200]; snprintf(t, sizeof t, "新的遭遇：%s\\n（来自模组，非原版游戏）", encounters_title(a - 1));
         ui_tip_beside(ImVec2(c.x - r, c.y - r), ImVec2(c.x + r, c.y + r));
         ImGui::SetTooltip("%s", t);
     }
@@ -175,7 +190,7 @@ static void draw_version(void)
     int m = game_mode();
     if (!(m == GM_OTHER || (m == GM_SCREEN && (s16)g_rw(G_PARTY_SIZE) == 0))) return;   /* (the title menu is a screen, before a party) */
     { extern TitleModel title_model; if (title_model.open && ns_screen == NS_TITLE && !ns_hidden()) return; }   /* (the start screen drawn anew writes it on its parchment) */
-    char t[96]; snprintf(t, sizeof t, dlp_release[0] ? "Darklands+ %s (build %s)" : "Darklands+ build %s%s", dlp_release[0] ? dlp_release : dlp_version, dlp_release[0] ? dlp_version : "");
+    char t[96]; snprintf(t, sizeof t, dlp_release[0] ? "Darklands+ %s（版本 %s）" : "Darklands+ 版本 %s%s", dlp_release[0] ? dlp_release : dlp_version, dlp_release[0] ? dlp_version : "");
     ImDrawList *dl = ovl_list();
     ImVec2 br = g2w(318.0f, 198.0f), sz = ImGui::CalcTextSize(t);
     ImVec2 p(br.x - sz.x, br.y - sz.y);
@@ -209,7 +224,7 @@ static void draw_hello(void)
     u32 age = plat_ticks_ms() - hello_t, life = hello_kind ? 7000 : 4000;
     if (age > life) { hello_kind = -1; return; }
     float a = age + 700 < life ? 1.0f : (life - age) / 700.0f;
-    static const char *KIND[4] = { "No controller detected", "Xbox controller detected", "PlayStation controller detected", "Nintendo controller detected" };
+    static const char *KIND[4] = { "未检测到控制器", "检测到Xbox控制器", "检测到PlayStation控制器", "检测到任天堂控制器" };
     ImGuiIO &io = ImGui::GetIO();
     ImDrawList *dl = ImGui::GetForegroundDrawList();
     ImGui::PushFont(ui_font_overlay);
@@ -295,8 +310,8 @@ static void draw_lcd(void)
     dl->AddRect(P0, P1, IM_COL32(110, 108, 104, A(255)), 6, 0, 1.5f);
     /* the top line: Roland, the model, MT-32 ACTIVE by a lit light */
     float ty = P0.y + pad * 0.7f, ls = fs * 0.95f;
-    dl->AddText(fb, ls, ImVec2(P0.x + pad, ty), IM_COL32(236, 236, 232, A(255)), "Roland");
-    const char *act = "MT-32 ACTIVE";
+    dl->AddText(fb, ls, ImVec2(P0.x + pad, ty), IM_COL32(236, 236, 232, A(255)), "罗兰");
+    const char *act = "MT-32 已启用";
     ImVec2 as = fb->CalcTextSizeA(ls * 0.85f, FLT_MAX, 0, act);
     float ax = P1.x - pad - as.x;
     dl->AddText(fb, ls * 0.85f, ImVec2(ax, ty + ls * 0.08f), IM_COL32(236, 236, 232, A(255)), act);
@@ -321,8 +336,8 @@ static void draw_lcd(void)
     bool blink = ((age / 140) % 5) < 2;
     ImVec2 mled(p0.x + fs * 0.3f, by + bh * 0.5f);
     dl->AddCircleFilled(mled, fs * 0.2f, blink ? IM_COL32(255, 70, 50, A(255)) : IM_COL32(90, 30, 24, A(255)), 10);
-    dl->AddText(f, small, ImVec2(mled.x + fs * 0.35f, by + (bh - small) * 0.5f), IM_COL32(200, 198, 192, A(255)), "MIDI MESSAGE");
-    float bx = mled.x + fs * 0.35f + f->CalcTextSizeA(small, FLT_MAX, 0, "MIDI MESSAGE").x + fs * 0.6f;
+    dl->AddText(f, small, ImVec2(mled.x + fs * 0.35f, by + (bh - small) * 0.5f), IM_COL32(200, 198, 192, A(255)), "MIDI消息");
+    float bx = mled.x + fs * 0.35f + f->CalcTextSizeA(small, FLT_MAX, 0, "MIDI消息").x + fs * 0.6f;
     static const char *PARTS[6] = { "1", "2", "3", "4", "5", "R" };
     float bw = (p1.x - bx - fs * 1.6f) / 6.0f;
     for (int k = 0; k < 6; k++) {
@@ -380,7 +395,7 @@ static void draw_card_help(void)
         std::string who;
         for (int m = 0; m < npar; m++)
             if (alive(m) && (rb(G_FAR2E38, (u16)(0x082c + m * 0x14 + (s >> 3))) & (0x80 >> (s & 7)))) { if (!who.empty()) who += ", "; who += name_of(m); }
-        lines.push_back({ gamedata.saints[s].name, who.empty() ? "nobody knows" : who });
+        lines.push_back({ gamedata.saints[s].name, who.empty() ? "没有人知道" : who });
         ids.push_back(s);
     }
     int nsaints = (int)lines.size();
@@ -394,7 +409,7 @@ static void draw_card_help(void)
             for (int i = 0; i < k && i < 64; i++) if ((rw(G_FAR2E38, G_ITEM(m, i)) & 0xfff) == it) n += rb(G_FAR2E38, (u16)(G_ITEM(m, i) + 4));
             if (n) { if (!who.empty()) who += ", "; who += name_of(m) + (n > 1 ? " (" + std::to_string(n) + ")" : ""); }
         }
-        lines.push_back({ game_text(gamedata.items[it].name.c_str(), 64), who.empty() ? "nobody has one" : who });
+        lines.push_back({ game_text(gamedata.items[it].name.c_str(), 64), who.empty() ? "没有人拥有" : who });
         ids.push_back(1000 + it);
     }
     if (lines.empty()) return;
@@ -403,7 +418,7 @@ static void draw_card_help(void)
     ImFont *f = ui_font_overlay;
     ImVec2 tl = g2w(0, 0), br = g2w(317, 197);
     float base = (br.y - tl.y) / 197.0f * 7.6f; if (base < 15) base = 15;
-    const char *hs = "Saints who help here", *hi = "Items that help here";
+    const char *hs = "在此提供帮助的圣人", *hi = "在此提供帮助的物品";
     int nrows = (int)lines.size() + (nsaints ? 1 : 0) + (nsaints < (int)lines.size() ? 1 : 0);
     float size = base, w = 0, h = 0, gapx = 0, padx = 0, pady = 0, lh = 0;
     ImVec2 p0, p1;
@@ -451,6 +466,7 @@ static void draw_card_help(void)
  * then). saints_known (far 2e38:082c, 20 bytes per member) is watched; a bit or two
  * appearing while no game is being loaded or made is a saint learned. */
 #include "../runtime/dispatch.h"
+
 static u8 sk_prev[5][20]; static int sk_have, learned_saint = -1, learned_by = -1; static u32 learned_t;
 static void watch_saints(void)
 {
@@ -475,7 +491,7 @@ static void draw_learned(void)
     float a = age < 11500 ? 1.0f : (12500 - age) / 1000.0f;
     const Saint &t = gamedata.saints[learned_saint];
     char who[16] = ""; if (learned_by >= 0) g_str(G_DGROUP, (u16)(G_MEMBER(learned_by) + G_M_SHORTNAME), who, sizeof who);
-    std::string head = (who[0] ? game_text(who, sizeof who) + " learned of " : std::string("Learned of ")) + t.name;
+    std::string head = (who[0] ? game_text(who, sizeof who) + "了解到" : std::string("了解到")) + t.name;
     ImFont *f = ui_font_overlay;
     ImVec2 tl = g2w(0, 0), br = g2w(317, 197);
     float size = (br.y - tl.y) / 197.0f * 6.8f; if (size < 15) size = 15;
@@ -521,7 +537,7 @@ static void draw_shop_info(void)
     static int tip_log = getenv("DL_TIP_LOG") != 0;
     static std::string last_log;
     auto tlog = [&](const std::string &m) { if (tip_log && m != last_log) { last_log = m; fprintf(stderr, "tip: %s\n", m.c_str()); } };
-    if (!ui_shop_info || (gm != GM_SCREEN && gm != GM_CARD) || !hdtext_mode || !gamedata.loaded || config_get_int("original", 0)) { tlog("off, mode " + std::to_string(gm)); return; }
+    if (!ui_shop_info || (gm != GM_SCREEN && gm != GM_CARD) || !hdtext_mode || !gamedata.loaded || config_get_int("original", 0)) { tlog("关闭，模式" + std::to_string(gm)); return; }
     static std::vector<std::string> item_keys, short_keys, saint_keys, formula_keys;
     if (item_keys.size() != gamedata.items.size()) {
         item_keys.clear(); short_keys.clear();
@@ -536,7 +552,7 @@ static void draw_shop_info(void)
         const HdRun &r = hdtext_runs[i];
         if (my >= r.y - 1 && my < r.y + r.h + 2 && mx >= r.x - 2 && mx < r.x + r.w + 2) hit = i;
     }
-    if (hit < 0) { tlog("nothing at " + std::to_string(mx) + "," + std::to_string(my)); return; }
+    if (hit < 0) { tlog("什么都没有" + std::to_string(mx) + "," + std::to_string(my)); return; }
     /* the runs of that line next to each other (one column of the screen), left to right */
     int row = hdtext_runs[hit].y;
     std::vector<const HdRun *> on;
@@ -566,7 +582,7 @@ static void draw_shop_info(void)
     }
     if (item < 0) for (size_t i = 0; i < saint_keys.size() && saint < 0; i++) if (key == saint_keys[i]) saint = (int)i;
     if (item < 0 && saint < 0) for (size_t i = 0; i < formula_keys.size() && formula < 0; i++) if (key == formula_keys[i]) formula = (int)i;
-    tlog("'" + t + "' -> '" + key + "' item " + std::to_string(item) + " saint " + std::to_string(saint) + " formula " + std::to_string(formula));
+    tlog("'" + t + "' -> '" + key + "' 项目" + std::to_string(item) + " saint " + std::to_string(saint) + " formula " + std::to_string(formula));
     if (item < 0 && saint < 0 && formula < 0) return;
     ImVec2 p = g2w((float)mx, (float)my);
     ImGuiIO &io = ImGui::GetIO();
@@ -611,7 +627,7 @@ static void show_tip(ImVec2 pos, ImVec2 pivot, int item, int saint, int formula)
             std::string nm = game_text(d->name.c_str(), d->name.size());
             ImGui::TextUnformatted(nm.c_str());
             bool wearable = d->kind == K_WEAPON || d->kind == K_MISSILE || d->kind == K_ARMOR || d->kind == K_SHIELD;   /* (only equipped things count toward the load) */
-            ImGui::TextDisabled("%s%s", kind_name_one(d->kind), wearable && d->weight ? (", weight " + std::to_string(d->weight) + " when equipped").c_str() : "");
+            ImGui::TextDisabled("%s%s", kind_name_one(d->kind), wearable && d->weight ? ("，重量" + std::to_string(d->weight) + "装备时").c_str() : "");
             ui_item_details(d, item);
         } else if (saint >= 0) {
             const Saint &st = gamedata.saints[saint];
@@ -622,7 +638,7 @@ static void show_tip(ImVec2 pos, ImVec2 pivot, int item, int saint, int formula)
                     char n[16]; g_str(G_DGROUP, (u16)(G_MEMBER(m) + G_M_SHORTNAME), n, sizeof n);
                     if (!who.empty()) who += ", "; who += game_text(n, sizeof n);
                 }
-            ImGui::TextDisabled("%s", who.empty() ? "Nobody in the party knows this saint" : ("Known to " + who).c_str());
+            ImGui::TextDisabled("%s", who.empty() ? "队伍里没人认识这位圣人" : ("为……所知" + who).c_str());
             ImGui::Separator();
             ui_saint_info(saint);
         } else {
@@ -630,8 +646,8 @@ static void show_tip(ImVec2 pos, ImVec2 pivot, int item, int saint, int formula)
             if (formula < (int)gamedata.formulas.size()) {
                 const Formula &F = gamedata.formulas[formula];
                 const ItemDef *pd = 95 + formula / 3 < (int)gamedata.items.size() ? &gamedata.items[95 + formula / 3] : nullptr;
-                static const char *RISK[3] = { "low risk", "medium risk", "high risk" };
-                ImGui::TextDisabled("%s - mystic number %d, %s", pd ? game_text(pd->name.c_str(), pd->name.size()).c_str() : "", F.mystic, RISK[F.risk >= 0 && F.risk < 3 ? F.risk : 0]);
+                static const char *RISK[3] = { "低风险", "中等风险", "高风险" };
+                ImGui::TextDisabled("%s - 神秘数字%d，%s", pd ? game_text(pd->name.c_str(), pd->name.size()).c_str() : "", F.mystic, RISK[F.risk >= 0 && F.risk < 3 ? F.risk : 0]);
                 /* its place among the potion's three formulae (by difficulty) */
                 int base = formula / 3 * 3, rank = 0, n3 = 0;
                 for (int k = base; k < base + 3 && k < (int)gamedata.formulas.size(); k++) {
@@ -640,10 +656,10 @@ static void show_tip(ImVec2 pos, ImVec2 pivot, int item, int saint, int formula)
                     if (gamedata.formulas[k].mystic < F.mystic || (gamedata.formulas[k].mystic == F.mystic && k < formula)) rank++;
                 }
                 if (n3 == 3) {
-                    static const char *ORD[3] = { "The easiest", "The middle", "The hardest" };
+                    static const char *ORD[3] = { "最容易", "中等难度", "最难" };
                     std::string others;
                     for (int k = base; k < base + 3; k++) if (k != formula && k < (int)gamedata.formula_names.size()) others += (others.empty() ? "" : " and ") + gamedata.formula_names[k];
-                    ImGui::TextDisabled("%s of the three formulae for %s (the others: %s).", ORD[rank], pd ? game_text(pd->name.c_str(), pd->name.size()).c_str() : "it", others.c_str());
+                    ImGui::TextDisabled("三种配方中的%s用于%s（其余：%s）。", ORD[rank], pd ? game_text(pd->name.c_str(), pd->name.size()).c_str() : "it", others.c_str());
                 }
                 {
                     std::string who; int np = (s16)g_rw(G_PARTY_SIZE);
@@ -651,7 +667,7 @@ static void show_tip(ImVec2 pos, ImVec2 pivot, int item, int saint, int formula)
                         char n[16]; g_str(G_DGROUP, (u16)(G_MEMBER(m) + G_M_SHORTNAME), n, sizeof n);
                         if (!who.empty()) who += ", "; who += game_text(n, strlen(n));
                     }
-                    ImGui::TextDisabled("%s", who.empty() ? "Nobody in the party knows this formula." : ("Known to " + who + ".").c_str());
+                    ImGui::TextDisabled("%s", who.empty() ? "队伍中无人知道这个配方。" : ("为……所知" + who + ".").c_str());
                 }
                 ImGui::Separator();
                 ImGui::TextWrapped("%s", F.text.c_str());
@@ -666,9 +682,9 @@ static void show_tip(ImVec2 pos, ImVec2 pivot, int item, int saint, int formula)
                     if (g.count > 0 && have / g.count < batches) batches = have / g.count;
                     std::string nm = g.item >= 0 && g.item < (int)gamedata.items.size() ? game_text(gamedata.items[g.item].name.c_str(), 64) : std::string("?");
                     ImGui::TextColored(have >= g.count ? ImVec4(0.2f, 0.12f, 0.06f, 1) : ImVec4(0.65f, 0.15f, 0.10f, 1), "%d %s", g.count, nm.c_str());
-                    ImGui::SameLine(); ImGui::TextDisabled("(carried: %d)", have);
+                    ImGui::SameLine(); ImGui::TextDisabled("（携带：%d）", have);
                 }
-                if (!F.ingr.empty()) ImGui::TextDisabled(batches > 0 ? "Enough for %d batch%s." : "Not enough ingredients for a batch.", batches, batches == 1 ? "" : "es");
+                if (!F.ingr.empty()) ImGui::TextDisabled(batches > 0 ? "足以制作%d批%s。" : "制作一批所需的材料不足。", batches, batches == 1 ? "" : "es");
             }
         }
         ImGui::PopTextWrapPos();
@@ -692,8 +708,8 @@ static void draw_loot_buttons(void)
     ImFont *f = ui_font_game[ui_game_font] ? ui_font_game[ui_game_font] : ui_font_text;
     ImVec2 a = g2w(0, 0), b = g2w(0, 7);
     float size = (b.y - a.y) * 1.05f;
-    static const char *L[2][2] = { { "A", "  Take all of it" }, { "S", "  Share it out among the party" } };
-    static const char *B[2][2] = { { "A", "  Sell the whole stack" }, { "T", "  Buy ten" } };
+    static const char *L[2][2] = { { "A", "全部拿走" }, { "S", "在队伍中平均分配" } };
+    static const char *B[2][2] = { { "A", "卖掉整堆" }, { "T", "买十个" } };
     const char *(*T)[2] = loot_active ? L : B;
     ImDrawList *dl = ovl_list();
     ImVec2 mp = ImGui::GetIO().MousePos;
@@ -727,15 +743,15 @@ static void draw_creation_guide(void)
     if (!ui_creation_guide || config_get_int("original", 0) || !hdart_on_screen("CHARGEN")) return;
     int st = (s16)g_rw(GV_create_state);
     static const char *T[5] = {
-        "Making a character: name and gender first, then the family background, the attributes, and "
-        "one profession after another, five years each, until you begin adventuring. Older characters "
-        "know more, but age costs attributes.",
-        "The family decides the first attributes and skills. The right side shows what the background "
-        "under the pointer would give; EP (top right) are the points to spend next.",
-        "Spend the EP on attributes: pick one, then + or -. Endurance and Strength are the hit points (and together set how much a character can carry); Agility counts in battle; Perception, Intelligence and Charisma serve many skills.",
-        "Choose the profession for the next five years. The right side shows the one under the pointer: the EP it gives (top), the attributes after it, and for each skill gain:room, that is, what it adds at once and how many EP that skill can still take. Some professions open only after others, or need certain attributes.",
-        "Spend the EP on skills: pick one, then + or -. A skill takes at most the room shown after the "
-        "colon. Then choose the next profession, or begin adventuring.",
+        "创建角色：先写姓名和性别，再写家庭背景、属性，以及"
+        "一项接一项的职业，每项五年，直到开始冒险。年长的角色"
+        "更了解情况，但年龄会降低属性。",
+        "家庭决定最初的基础属性和技能。右侧显示指针下的背景"
+        "所能提供的效果；EP（右上角）是接下来可以花费的点数。",
+        "将EP用于属性：选一个，然后+或-。耐力和力量决定生命值（并共同决定角色能携带多少重量）；敏捷在战斗中起作用；感知、智力和魅力则适用于多种技能。",
+        "选择未来五年的职业。右侧显示指针下的职业：它提供的EP（顶部）、之后的属性，以及每项技能获得的“空间”，即一次性增加的数值和该技能还能再获得多少EP。有些职业需在其他职业之后才能解锁，或需要特定的属性。",
+        "将EP用于技能：选一个，然后+或-。一项技能最多只能占用冒号后显示的“空间”。"
+        "接着选择下一个职业，或开始冒险。",
     };
     if (st < 0 || st > 4) return;
     ImVec2 a = g2w(3, 4), b = g2w(58, 196);

@@ -24,21 +24,21 @@ std::string ns_item_line(int id, int q)
     if (!d) return "";
     if (d->type >= 95 && d->type <= 97) {                  /* a shield: its defence, by size and quality (mods/gamemodel.h) */
         if (q < 0) q = d->quality;
-        return "Defense " + std::to_string(gm_shield_defence(d->type, q, 0)) + " against blows, " + std::to_string(gm_shield_defence(d->type, q, 1)) +
-               " against shots and throws; unusable with a two-handed weapon";
+        return "防御" + std::to_string(gm_shield_defence(d->type, q, 0)) + "抵抗打击，" + std::to_string(gm_shield_defence(d->type, q, 1)) +
+               "抵抗射击与投掷；双手武器无法使用";
     }
     if (d->type >= 0 && d->type <= 33 && (d->kind == K_WEAPON || d->kind == K_MISSILE)) {
         int w = d->type, sk = rb(G_FAR20A5, (u16)(0x75ac + w)), cp = rb(G_FAR20A5, (u16)(0x76a8 + w)), dmg = rb(G_FAR20A5, (u16)(0x76e7 + w));
         int tm = rb(G_FAR20A5, (u16)(0x7669 + w)), rl = rb(G_FAR20A5, (u16)(0x77e3 + w));
-        std::string r = (sk < 7 ? "{" + std::string(gm_skill_short(sk)) + "}" : std::string("?")) + ", " + ((cp >> 4) >= 2 ? "two hands" : "one hand") + ", damage " + std::to_string(dmg) + ", penetration " + std::to_string(cp & 15);
-        if (tm) r += ", time for a blow " + std::to_string(tm);
-        if (rl) r += std::string(", time to ") + (w >= 30 ? "reload " : w >= 27 ? "draw and loose " : "throw ") + std::to_string(rl);
+        std::string r = (sk < 7 ? "{" + std::string(gm_skill_short(sk)) + "}" : std::string("?")) + ", " + ((cp >> 4) >= 2 ? "双手" : "一手") + "，伤害" + std::to_string(dmg) + "，穿透" + std::to_string(cp & 15);
+        if (tm) r += "，攻击所需时间" + std::to_string(tm);
+        if (rl) r += std::string("，准备与释放所需时间") + (w >= 30 ? "reload " : w >= 27 ? "覆盖身体与手臂" : "throw ") + std::to_string(rl);
         return r;
     }
     if (d->type >= 67 && d->type <= 84) {
         static const char *HN[6] = { "none", "soft", "stiff", "scale", "mail", "plate" };
         int h = rb(G_FAR20A5, (u16)(0x781e + d->type));
-        return std::string(d->type <= 75 ? "Covers body and arms" : "Covers the legs") + ", hardness " + std::to_string(h) + " (" + (h >= 0 && h < 6 ? HN[h] : "?") + ")";
+        return std::string(d->type <= 75 ? "，硬度" : "覆盖腿部") + "制作更佳" + std::to_string(h) + " (" + (h >= 0 && h < 6 ? HN[h] : "?") + ")";
     }
     return "";
 }
@@ -60,34 +60,34 @@ std::string ns_item_compare(int id, int q, int m)
             if (gm_item(m, i, &it) && it.type == t && it.qual == wq) { const ItemDef *w = ns_itemdef(it.id); return w ? ns_gtext(w->plain.c_str()) : ns_item_name(it.id); }   /* (armour: "Scale") */
         return std::string("?");
     };
-    auto cmpq = [&](int a, int c) { return a > c ? "better made" : a < c ? "less well made" : "as well made"; };
+    auto cmpq = [&](int a, int c) { return a > c ? "制作较差" : a < c ? "制作尚可" : "制作良好"; };
     static const char *HN[6] = { "none", "soft", "stiff", "scale", "mail", "plate" };
     if (d->type >= 67 && d->type <= 84) {
         bool vital = d->type <= 75;
         int t, wq, h = rb(G_FAR20A5, (u16)(0x781e + d->type));
-        if (!slot(vital ? 0x37 : 0x38, vital ? 0x3b : 0x3c, t, wq) || t < 67 || t > 84) return who + " wears nothing there.";
+        if (!slot(vital ? 0x37 : 0x38, vital ? 0x3b : 0x3c, t, wq) || t < 67 || t > 84) return who + "在那里不穿任何装备。";
         int wh = rb(G_FAR20A5, (u16)(0x781e + t));
         std::string n = name_of(t, wq);
         int s1 = (h > wh) - (h < wh), s2 = (q > wq) - (q < wq);
-        return who + " wears " + n + " (" + (wh >= 0 && wh < 6 ? HN[wh] : "?") + ", " + std::to_string(wq) + "q): this is " +
-               (s1 > 0 ? "harder" : s1 < 0 ? "softer" : "as hard") + (s1 == s2 ? " and " : " but ") + cmpq(q, wq) + ".";
+        return who + " wears " + n + " (" + (wh >= 0 && wh < 6 ? HN[wh] : "?") + ", " + std::to_string(wq) + "q): 这是" +
+               (s1 > 0 ? "harder" : s1 < 0 ? "softer" : "如此坚硬") + (s1 == s2 ? " and " : " but ") + cmpq(q, wq) + ".";
     }
     if (d->kind == K_SHIELD) {
         int t, wq;
-        if (!slot(0x48, 0x47, t, wq)) return who + " carries no shield.";
-        return who + " carries " + name_of(t, wq) + " (" + std::to_string(wq) + "q): this is " + cmpq(q, wq) + ".";
+        if (!slot(0x48, 0x47, t, wq)) return who + "不携带盾牌。";
+        return who + " carries " + name_of(t, wq) + " (" + std::to_string(wq) + "q): 这是" + cmpq(q, wq) + ".";
     }
     if (d->type >= 0 && d->type <= 62 && (d->kind == K_WEAPON || d->kind == K_MISSILE)) {
         int w = d->type, sk = rb(G_FAR20A5, (u16)(0x75ac + w)), smin = rb(G_FAR20A5, (u16)(0x7765 + w));
         bool missile = sk == 5 || sk == 6;
-        std::string r = who + "'s " + (sk < 7 ? "{" + std::string(gm_skill_short(sk)) + ":" + std::to_string(gm_member_skill(m, sk)) + "}" : std::string("skill: ?")) + ".";
+        std::string r = who + "'s " + (sk < 7 ? "{" + std::string(gm_skill_short(sk)) + ":" + std::to_string(gm_member_skill(m, sk)) + "}" : std::string("技能：？")) + ".";
         int str, strmax; gm_member_attr(m, 1, &str, &strmax);
-        if (smin > 0 && strmax < smin) r += " Too heavy: it needs {Strength:" + std::to_string(smin) + "}.";
+        if (smin > 0 && strmax < smin) r += "太重：需要 {力量：" + std::to_string(smin) + "}.";
         int t, wq;
         if (slot(missile ? 0x0e : 0x3d, missile ? 0x46 : 0x44, t, wq) && t <= 62) {
             int cp = rb(G_FAR20A5, (u16)(0x76a8 + t)), dmg = rb(G_FAR20A5, (u16)(0x76e7 + t));
-            r += " In hand now: " + name_of(t, wq) + " (damage " + std::to_string(dmg) + ", penetration " + std::to_string(cp & 15) + ", " + std::to_string(wq) + "q).";
-        } else r += missile ? " No missile weapon equipped." : " Nothing in hand now.";
+            r += "现在手中持有：" + name_of(t, wq) + " (damage " + std::to_string(dmg) + "，穿透" + std::to_string(cp & 15) + ", " + std::to_string(wq) + "q).";
+        } else r += missile ? "未装备远程武器。" : "现在手中空无一物。";
         return r;
     }
     return "";
@@ -118,9 +118,9 @@ std::string ns_item_compare_party(int id, int q)
             if (h > wh || (h == wh && q > wq)) better.push_back(nm(m));
         }
         std::string r;
-        if (!better.empty()) r = "Harder or better made than what " + join(better) + (better.size() == 1 ? " wears" : " wear") + " there.";
-        if (!none.empty()) r += (r.empty() ? "" : " ") + join(none) + (none.size() == 1 ? " wears" : " wear") + " nothing there.";
-        return r.empty() ? "Everyone wears as good or better there." : r;
+        if (!better.empty()) r = "比……更坚硬或制作更好" + join(better) + (better.size() == 1 ? " wears" : " wear") + " there.";
+        if (!none.empty()) r += (r.empty() ? "" : " ") + join(none) + (none.size() == 1 ? " wears" : " wear") + "在那里什么都没有。";
+        return r.empty() ? "每个人在那里都穿着同样好或更好的装备。" : r;
     }
     if (d->kind == K_SHIELD) {
         std::vector<std::string> better, none;
@@ -130,9 +130,9 @@ std::string ns_item_compare_party(int id, int q)
             if (t < 0) none.push_back(nm(m)); else if (q > wq) better.push_back(nm(m));
         }
         std::string r;
-        if (!better.empty()) r = "Better made than the shield of " + join(better) + ".";
-        if (!none.empty()) r += (r.empty() ? "" : " ") + join(none) + (none.size() == 1 ? " carries" : " carry") + " no shield.";
-        return r.empty() ? "Everyone's shield is as good or better." : r;
+        if (!better.empty()) r = "比……的盾牌制作更好" + join(better) + ".";
+        if (!none.empty()) r += (r.empty() ? "" : " ") + join(none) + (none.size() == 1 ? " carries" : " carry") + "没有盾牌。";
+        return r.empty() ? "每个人的盾牌都同样好或更好。" : r;
     }
     if (d->type >= 0 && d->type <= 62 && (d->kind == K_WEAPON || d->kind == K_MISSILE)) {
         int w = d->type, sk = rb(G_FAR20A5, (u16)(0x75ac + w)), smin = rb(G_FAR20A5, (u16)(0x7765 + w));
@@ -147,7 +147,7 @@ std::string ns_item_compare_party(int id, int q)
         std::string r = "{" + std::string(gm_skill_short(sk)) + "}: ";
         for (size_t i = 0; i < v.size(); i++) r += (i ? ", " : "") + v[i].second + " " + std::to_string(v[i].first);
         r += ".";
-        if (!heavy.empty()) r += " Too heavy for " + join(heavy) + " (it needs {Strength:" + std::to_string(smin) + "}).";
+        if (!heavy.empty()) r += "对……来说太重了" + join(heavy) + "（需要 {力量：" + std::to_string(smin) + "}).";
         return r;
     }
     return "";
@@ -166,7 +166,7 @@ std::string ns_item_encounters(int id, ImU32 *col)
     static const unsigned char CARDS[22] = { 61, 42, 54, 5, 15, 2, 73, 41, 11, 7, 0, 1, 0, 0, 1, 6, 1, 1, 0, 0, 1, 6 };
     int n = CARDS[id - 95];
     if (col) *col = ns_tier_colour(n);
-    return n >= 20 ? "Many encounters let you use it." : n >= 5 ? "Some encounters let you use it." : n >= 1 ? "A few encounters let you use it." : "No encounter asks for it.";
+    return n >= 20 ? "许多遭遇战允许你使用它。" : n >= 5 ? "有些遭遇战允许你使用它。" : n >= 1 ? "少数遭遇战允许你使用它。" : "没有任何遭遇战要求它。";
 }
 /* what a thing is good for, where that is not plain from its kind (ingredients: the potions made
  * with it; the general goods: what in the game asks for them). Read from the game's code: of the
@@ -180,20 +180,20 @@ std::string ns_item_use(int id)
     if (d->kind == K_INGREDIENT) return "";                 /* (the potions it goes into are pictures: ns_ingredient_row) */
     if (id >= 95 && id <= 116) return ns_potion_effect(id);
     switch (id) {
-    case 0x3b: return "For climbing: over a town's walls at night, into a castle and the like, the best climber goes up first and lets it down for the others (without one, each climbs alone). One in the party is enough.";
-    case 0x40: return "For picking locks: shops at night, doors, chests, a cell. One in the party is enough.";
-    case 0x41: case 0x42: return "St. Cecilia, the patron of music, raises the party's standing in a town greatly for a member who carries an instrument.";
+    case 0x3b: return "用于攀爬：在夜间翻越城镇的城墙、进入城堡等场合，最擅长攀爬的队员会率先上去，再把绳索放下来供其他人使用（如果没有绳索，每个人只能独自攀爬）。队伍中有一人即可。";
+    case 0x40: return "用于开锁：夜间店铺、房门、箱子、牢房等。队伍中有一人即可。";
+    case 0x41: case 0x42: return "音乐守护圣人圣塞西莉亚，会让携带乐器的队员在城镇中的声望大幅提升。";
     case 0x39: case 0x3a: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
-        return "Nothing in the game asks for one (no card, no saint): it is worth only what it sells for.";
+        return "游戏中没有任何东西需要它（既不要卡片，也不要圣人）：它的价值仅取决于出售价格。";
     /* the quest things and trophies (read from the cards' scripts: add_item, count_items, take_item) */
     case 0x8c: case 0x8d: case 0x8e: case 0x8f: case 0x90: case 0x91:
-        return "One of the Six Keys: the gate to the last chamber of the Baphomet's lair opens only for a party that carries all six. Keep it.";
-    case 0x92: return "A trophy: the boars' tusks, thought to be good-luck charms. Nothing in the game asks for them and no shop buys them.";
-    case 0x93: return "A trophy. Nothing in the game asks for it.";
-    case 0x94: return "A skeleton near a cemetery wants its bone back: give it this and it will talk with you.";
-    case 0x95: return "The dragon's gold cup, taken back from the thief: brandish it before the dragon and it will not breathe fire on its treasure.";
+        return "六把钥匙之一：巴佛墨特巢穴最后一间密室的入口，只有携带全部六把钥匙的队伍才能打开。请妥善保管。";
+    case 0x92: return "一件战利品：野猪獠牙，被认为能带来好运。游戏中没有任何东西要求它，也没有商店收购。";
+    case 0x93: return "一件战利品。游戏中没有任何东西要求它。";
+    case 0x94: return "墓地旁的一具骷髅想要找回自己的骨头：把它交给骷髅，它就会与你交谈。";
+    case 0x95: return "从盗贼手中夺回的龙之金杯：在龙面前挥舞它，龙就不会对其宝藏喷火。";
     }
-    if (id >= 129 && id <= 139) return "Wanted by whoever sent you to fetch it: bring it to them (the quests on the world map, M, say who and where).";
+    if (id >= 129 && id <= 139) return "被派你去取回的人所追寻：把它送还给他们（世界地图上的任务，M标记处会注明是谁以及在哪里）。";
     return "";
 }
 
@@ -216,8 +216,8 @@ float ns_ingredient_row(NsDraw &P, float x0, float y, float x1, int id)
         uses[k].need[f % 3] = need;
         for (int m = 0; m < gm_party_size() && m < 5; m++) if (gm_member_present(m) && gm_knows_formula(m, f)) uses[k].known[f % 3] = true;
     }
-    if (uses.empty()) { P.text(P.fo, NsDraw::FS_BODY, x0, y, soft, "No formula uses it."); return 7; }
-    const char *lab = "Goes into";
+    if (uses.empty()) { P.text(P.fo, NsDraw::FS_BODY, x0, y, soft, "没有配方使用它。"); return 7; }
+    const char *lab = "进入";
     P.text(P.fo, NsDraw::FS_SMALL, x0, y + 3.0f, soft, lab);
     float x = x0 + P.width(P.fo, NsDraw::FS_SMALL, lab) + 3, sz = 9.0f;
     float step = fminf(11.0f, (x1 - x) / (float)uses.size());
@@ -242,15 +242,15 @@ float ns_ingredient_row(NsDraw &P, float x0, float y, float x1, int id)
         line = ns_item_name(u.potion) + ": ";
         bool first = true;
         for (int g = 0; g < 3; g++) if (u.need[g]) {
-            char b[64]; snprintf(b, sizeof b, "%sgrade %d (%d a batch%s)", first ? "" : ", ", g + 1, u.need[g], u.known[g] ? ", known" : "");
+            char b[64]; snprintf(b, sizeof b, "%s等级 %d (%d 个配方%s)", first ? "" : ", ", g + 1, u.need[g], u.known[g] ? "，已知" : "");
             line += b; first = false;
         }
         int other = 0; for (int g = 0; g < 3; g++) if (!u.need[g]) other++;
-        if (other) line += other == 2 ? "; the other two grades don't use it" : "; the other grade doesn't use it";
+        if (other) line += other == 2 ? "；另外两个等级不使用它" : "；另一个等级也不使用它";
     } else {
         int nk = 0; for (const Use &u : uses) nk += u.known[0] || u.known[1] || u.known[2];
-        line = "Dots: the grades (1 to 3) whose formula uses it, gold where the party knows it. Point at a potion for more.";
-        if (!nk) line = "Nobody in the party knows a formula with it. Dots: the grades (1 to 3) that use it; point at a potion for more.";
+        line = "点击：那些配方使用它的等级（1至3级），以及队伍已知的黄金所在位置。点击药剂可查看更多信息。";
+        if (!nk) line = "队伍中无人知晓含有它的配方。点击：那些使用它的等级（1至3级）；点击药剂可查看更多信息。";
     }
     return sz + 4.2f + P.para(P.fo, NsDraw::FS_SMALL, x0, y + sz + 4.2f, x1 - x0, hov >= 0 ? ink : NsDraw::INK_DIM, line);
 }
@@ -263,41 +263,41 @@ float ns_ingredient_row(NsDraw &P, float x0, float y, float x1, int id)
 std::string ns_potion_effect(int id)
 {
     bool fixed = fix_is_on("potions") != 0;
-    std::string day = fixed ? " for about a day (19 to 21 hours)." : " permanently, adding up with the next dose.";
+    std::string day = fixed ? "可持续约一天（19至21小时）。" : "永久生效，并与下一次剂量叠加。";
     switch (id) {
-    case 95: return "Thrown in a battle: a reeking cloud (up to 4 by 4 paces). Whoever it hits loses half their {Agility}, {Perception} and weapon skills and everyone else in the cloud a quarter, allies and enemies alike, while it lasts (longer at higher grades).";
-    case 96: return "Thrown: blinding powder. The target loses a third of their {Agility}, {Perception} and weapon skills and is blinded (cannot shoot, throw or take orders well); those beside them lose a quarter. Lasts longer at higher grades.";
-    case 97: return "Thrown: a cloud of black smoke. Shots through any cloud hit far less often (a fifth of the chance), and fighting from inside one costs 15 to hit. Lasts longer at higher grades. (The battle menu never offers it to the party: it is used on cards, and enemies throw it.)";
-    case 98: return "Thrown: itching powder. Weapon skills fall by five times the armor worn on the body and limbs: the heavier the armor, the worse the itch. Lasts longer at higher grades.";
-    case 99: return "Thrown: acid that eats the target's armor, lowering its quality by 4, 6 or 8 (grade 1, 2, 3) plus up to 8 more at random; armor eaten to nothing is destroyed, and where there is no armor (or damage is left over) it wounds the target. Also dissolves locks.";
-    case 100: return "Thrown: a poison cloud (up to 2 by 2 paces) whose wounds no armor stops, worse for weaker targets; stronger at higher grades.";
-    case 101: return "Thrown: a blinding flash. The target and every enemy of the thrower on that floor who faces it are blinded for a while (longer at higher grades); the thrower's allies are spared.";
-    case 102: return "Thrown: it bursts with great force: damage 4, 6 or 8 (grade 1, 2, 3) plus up to 8 more at random, penetration 6, 7 or 8 on the target and less around it; it also wears the armor down by a quarter of the damage.";
-    case 103: return "Thrown: burning pitch that no armor stops: damage 4, 6 or 8 (grade 1, 2, 3) plus up to 6 more at random, a quarter of that further off, minus a tenth of the armor's quality (and of Firewall's protection); it also wears the armor down.";
-    case 104: return "Thrown: a pool of sticky sludge (up to 4 by 4 paces) that slows whoever crosses it to 1/2, 3/8 or 1/4 of their pace (grade 1, 2, 3), for a long while.";
-    case 105: if (fix_is_on("oilweapons")) return std::string("Used (P in the inventory) by a member: +3, +4 or +5 damage (grade 1, 2, 3) on every hit they land with any weapon except an impact weapon or a flail. Damage only, not the chance to hit;") + day;
-              return "Used (P in the inventory) by a member: +3, +4 or +5 damage (grade 1, 2, 3) on every hit they land, with any weapon: bows, guns, impact weapons and fists too. Damage only, not the chance to hit;" + day;
-    case 106: if (fix_is_on("oilweapons")) return "Used by a member: +3, +4 or +5 penetration (grade 1, 2, 3) on every hit they land with a blade or a polearm, " + std::string(fixed ? "up to 15 in all" : "past 15 the penetration starts again from 0") + ";" + day;
-              return "Used by a member: +3, +4 or +5 penetration (grade 1, 2, 3) on every hit they land, with any weapon, " + std::string(fixed ? "up to 15 in all" : "past 15 the penetration starts again from 0 (a bow's 6 + 10 hits as 0)") + ";" + day;
-    case 107: if (fix_is_on("greatpower")) return std::string("Used by a member: the weapon in hand counts as 14, 22 or 30 points higher in quality (grade 1, 2, 3; up to 99), ") + (fix_is_on("oilweapons") ? "if it is an impact weapon, a flail or a handgun" : "including bows, guns and fists") + ", for about a day (19 to 21 hours). Each 10 points of quality add one step of damage. A second dose adds to the first.";
-              return "Used by a member, on every hit they land, with any weapon: grade 1 +14 penetration; grade 2 +1 damage and +6 penetration; grade 3 +1 damage and +14 penetration. " + std::string(fixed ? "Penetration counts up to 15 in all" : "Penetration past 15 starts again from 0, so grades 1 and 3 lower a bow's penetration") + ";" + day;
-    case 108: return "Used by a member: +14, +22 or +30 (grade 1, 2, 3) to Bows, Thrown Weapons and Missile Devices (up to 99), for about a day (19 to 21 hours). A second dose adds to the first.";
-    case 109: if (fix_is_on("armorday")) return "Used by a member: their armor counts 20, 25 or 30 points better in quality and 1, 2 or 2 levels thicker (grade 1, 2, 3) against every blow and shot, for about a day (19 to 21 hours). A second dose while one is active keeps the stronger.";
-              return "Used by a member: +1, +2 or +3 (grade 1, 2, 3) to their armor against every hit, blow or shot, permanently; doses add up.";
-    case 110: return "Drinking it yields just one florin: it is meant for cards, where an encounter asks for it (to purify, or to make gold).";
+    case 95: return "在战斗中投掷：一团恶臭的烟雾（最大范围可达4乘4格）。被击中的目标将失去一半的{敏捷}、{感知}和武器技能，而烟雾中的所有人——无论敌我——都将损失四分之一，持续时间随等级提高而延长。";
+    case 96: return "投掷：致盲粉末。目标将失去三分之一的{敏捷}、{感知}和武器技能，并陷入失明状态（无法射击、投掷或良好执行指令）；其身旁的人也将损失四分之一。高等级时持续时间更长。";
+    case 97: return "投掷：一团黑烟。穿透任何烟雾的命中率都会大幅降低（仅为原来的五分之一），而在烟雾内部作战则需额外付出15点命中代价。高等级时持续时间更长。（战斗菜单从不向队伍提供此技能：它只用于卡片，且由敌人投掷。）";
+    case 98: return "投掷：瘙痒粉末。武器技能会因身体及四肢上穿戴的护甲重量而下降五倍：护甲越重，瘙痒越严重。高等级时持续时间更长。";
+    case 99: return "投掷：腐蚀性酸液，会侵蚀目标的护甲，使其质量降低4、6或8级（对应1、2、3级），并随机额外降低最多8级；当护甲被完全侵蚀后，目标将被摧毁，若无护甲（或仍有损伤），还会对目标造成伤害。同时还能溶解锁具。";
+    case 100: return "投掷：毒雾（最大范围可达2乘2格），其伤害不受护甲阻挡，对较弱目标尤为致命；高等级时效果更强。";
+    case 101: return "投掷：耀眼的闪光。目标以及该楼层内所有面向它的投掷者之敌都将暂时失明（高等级时持续时间更长）；投掷者的盟友则免受影响。";
+    case 102: return "投掷：以巨大威力爆发：伤害为4、6或8级（对应1、2、3级），并随机额外增加最多8级，对目标的穿透力为6、7或8级，周边区域则相应减弱；同时还会使护甲因伤害而损耗四分之一。";
+    case 103: return "投掷：燃烧的焦油，护甲无法阻挡：伤害为4、6或8级（对应1、2、3级），并随机额外增加最多6级，远处的伤害减半，护甲质量（以及防火墙保护）亦随之降低四分之一；同时还会进一步磨损护甲。";
+    case 104: return "投掷：一团黏稠的泥浆（最大范围可达4乘4格），会使穿越者速度降至平时的1/2、3/8或1/4（对应1、2、3级），且持续时间较长。";
+    case 105: if (fix_is_on("oilweapons")) return std::string("由队员使用（库存栏中P标记）：每次使用任何非撞击类武器或连枷的攻击，均可获得+3、+4或+5的伤害（对应1、2、3级）。仅计算伤害，不计命中几率；") + day;
+              return "由队员使用（库存栏中P标记）：每次使用任何武器——弓箭、枪械、撞击类武器乃至拳头——均可获得+3、+4或+5的伤害（对应1、2、3级）。仅计算伤害，不计命中几率；" + day;
+    case 106: if (fix_is_on("oilweapons")) return "由队员使用：每次使用刀剑或长柄武器的攻击，均可获得+3、+4或+5的穿透力（对应1、2、3级），" + std::string(fixed ? "总计最高可达15" : "超过15后，穿透力将重新从0开始计算") + ";" + day;
+              return "由队员使用：每次使用任何武器的攻击，均可获得+3、+4或+5的穿透力（对应1、2、3级），" + std::string(fixed ? "总计最高可达15" : "过了15点后，穿透力会重新从0开始（弓的6+10次命中算作0）") + ";" + day;
+    case 107: if (fix_is_on("greatpower")) return std::string("队伍成员使用时：手中的武器品质提升14、22或30点（等级1、2、3；最高99），") + (fix_is_on("oilweapons") ? "如果是冲击武器、链枷或手枪" : "包括弓、枪和拳头") + "，持续约一天（19至21小时）。每提升10点品质，伤害就增加一级。第二次服用会叠加第一次的效果。";
+              return "队伍成员每次命中时，无论使用何种武器：等级1增加14点穿透力；等级2增加1点伤害和6点穿透力；等级3增加1点伤害和14点穿透力。" + std::string(fixed ? "穿透力在所有情况下最多累计到15点" : "超过15点后穿透力会重新从0开始，因此等级1和3会降低弓的穿透力") + ";" + day;
+    case 108: return "队伍成员使用时：对弓、投掷武器和投射装置，品质提升14、22或30点（等级1、2、3；最高99），持续约一天（19至21小时）。第二次服用会叠加第一次的效果。";
+    case 109: if (fix_is_on("armorday")) return "队伍成员使用时：其护甲品质提升20、25或30点，厚度增加1、2或2级（等级1、2、3），能抵御每一次打击和射击，持续约一天（19至21小时）。在效果生效期间再次服用，可保持更强的效果。";
+              return "队伍成员使用时：对其护甲的每一次击打、打击或射击，永久增加1、2或3点防护（等级1、2、3）；剂量可叠加。";
+    case 110: return "喝下它只能得到一枚弗罗林：它专门用于卡牌，当遭遇需要时（用于净化或炼金术）。";
     case 111: case 112: case 113: case 114: {
         static const char *const ATT[4] = { "{Perception}", "{Endurance}", "{Strength}", "{Agility}" };
-        static const char *const AMT[4] = { "9-14, 15-21 or 22-29", "6-11, 8-13 or 10-15", "6-11, 8-13 or 10-15", "6-11, 8-15 or 10-17" };
+        static const char *const AMT[4] = { "9-14、15-21或22-29", "6-11、8-13或10-15", "6-11、8-13或10-15", "6-11、8-15或10-17" };
         int a = id - 111;
-        std::string t = std::string("Drunk: ") + ATT[a] + " up by " + AMT[a] + " (grade 1, 2, 3) for about a day: the current value rises, past the maximum if need be; the maximum itself does not change. ";
-        if (a == 1 || a == 2) t += std::string("On a wounded member it heals: ") + (fix_is_on("blessing") ? "when it wears off, only the part still above the maximum is lost, so the healing stays." : "but when it wears off the whole amount is taken back, healed or not.");
-        else t += "When it wears off, what it added is lost.";
-        return t + " A second dose while the first is active adds only what goes beyond it.";
+        std::string t = std::string("Drunk: ") + ATT[a] + "提升" + AMT[a] + "（等级1、2、3）持续约一天：当前数值会上升，必要时甚至超过最大值；但最大值本身不会改变。";
+        if (a == 1 || a == 2) t += std::string("对受伤的队员有治愈作用：") + (fix_is_on("blessing") ? "效果消退时，只会失去仍高于最大值的部分，因此治愈效果得以保留。" : "但当效果完全消退时，全部数值都会被收回，无论是否已治愈。");
+        else t += "效果消退时，所增加的部分将不复存在。";
+        return t + "第二次服用在第一次效果仍在时，只会叠加超出部分。";
     }
-    case 115: return "Drunk: permanently heals 50, 70 or 90% of the {Strength} lost to wounds (grade 1, 2, 3), and raises {Endurance} by 9-14, 15-21 or 22-29 for about 30 hours.";
+    case 115: return "喝下后：永久治愈因伤损失的{力量}的50%、70%或90%（等级1、2、3），并使{耐力}提升9-14、15-21或22-29，持续约30小时。";
     case 116: {
-        if (fix_is_on("armorday")) return "Drunk: protection against fire for about a day (19 to 21 hours): Arabian Fire does 5, 7 or 9 points less (grade 1, 2, 3). A second dose keeps the stronger.";
-        return std::string("Drunk: permanent protection against fire: Arabian Fire does 5, 7 or 9 points less (grade 1, 2, 3).") + (fix_is_on("fireward") ? "" : " It also adds 16 to the armor permanently."); }
+        if (fix_is_on("armorday")) return "喝下后：约一天（19至21小时）的防火保护：阿拉伯之火造成的伤害减少5、7或9点（等级1、2、3）。第二次服用可保持更强的效果。";
+        return std::string("喝下后：永久防火保护：阿拉伯之火造成的伤害减少5、7或9点（等级1、2、3）。") + (fix_is_on("fireward") ? "" : "同时还永久为护甲增加16点防护。"); }
     }
     return "";
 }
@@ -313,8 +313,8 @@ float ns_item_strip(NsDraw &P, float y0, const NsStripThing &t)
     /* (the weight only of what can be worn or wielded: the load is the equipped things' alone,
        equip_weight s031 18e7:140a; what is merely carried weighs nothing) */
     bool wearable = d && (d->kind == K_WEAPON || d->kind == K_MISSILE || d->kind == K_ARMOR || d->kind == K_SHIELD);
-    std::string l1 = std::string(d ? kind_name_one(d->kind) : "") + ns_quality_words(t.id, t.qual) + (wearable ? ", weight " + std::to_string(t.weight) + " when equipped" : std::string());
-    if (t.count > 1) l1 += " each, " + std::to_string(t.count) + " of them";
+    std::string l1 = std::string(d ? kind_name_one(d->kind) : "") + ns_quality_words(t.id, t.qual) + (wearable ? "，重量" + std::to_string(t.weight) + "装备时" : std::string());
+    if (t.count > 1) l1 += " each, " + std::to_string(t.count) + "其中";
     if (!t.status.empty()) l1 += "; " + t.status;
     float y = y0 + 10;
     P.text(P.fo, NsDraw::FS_BODY, 79, y, soft, l1); y += 7;
@@ -338,15 +338,15 @@ float ns_item_strip(NsDraw &P, float y0, const NsStripThing &t)
             int e, st, mx; gm_member_attr(m, 0, &e, &mx); gm_member_attr(m, 1, &st, &mx);
             int cap = e + st, cur = gm_member_load(m);
             auto band = [&](int l) { return 2 * l <= cap ? 0 : l <= cap ? 1 : 2 * l <= 3 * cap ? 2 : 3; };
-            static const char *BAND[4] = { "a light load: no hindrance", "a normal load: blows hand to hand a fifth slower",
-                                           "a heavy load: blows a fifth slower, dodging hampered", "overloaded: blows two thirds slower, little or no dodging" };
+            static const char *BAND[4] = { "轻负荷：无阻碍", "正常负荷：徒手格斗速度慢五分之一",
+                                           "重负荷：格斗速度再慢五分之一，闪避受阻", "超负荷：格斗速度慢三分之二，几乎无法闪避" };
             int b0 = band(cur), b1 = band(after);
             char nm[24]; gm_member_name(m, nm, sizeof nm);
             char line[200];
-            snprintf(line, sizeof line, "Worn by %s: load %d \xc2\xbb %d of %d, %s%s", ns_gtext(nm).c_str(), cur, after, cap, BAND[b1],
-                     b1 > b0 ? " (now " : b1 < b0 ? " (now " : "");
+            snprintf(line, sizeof line, "%s穿着：负载%d » %d / %d，%s%s", ns_gtext(nm).c_str(), cur, after, cap, BAND[b1],
+                     b1 > b0 ? "（现在 " : b1 < b0 ? "（现在 " : "");
             std::string l = line;
-            if (b1 != b0) { static const char *SHORT[4] = { "light", "normal", "heavy", "overloaded" }; l += SHORT[b0]; l += ")"; }
+            if (b1 != b0) { static const char *SHORT[4] = { "轻", "正常", "重", "超载" }; l += SHORT[b0]; l += "）"; }
             ImU32 c = b1 >= 3 ? NsDraw::RED : b1 == 2 ? IM_COL32(150, 80, 20, 255) : after < cur ? NsDraw::GREEN : soft;   /* (as the heading's note: ns_load_note) */
             y += P.para(P.fo, NsDraw::FS_BODY, 79, y, 235, c, l);
         }
@@ -362,7 +362,7 @@ std::string ns_quality_tag(int id, int qual)
     else if (d && d->kind == K_POTION && config_get_int("display.potion_grade", 4) == 2) {
         int ui_potion_tier(int q, int base);
         int t = ui_potion_tier(qual, d->quality);
-        if (t > 0) snprintf(b, sizeof b, "grade %d", t);
+        if (t > 0) snprintf(b, sizeof b, "等级%d", t);
     }
     return b;
 }
@@ -407,8 +407,8 @@ float ns_load_note(NsDraw &P, float x1, float y, int m, int after)
     int b = band(v);
     ImU32 c = b >= 3 ? NsDraw::RED : b == 2 ? IM_COL32(150, 80, 20, 255) : NsDraw::INK_SOFT;
     char t[64];
-    if (after >= 0 && after != cur) snprintf(t, sizeof t, "Load %d \xc2\xbb %d of %d", cur, after, cap);
-    else snprintf(t, sizeof t, "Load %d of %d", cur, cap);
+    if (after >= 0 && after != cur) snprintf(t, sizeof t, "负载%d » %d / %d", cur, after, cap);
+    else snprintf(t, sizeof t, "负载%d / %d", cur, cap);
     if (after >= 0 && after != cur && b == band(cur)) c = after < cur ? NsDraw::GREEN : NsDraw::INK;   /* (the same band: lighter green, heavier ink) */
     float w = P.width(P.fo, NsDraw::FS_SMALL, t);
     P.text(P.fo, NsDraw::FS_SMALL, 0, y, c, t, x1);
@@ -461,7 +461,7 @@ int ns_item_section(int id)
 }
 const char *ns_item_section_name(int sec)
 {
-    static const char *N[6] = { "Equipped", "Potions", "Spare equipment", "Tools and other goods", "Trophies and quest items", "Ingredients" };
+    static const char *N[6] = { "已装备", "药剂", "备用装备", "工具及其他物品", "奖杯与任务物品", "配料" };
     return sec >= 0 && sec < 6 ? N[sec] : "";
 }
 

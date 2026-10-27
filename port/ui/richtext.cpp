@@ -150,7 +150,7 @@ std::string rich_auto(const char *s)
 {
     static std::vector<std::string> names;                      /* every name a key answers to, the longest first */
     if (names.empty()) {
-        static const char *const MORE[] = { "Edged", "Impact", "Thrown", "Latin", "Missile Devices" };
+        static const char *const MORE[] = { "锋利武器", "冲击", "投掷", "拉丁文", "投射装置" };
         for (int k = 0; k < UI_KEY_REP; k++) names.push_back(ui_key_name(k));
         for (const char *m : MORE) names.push_back(m);
         std::sort(names.begin(), names.end(), [](const std::string &a, const std::string &b) { return a.size() > b.size(); });

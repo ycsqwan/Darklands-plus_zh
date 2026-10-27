@@ -53,8 +53,8 @@ bool tips_never_box(bool *never)
     if (!can) *never = false;
     ImGui::BeginDisabled(!can);
     int more = 4 - (launches > 0 ? launches : 1);
-    char l[96]; snprintf(l, sizeof l, "Never show again (this will nag you %d more time%s)", more, more == 1 ? "" : "s");
-    ImGui::Checkbox(can ? "Never show again" : l, never);
+    char l[96]; snprintf(l, sizeof l, "永远不再显示（这将再提醒你%d次%s）", more, more == 1 ? "" : "s");
+    ImGui::Checkbox(can ? "永远不再显示" : l, never);
     ImGui::EndDisabled();
     return *never;
 }
@@ -115,31 +115,31 @@ static void battle_tip(void)
 {
     static bool never;
     bool done = false;
-    if (begin_tip("Battles, with Improved combat", 660)) {
-        ImGui::PushFont(font_head); orn_septext("Your people fight on between orders"); ImGui::PopFont();
-        bullet("A member with a bow, crossbow, gun or thrown weapon keeps shooting; when the target falls, at the nearest enemy in sight.");
-        bullet("With no clear line (a wall, a tree or a friend in the way), a shooter steps a few paces aside to find one.");
-        bullet("Shooters draw a melee weapon once an enemy is close, when nothing is left to shoot, or to help a friend nearby who is set upon or badly hurt.");
-        bullet("A member whose enemy falls turns on another close by; one with no orders joins a fight beside it, unless told to hold.");
-        ImGui::PushFont(font_head); orn_septext("Your orders"); ImGui::PopFont();
-        if (ui_pad_prompts()) ui_pad_text("F11 on a keyboard lists the keys.", true);
-        bullet("Space pauses and resumes. Orders can be given while paused.");
-        if (!ui_original_mode() && config_get_int("battle.quick_orders", 1)) bullet("Click a member, then an enemy (attack) or a spot (walk there).");
-        else bullet("Click a member, then an enemy, a spot or a menu choice; Enter gives the order.");
-        bullet("A click on an enemy lets your member choose the attack: a Vulnerable one, aimed at the gaps, when only that gets through the enemy's armor; else a standard one. An attack you pick from the orders yourself (Std Attack, Vulnerable, Berserk, Parry) is kept.");
-        std::string keys = "F11 lists every key";
-        if (levelmap_available()) keys += "; Tab, the level map";
-        if (config_get_int("battle.fast_key", 1)) keys += "; Z, fast forward";
+    if (begin_tip("战斗，采用改进后的战斗系统", 660)) {
+        ImGui::PushFont(font_head); orn_septext("你的部下会在命令之间继续战斗"); ImGui::PopFont();
+        bullet("持弓、弩、枪或投掷武器的队员会持续射击；当目标倒下时，会瞄准视野内最近的敌人。");
+        bullet("在没有明显遮挡物（如墙、树或友军）的情况下，射手会侧身挪动几步，寻找合适的射击位置。");
+        bullet("当敌人靠近、无弹药可射，或为附近遭到围攻或重伤的友军提供支援时，射手会拔出近战武器。");
+        bullet("敌人倒下的队员会转向另一名近战敌人；无指令的队员则会加入附近的战斗，除非被命令坚守。");
+        ImGui::PushFont(font_head); orn_septext("你的指令"); ImGui::PopFont();
+        if (ui_pad_prompts()) ui_pad_text("按键盘上的F11可查看所有按键。", true);
+        bullet("按空格键可暂停或继续游戏。暂停时仍可下达指令。");
+        if (!ui_original_mode() && config_get_int("battle.quick_orders", 1)) bullet("先点击一名队员，再点击一名敌人（攻击）或一个地点（前往）。");
+        else bullet("先点击一名队员，再点击一名敌人、一个地点或菜单选项；按回车键即可执行指令。");
+        bullet("点击敌人后，队员可选择攻击方式：针对弱点的攻击，专攻敌甲间隙，只有这种攻击才能穿透敌甲；否则为普通攻击。你从指令中自行选择的攻击方式（普通攻击、弱点攻击、狂暴攻击、格挡）将被保留。");
+        std::string keys = "F11列出所有按键";
+        if (levelmap_available()) keys += "; Tab键，切换到关卡地图";
+        if (config_get_int("battle.fast_key", 1)) keys += "; Z键，快进";
         keys += "."; bullet(keys.c_str());
-        ImGui::PushFont(font_head); orn_septext("The attacks"); ImGui::PopFont();
-        bullet("Std Attack: blows and guard in balance.");
-        bullet("Vulnerable: slow blows aimed at the gaps in the armor; they pierce more (1 to 4 more penetration), but come far less often and land a little less. For armor the weapon cannot get through.");
-        bullet("Berserk: quick, sure blows, without thought of defense. To finish a foe fast.");
-        bullet("Parry: mostly defends; hard to hit, striking back slower and less surely. To hold a foe off while help comes, or to spare a wounded member.");
+        ImGui::PushFont(font_head); orn_septext("攻击方式"); ImGui::PopFont();
+        bullet("普通攻击：攻守平衡。");
+        bullet("弱点攻击：缓慢而精准的打击，专攻敌甲缝隙；穿透力更强（多1至4点），但出现频率较低且命中率稍低。适用于敌甲无法被普通武器突破的情况。");
+        bullet("狂暴攻击：快速而果断的打击，完全不考虑防御。用于迅速消灭敌人。");
+        bullet("格挡：以防守为主；难以被击中，反击速度较慢且把握度较低。用于在援军到达前牵制敌人，或保护受伤队友。");
         ImGui::Spacing();
-        ui_hint("Improved combat can be switched off in F12 > Settings > Battles.");
+        ui_hint("可在F12 > 设置 > 战斗中关闭强化战斗模式。");
         ImGui::Spacing();
-        if (ImGui::Button("  To battle  ") || ImGui::IsKeyPressed(ImGuiKey_Escape) || ImGui::IsKeyPressed(ImGuiKey_Enter)) done = true;
+        if (ImGui::Button("开始战斗") || ImGui::IsKeyPressed(ImGuiKey_Escape) || ImGui::IsKeyPressed(ImGuiKey_Enter)) done = true;
         tips_never_box(&never);
     }
     end_tip();

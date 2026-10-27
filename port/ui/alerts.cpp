@@ -53,7 +53,7 @@ static void alert_rows(const std::vector<UiAlertRow> &rows)
             ImVec2 p = chip(is + lh * 0.25f + ImGui::CalcTextSize(t).x);
             ui_age_icon(dl, ImVec2(p.x + is * 0.5f, p.y + is * 0.5f), is * 0.92f);
             dl->AddText(ImVec2(p.x + is + lh * 0.25f, p.y + (is - lh) * 0.5f), ImGui::GetColorU32(ImGuiCol_Text), t);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Age %d", r.age);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("年龄 %d", r.age);
         }
         for (int i = 0; i < r.n; i++) {                         /* each change: the shield, was (dim), an arrow, now (red) */
             const UiAlertChange &c = r.ch[i];
@@ -68,7 +68,7 @@ static void alert_rows(const std::vector<UiAlertRow> &rows)
             dl->AddTriangleFilled(ImVec2(x + aw * 0.25f, ay - lh * 0.22f), ImVec2(x + aw * 0.25f, ay + lh * 0.22f), ImVec2(x + aw * 0.75f, ay), ImGui::GetColorU32(ImGuiCol_TextDisabled));
             x += aw;
             dl->AddText(ImVec2(x, y), IM_COL32(170, 40, 30, 255), now);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s: %d, was %d", c.key < 7 ? gm_attr_name(c.key) : gm_skill_name(c.key - 7), c.now, c.was);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s：%d，曾是 %d", c.key < 7 ? gm_attr_name(c.key) : gm_skill_name(c.key - 7), c.now, c.was);
         }
         ImGui::Spacing();
     }
@@ -98,7 +98,7 @@ void ui_alert_draw(void)
         else alert_rows(a.rows);
         if (!a.foot.empty()) { ImGui::Spacing(); ui_hint("%s", a.foot.c_str()); }
         ImGui::Spacing(); ImGui::Spacing();
-        char lab[48]; snprintf(lab, sizeof lab, queue.size() > 1 ? "  Next (%d more)  " : "  Continue  ", (int)queue.size() - 1);
+        char lab[48]; snprintf(lab, sizeof lab, queue.size() > 1 ? "下一步（再加 %d）" : "继续", (int)queue.size() - 1);
         bool done = ImGui::Button(lab);
         if (ImGui::IsWindowAppearing()) ImGui::SetKeyboardFocusHere(-1);
         if (ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsKeyPressed(ImGuiKey_KeypadEnter) || ImGui::IsKeyPressed(ImGuiKey_Escape) || ImGui::IsKeyPressed(ImGuiKey_Space)) done = true;
@@ -147,6 +147,6 @@ extern "C" void game_dialog_draw(void)
     if (!title.empty()) { ImVec2 ts = fh->CalcTextSizeA(sh, FLT_MAX, 0, title.c_str()); dl->AddText(fh, sh, ImVec2((a.x + b.x - ts.x) * 0.5f, y), IM_COL32(120, 36, 20, 255), title.c_str()); y += sh * 1.4f; }
     dl->AddText(fb, sb, ImVec2(a.x + pad, y), IM_COL32(44, 26, 10, 255), t.c_str(), nullptr, w - pad * 2);
     y += tb.y + sb * 0.6f;
-    const char *foot = game_dialog_kind == 3 ? "Y: yes     N: no" : game_dialog_kind == 2 ? "Any key or click: go on" : "";
+    const char *foot = game_dialog_kind == 3 ? "Y：是     N：否" : game_dialog_kind == 2 ? "任意按键或点击：继续" : "";
     if (*foot) { ImVec2 fs = fb->CalcTextSizeA(sb * 0.85f, FLT_MAX, 0, foot); dl->AddText(fb, sb * 0.85f, ImVec2((a.x + b.x - fs.x) * 0.5f, y), IM_COL32(110, 80, 50, 255), foot); }
 }

@@ -88,9 +88,9 @@ void pic_choice(const char *id, const char *key, int def, const int *vals, const
 void display_icons(void)
 {
     float cw = fminf((ImGui::GetContentRegionAvail().x - 3 * ImGui::GetStyle().ItemSpacing.x) / 4, UIS(170));
-    ImGui::TextUnformatted("A potion's grade, on its flask");
+    ImGui::TextUnformatted("瓶身上的药剂等级");
     static const int PV[4] = { 4, 3, 1, 0 };
-    static const char *PL[4] = { "Chevrons on a badge", "Chevrons", "Dots on a strip", "Small dots" };
+    static const char *PL[4] = { "徽章上的小三角标志", "小三角标志", "条形上的小圆点", "小圆点" };
     pic_choice("pgrade", "display.potion_grade", 4, PV, PL, 4, cw, cw * 0.62f, [](ImDrawList *dl, ImVec2 a, ImVec2 b, int v) {
         extern int potion_grade_preview; void ui_item_icon_tier(ImDrawList *dl, ImVec2 c, float s, int id, int tier);
         dl->AddRectFilled(a, b, IM_COL32(244, 234, 210, 255), 4);
@@ -122,9 +122,9 @@ static void text_look_set(bool fresh)
 }
 void look_text(void)
 {
-    static const char *SAMPLE = "The gate of the town stands open.";
+    static const char *SAMPLE = "城镇的大门敞开着。";
     float cw = fminf((ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2, UIS(360));
-    static const char *L[2] = { "The original lettering", "New text" };
+    static const char *L[2] = { "原始的字体", "新文本" };
     int cur = hdtext_mode ? 1 : 0;
     float ph = cw * 0.36f, ch = ph + ImGui::GetTextLineHeightWithSpacing() * 1.3f;
     for (int j = 0; j < 2; j++) {
@@ -148,7 +148,7 @@ void look_text(void)
                 ImVec2 o(a.x + ((b.x - a.x) - pw * k) * 0.5f, a.y + ((b.y - a.y) - fh * k) * 0.5f);
                 for (int y = 0; y < fh; y++) for (int x = 0; x < pw; x++)
                     if (px[y * PW + x]) dl->AddRectFilled(ImVec2(o.x + x * k, o.y + y * k), ImVec2(o.x + (x + 1) * k, o.y + (y + 1) * k), ink);
-            } else dl->AddText(ImVec2(a.x + 8, a.y + 8), ink, "(the game's fonts were not found)");
+            } else dl->AddText(ImVec2(a.x + 8, a.y + 8), ink, "（未找到游戏的字体）");
         } else {    /* the same words in the new text */
             ImFont *f = ui_font_game[ui_game_font] ? ui_font_game[ui_game_font] : ImGui::GetFont();
             float fs = (b.y - a.y) * 0.36f;
@@ -161,11 +161,11 @@ void look_text(void)
         ImGui::PopID();
     }
     if (cur) {
-        ui_hint("New text: the same words drawn sharp at any window size, outlined over pictures and darkened where faint; "
-                "the character sheet's abbreviations spelled out (wPol: Polearm Wpns), names in full where the game cut them short, "
-                "armor named by where it is worn (Chainmail (body) for V:Chainmail), and icons beside the skills.");
+        ui_hint("新文本：同样的文字在任何窗口大小下都清晰锐利，叠加在图片之上，并在模糊处加深颜色；"
+                "角色表中的缩写被完整写出（wPol：长兵器），名字在游戏截断的地方也被完整呈现，"
+                "盔甲按穿戴部位命名（V：锁子甲对应 Chainmail (body)），并在技能旁添加图标。");
         ImGui::SetNextItemWidth(UIS(380));
-        if (ImGui::BeginCombo("Typeface", UI_GAME_FONT_NAMES[ui_game_font])) {      /* (the picture above follows) */
+        if (ImGui::BeginCombo("字体", UI_GAME_FONT_NAMES[ui_game_font])) {      /* (the picture above follows) */
             for (int i = 0; i < UI_GAME_FONTS; i++) {
                 ImGui::PushFont(ui_font_game[i]);
                 if (ImGui::Selectable(UI_GAME_FONT_NAMES[i], i == ui_game_font)) { ui_game_font = i; config_set_int("display.text_font", i); ui_overlay_font_update(); ui_dirty_config = 1; }
@@ -177,11 +177,11 @@ void look_text(void)
         ImGui::PushID("coins");
         if (ImGui::Checkbox("##co", &co)) click = true;
         ImGui::SameLine();
-        if (ui_title_desc("Money with coins", "1" COIN_FL " 12" COIN_GR " 4" COIN_PF " instead of 1fl 12gr 4pf (florins, groschen, pfennigs).")) { co = !co; click = true; }
+        if (ui_title_desc("以硬币计价", "1" COIN_FL " 12" COIN_GR " 4" COIN_PF "而不是 1fl 12gr 4pf（弗罗林、格罗申、芬尼）。")) { co = !co; click = true; }
         if (click) { config_set_int("display.coins", co); ui_dirty_config = 1; }
         ImGui::PopID();
     } else
-        ui_hint("The game's own small blackletter, as in 1992: true to the original, but hard to read on a large screen.");
+        ui_hint("游戏原版的小型黑体字，如同 1992 年一般：忠实于原作，但在大屏幕上却难以辨认。");
 }
 void look_ornaments(void)
 {
@@ -209,20 +209,20 @@ void look_ornaments(void)
         {   /* the frames round tooltips and panels, and the buttons (with any band) */
             float cw = fminf((ImGui::GetContentRegionAvail().x - 3 * ImGui::GetStyle().ItemSpacing.x) / 4, UIS(170));
             static const int V4[4] = { 0, 1, 2, 3 };
-            static const char *FR[4] = { "Gold lines", "Red lines", "Pen flourishes", "Stamped leather" };
-            static const char *BT[4] = { "Metal plaques", "Flat, gold-edged", "Rounded tabs", "Words only" };
-            ImGui::TextWrapped("Frames (tooltips, the card text, the new screens' pages)");
+            static const char *FR[4] = { "金色线条", "红色线条", "笔触装饰", "压印皮革" };
+            static const char *BT[4] = { "金属铭牌", "平面，金边", "圆角标签", "仅文字" };
+            ImGui::TextWrapped("框架（工具提示、卡片文本、新界面的页面）");
             pic_choice("ornfr", "display.frame_style", 0, V4, FR, 4, cw, cw * 0.62f, [](ImDrawList *dl, ImVec2 a, ImVec2 b, int v) {
                 dl->AddRectFilled(a, b, IM_COL32(237, 222, 189, 255));
                 orn_parchment_edges(dl, a, b, (b.y - a.y) * 0.12f);
                 orn_frame_style_box(dl, a, b, (b.x - a.x) * 0.09f, v);
-                dl->AddText(ImVec2(a.x + (b.x - a.x) * 0.2f, a.y + (b.y - a.y) * 0.35f), IM_COL32(60, 40, 20, 255), "St. Adrian");
+                dl->AddText(ImVec2(a.x + (b.x - a.x) * 0.2f, a.y + (b.y - a.y) * 0.35f), IM_COL32(60, 40, 20, 255), "圣人阿德里安");
             });
-            ImGui::TextUnformatted("Buttons");
+            ImGui::TextUnformatted("按钮");
             pic_choice("ornbt", "display.button_style", 0, V4, BT, 4, cw, cw * 0.62f, [](ImDrawList *dl, ImVec2 a, ImVec2 b, int v) {
                 dl->AddRectFilled(a, b, IM_COL32(242, 230, 200, 255), 4);
                 static const ImU32 C[2] = { IM_COL32(112, 40, 22, 235), IM_COL32(40, 92, 34, 235) };
-                static const char *L[2] = { "Leave", "Buy" };
+                static const char *L[2] = { "离开", "购买" };
                 float h = (b.y - a.y) * 0.3f;
                 for (int k = 0; k < 2; k++) {
                     ImVec2 p0(a.x + (b.x - a.x) * 0.15f, a.y + (b.y - a.y) * (0.14f + k * 0.46f)), p1(b.x - (b.x - a.x) * 0.15f, p0.y + h);
@@ -233,9 +233,9 @@ void look_ornaments(void)
                 }
             });
         }
-        ui_hint("The band around the windows, after the original's own: the cards' plaited copper, the party sheet's walnut and brass, "
-                "the illuminated capitals' vermilion and gold, the stone niche around the figure on the character sheet. With any of them, the lines and corners are gilt "
-                "and the frames and buttons are as chosen here.");
+        ui_hint("窗户周围的装饰带，沿用了原版的设计：卡片上的铜质编织纹路，队伍表上的胡桃木与黄铜，"
+                "点缀大写字母的朱红与金色，以及角色表上人物周围石制壁龛。无论使用哪一种，线条与角落均镀金，"
+                "框架与按钮也按照此处的选择进行处理。");
     }
 
 }
@@ -266,8 +266,8 @@ void look_clock(void)
             dl->AddText(ImVec2(p.x + (cw - ts.x) * 0.5f, p.y + ch - ImGui::GetTextLineHeightWithSpacing() * 1.1f), IM_COL32(246, 236, 214, 255), n);
             ImGui::PopID();
         }
-        ui_hint("Shown while hours pass (at the inn, waiting, traveling on a card). The tower dial follows the great clocks of about 1400 (Wells, Prague); "
-                "the copper astrolabe is the game's own clock, drawn anew so that it stays sharp.");
+        ui_hint("随着时间流逝而显示（在旅店、等待时、卡片上旅行时）。塔式钟盘仿照约 1400 年左右的大型时钟（威尔斯、布拉格）；"
+                "铜质星盘是游戏自有的时钟，重新绘制以保持清晰锐利。");
     }
 
 }

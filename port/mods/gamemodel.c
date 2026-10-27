@@ -326,7 +326,7 @@ int gm_hour_band(int h)
 }
 void gm_hour_name(int hour, char *out, int n)
 {
-    static const char *const OWN[8] = { "Lauds", "Prime", "Terce", "Sexts", "Nones", "Vespers", "Compline", "Matins" };
+    static const char *const OWN[8] = { "晨祷", "晨祷初段", "中午祷", "下午祷", "傍晚祷", "夜间祷", "完结祷", "晨祷" };
     int b = gm_hour_band(hour);
     u16 tb = (u16)(LOADSEG + 0x290e), o = rw(tb, (u16)(0x20c3 + 4 * b)), sg = rw(tb, (u16)(0x20c3 + 4 * b + 2));
     out[0] = 0;
@@ -337,23 +337,23 @@ void gm_hour_name(int hour, char *out, int n)
 /* ---------------------------------------------------------------- names (as the character sheet has them) */
 const char *gm_attr_name(int a)
 {
-    static const char *const A[7] = { "Endurance", "Strength", "Agility", "Perception", "Intelligence", "Charisma", "Divine Favor" };
+    static const char *const A[7] = { "耐力", "力量", "敏捷", "感知", "智力", "魅力", "神恩" };
     return a >= 0 && a < 7 ? A[a] : "?";
 }
 const char *gm_skill_name(int k)
 {
-    static const char *const S[19] = { "Edged Weapons", "Impact Weapons", "Flails", "Polearms", "Thrown Weapons", "Bows", "Missile Devices",
-        "Alchemy", "Religion", "Virtue", "Speak Common", "Speak Latin", "Read & Write", "Healing", "Artifice", "Stealth", "Streetwise", "Riding", "Woodwise" };
+    static const char *const S[19] = { "锋利武器", "冲击武器", "棍棒类武器", "长柄武器", "投掷武器", "弓箭", "投射装置",
+        "炼金术", "宗教", "美德", "通用语言", "拉丁语", "读写能力", "治疗", "工艺", "潜行", "精通街头", "骑术", "精通林地" };
     return k >= 0 && k < 19 ? S[k] : "?";
 }
 /* the months, from 0 (January); any number taken round the year */
 const char *gm_month_name(int m)
 {
-    static const char *const M[12] = { "January", "February", "March", "April", "May", "June", "July", "August",
-                                       "September", "October", "November", "December" };
+    static const char *const M[12] = { "一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月",
+                                       "九月", "十月", "十一月", "十二月" };
     return M[((m % 12) + 12) % 12];
 }
-const char *gm_month_short(int m) { static const char *const M[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" }; return M[((m % 12) + 12) % 12]; }
+const char *gm_month_short(int m) { static const char *const M[12] = { "一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月" }; return M[((m % 12) + 12) % 12]; }
 /* "a" or "an" before a number written in figures: "an 8%", "an 11%", "an 18%", "an 80%" */
 const char *gm_a_an(int n)
 {
@@ -362,6 +362,6 @@ const char *gm_a_an(int n)
 }
 const char *gm_skill_short(int k)
 {
-    static const char *const S[7] = { "Edged", "Impact", "Flails", "Polearms", "Thrown", "Bows", "Missile Devices" };
+    static const char *const S[7] = { "锋利武器", "冲击", "棍棒类武器", "长柄武器", "投掷", "弓箭", "投射装置" };
     return k >= 0 && k < 7 ? S[k] : gm_skill_name(k);
 }

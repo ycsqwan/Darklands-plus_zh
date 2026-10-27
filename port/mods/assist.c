@@ -465,7 +465,7 @@ void assist_set_card_keys(int on)
 const char *assist_card_key_why(int digit)
 {
     static char b[120];
-    snprintf(b, sizeof b, "keys %d depth %d polled %u ms ago ee41 %d ee42 %d options %d", assist_card_keys, cm_depth,
+    snprintf(b, sizeof b, "键盘深度%d，采样频率%d，上次采样距今%u毫秒，ee41%d，ee42%d，选项%d", assist_card_keys, cm_depth,
              (unsigned)(plat_ticks_ms() - card_chances.polled), g_rb(GV_card_box_shown), g_rb(GV_card_box_pointer), (s8)g_rb(GV_card_layout));
     (void)digit;
     return b;

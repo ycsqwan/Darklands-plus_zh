@@ -680,26 +680,26 @@ const char *orders_hint(void)
     if (!config_get_int("battle.click_hint", 1) || config_get_int("original", 0) || g_rb(D_ORDER_MODE) != 1 || (s8)g_rb(D_SELECTED) != hint_sel) return 0;
     int a = hint_act, flee = (g_rw((u16)(GV_cbt_flags + 2 * hint_sel)) & 0x1000) != 0;
     switch (hint_ct) {
-    case -2: return a == 0x100 ? "Click: throw here" : flee && a == 1 ? "Click: flee here" : 0;   /* (walking there goes without saying) */
-    case -3: return a == 0x100 ? "No clear throw" : "Can't walk there";
-    case -4: return a == MISSILE ? "No clear shot" : a == 0x100 ? "No clear throw" : "No way there";
+    case -2: return a == 0x100 ? "点击：在此投掷" : flee && a == 1 ? "点击：在此逃跑" : 0;   /* (walking there goes without saying) */
+    case -3: return a == 0x100 ? "无法明确投掷" : "无法步行前往";
+    case -4: return a == MISSILE ? "无法明确射击" : a == 0x100 ? "无法明确投掷" : "无法到达那里";
     case -1: return 0;
     }
     if (hint_ct < 5 || hint_ct >= 13) return 0;
     switch (a) {
     case MISSILE: {
         int w, f;                                                  /* (improved combat: a shooter with no line moves for one) */
-        if (combat_improved() && aim_of(&w, &f) == MISSILE && f == hint_ct) { LosBox bx[4]; if (los_trace(w, f, MISSILE, bx, 4)) return "Click: shoot (moves for a clear line)"; }
-        return "Click: shoot";
+        if (combat_improved() && aim_of(&w, &f) == MISSILE && f == hint_ct) { LosBox bx[4]; if (los_trace(w, f, MISSILE, bx, 4)) return "点击：射击（为确保视线清晰而移动）"; }
+        return "点击：射击";
     }
-    case 0x100: return "Click: throw";
-    case 0x0a: return "Click: attack (Vulnerable)";
-    case 6: return "Click: attack (Berserk)";
-    case 0x22: return "Click: parry its blows";
+    case 0x100: return "点击：投掷";
+    case 0x0a: return "点击：攻击（易受伤害）";
+    case 6: return "点击：攻击（狂暴状态）";
+    case 0x22: return "点击：格挡其攻击";
     }
     if ((a == STD_ATTACK || a == 0x0a) && hint_sel >= 0) {       /* one who opens by shooting, sent in instead: no clear shot */
         int w, f;
-        if (aim_of(&w, &f) == MISSILE && f == hint_ct) return "No clear shot: walks up to fight";
+        if (aim_of(&w, &f) == MISSILE && f == hint_ct) return "无法明确射击：走上前去战斗";
     }
     return 0;                                                    /* (a plain attack goes without saying) */
 }

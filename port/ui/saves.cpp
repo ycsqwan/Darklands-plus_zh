@@ -37,8 +37,8 @@ static std::string when(long long t)
     time_t tt = (time_t)t, now = time(0);
     struct tm a = *localtime(&tt), b = *localtime(&now);
     char s[48];
-    if (a.tm_year == b.tm_year && a.tm_yday == b.tm_yday) strftime(s, sizeof s, "today %H:%M", &a);
-    else if (a.tm_year == b.tm_year && a.tm_yday == b.tm_yday - 1) strftime(s, sizeof s, "yesterday %H:%M", &a);
+    if (a.tm_year == b.tm_year && a.tm_yday == b.tm_yday) strftime(s, sizeof s, "今天%H:%M", &a);
+    else if (a.tm_year == b.tm_year && a.tm_yday == b.tm_yday - 1) strftime(s, sizeof s, "昨天%H:%M", &a);
     else strftime(s, sizeof s, "%Y-%m-%d %H:%M", &a);
     return s;
 }
@@ -50,27 +50,27 @@ extern "C" void saves_prefs(void)
 {
     bool in_game = game_mode() != GM_OTHER;
     bool on = saves_on != 0;
-    if (ImGui::Checkbox("Quick save, quick load and autosaves", &on)) saves_enable(on);
+    if (ImGui::Checkbox("快速存档、快速载入与自动存档", &on)) saves_enable(on);
     { bool rs = saves_restart != 0;
-      if (ImGui::Checkbox("When the party's journey ends, return to the start screen (the original game quits)", &rs)) { saves_restart = rs; config_set_int("saves.restart_on_end", rs); } }
+      if (ImGui::Checkbox("当队伍旅程结束时，返回主菜单（原版游戏将退出）", &rs)) { saves_restart = rs; config_set_int("saves.restart_on_end", rs); } }
     if (on) {
-        ImGui::TextDisabled("Ctrl+S saves at once (no comment to type); F9 or Ctrl+L loads the last quick save.");
+        ImGui::TextDisabled("Ctrl+S可立即存档（无需输入任何备注）；F9或Ctrl+L可加载上次快速存档。");
         ImGui::Indent(UIS(20));
         bool a = saves_auto_arrive != 0, b = saves_auto_battle != 0;
-        if (ImGui::Checkbox("Autosave on arriving at a city, castle, village ...", &a)) { saves_auto_arrive = a; config_set_int("saves.autosave_arrive", a); }
-        if (ImGui::Checkbox("Autosave before every battle", &b)) { saves_auto_battle = b; config_set_int("saves.autosave_battle", b); }
+        if (ImGui::Checkbox("抵达城市、城堡、村庄等地点时自动存档", &a)) { saves_auto_arrive = a; config_set_int("saves.autosave_arrive", a); }
+        if (ImGui::Checkbox("每场战斗前自动存档", &b)) { saves_auto_battle = b; config_set_int("saves.autosave_battle", b); }
         ImGui::SetNextItemWidth(UIS(160));
-        if (ImGui::SliderInt("autosaves kept", &saves_keep_auto, 1, 9)) config_set_int("saves.keep_auto", saves_keep_auto);
+        if (ImGui::SliderInt("自动存档已保留", &saves_keep_auto, 1, 9)) config_set_int("saves.keep_auto", saves_keep_auto);
         ImGui::SameLine(0, UIS(30)); ImGui::SetNextItemWidth(UIS(160));
-        if (ImGui::SliderInt("quick saves kept", &saves_keep_quick, 1, 9)) config_set_int("saves.keep_quick", saves_keep_quick);
+        if (ImGui::SliderInt("快速存档已保留", &saves_keep_quick, 1, 9)) config_set_int("saves.keep_quick", saves_keep_quick);
         ImGui::Unindent(UIS(20));
         if (in_game) {
-            if (ImGui::Button("Save now")) { saves_quick_save(); ui_toggle(); }
+            if (ImGui::Button("现在存档")) { saves_quick_save(); ui_toggle(); }
             ImGui::SameLine();
-            ImGui::TextDisabled("as a quick save, when the game next allows saving (not in shops or during conversations).");
+            ImGui::TextDisabled("作为快速存档，当游戏下次允许存档时（不在商店或对话中）。");
         }
     }
-    ImGui::TextDisabled("Save and Load: the Game menu (right-click), or Alt+S and Alt+L. Quick save and Quick load are also in the menu bar's Darklands+ menu.");
+    ImGui::TextDisabled("存档与载入：通过游戏菜单（右键），或按 Alt+S 和 Alt+L。快速存档与快速载入也在菜单栏的 Darklands+ 菜单中。");
 }
 
 extern "C" void tab_saves(void)
@@ -78,17 +78,17 @@ extern "C" void tab_saves(void)
     if (nlist < 0 || plat_ticks_ms() - listed_at > 3000) refresh();
     bool in_game = game_mode() != GM_OTHER;
     char cur[16]; g_str(G_DGROUP, 0xa680, cur, sizeof cur);
-    if (nlist == 0) { ImGui::TextDisabled("No saved games yet."); return; }
-    ImGui::Text("%d saved game%s, newest first", nlist, nlist == 1 ? "" : "s");
-    ImGui::SameLine(); if (ImGui::SmallButton("Refresh")) refresh();
-    if (!in_game) ImGui::TextDisabled("Loading from here works once a game is running; before that, use Load on the title screen.");
+    if (nlist == 0) { ImGui::TextDisabled("尚未有存档。"); return; }
+    ImGui::Text("%d 个存档%s，最新优先", nlist, nlist == 1 ? "" : "s");
+    ImGui::SameLine(); if (ImGui::SmallButton("刷新")) refresh();
+    if (!in_game) ImGui::TextDisabled("从这里载入仅在游戏运行时有效；在此之前，请在标题界面使用载入功能。");
     if (!ImGui::BeginTable("saves", 5, ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerH, ImVec2(0, 0)))
         return;
     ImGui::TableSetupScrollFreeze(0, 1);
-    ImGui::TableSetupColumn("Where and when", ImGuiTableColumnFlags_WidthStretch, 2.2f);
-    ImGui::TableSetupColumn("Party", ImGuiTableColumnFlags_WidthStretch, 2.0f);
-    ImGui::TableSetupColumn("Comment", ImGuiTableColumnFlags_WidthStretch, 1.6f);
-    ImGui::TableSetupColumn("Saved", ImGuiTableColumnFlags_WidthStretch, 1.3f);
+    ImGui::TableSetupColumn("在哪里、何时", ImGuiTableColumnFlags_WidthStretch, 2.2f);
+    ImGui::TableSetupColumn("队伍", ImGuiTableColumnFlags_WidthStretch, 2.0f);
+    ImGui::TableSetupColumn("备注", ImGuiTableColumnFlags_WidthStretch, 1.6f);
+    ImGui::TableSetupColumn("已存档", ImGuiTableColumnFlags_WidthStretch, 1.3f);
     ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, UIS(150));
     ImGui::TableHeadersRow();
     for (int i = 0; i < nlist; i++) {
@@ -97,26 +97,26 @@ extern "C" void tab_saves(void)
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
         ImGui::TextUnformatted(game_text(s.place, sizeof s.place).c_str());
-        ImGui::TextDisabled("%d %s %d, %d:00%s", s.day, gm_month_short((unsigned)s.month % 12), s.year, s.hour, s.battle ? "  (in battle)" : "");
+        ImGui::TextDisabled("%d %s %d, %d:00%s", s.day, gm_month_short((unsigned)s.month % 12), s.year, s.hour, s.battle ? "（战斗中）" : "");
         ImGui::TableNextColumn();
         std::string party;
         for (int m = 0; m < s.nmembers; m++) { if (m) party += ", "; party += game_text(s.members[m], sizeof s.members[m]); }
         ImGui::TextWrapped("%s", party.c_str());
-        ImGui::TextDisabled("%s, fame %d", money_fgp(s.florins, s.groschen, s.pfennigs).c_str(), s.fame);
+        ImGui::TextDisabled("%s，声望 %d", money_fgp(s.florins, s.groschen, s.pfennigs).c_str(), s.fame);
         ImGui::TableNextColumn();
         ImGui::TextWrapped("%s", game_text(s.comment, sizeof s.comment).c_str());
         ImGui::TableNextColumn();
         ImGui::TextUnformatted(when(s.mtime).c_str());
-        if (!strcasecmp(cur, s.file)) ImGui::TextDisabled("current game");   /* (its file name says nothing more) */
+        if (!strcasecmp(cur, s.file)) ImGui::TextDisabled("当前游戏");   /* (its file name says nothing more) */
         else ImGui::TextDisabled("%s", s.file);
         ImGui::TableNextColumn();
         if (in_game) {
-            if (ImGui::Button("Load")) { if (saves_load(s.file)) ui_toggle(); }
+            if (ImGui::Button("载入")) { if (saves_load(s.file)) ui_toggle(); }
             ImGui::SameLine();
         }
         if (!strcmp(confirm_delete, s.file)) {
-            if (ImGui::Button("Delete it?")) { saves_delete(s.file); confirm_delete[0] = 0; refresh(); }
-        } else if (strcasecmp(cur, s.file) && ImGui::Button("Delete")) snprintf(confirm_delete, sizeof confirm_delete, "%s", s.file);
+            if (ImGui::Button("删除它吗？")) { saves_delete(s.file); confirm_delete[0] = 0; refresh(); }
+        } else if (strcasecmp(cur, s.file) && ImGui::Button("删除")) snprintf(confirm_delete, sizeof confirm_delete, "%s", s.file);
         ImGui::PopID();
     }
     ImGui::EndTable();

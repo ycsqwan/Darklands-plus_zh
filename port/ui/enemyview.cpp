@@ -40,7 +40,7 @@ extern "C" void enemyview_draw(void)
     if (!P.begin()) return;
     ImFont *f = P.f, *fo = P.fo;
     const ImU32 ink = NsDraw::INK, soft = NsDraw::INK_SOFT, dim = NsDraw::INK_DIM;
-    static const char *HN[6] = { "no armor", "soft", "stiff", "scale", "mail", "plate" };
+    static const char *HN[6] = { "无护甲", "soft", "stiff", "scale", "mail", "plate" };
     int cols = m.n > 3 ? 2 : 1, rows = (m.n + cols - 1) / cols;
     const float X0 = 64, X1 = 318, Y0 = 3;
     float ch = (197 - Y0 - 16 - (rows - 1) * 3) / (rows ? rows : 1);
@@ -51,8 +51,8 @@ extern "C" void enemyview_draw(void)
     P.rect(X0, Y0, X1, Y1, IM_COL32(242, 230, 200, 252), 2);
     if (orn_on()) { orn_parchment_edges(P.dl, NsDraw::w(X0, Y0), NsDraw::w(X1, Y1), 5 * P.k); orn_gilt_frame(P.dl, NsDraw::w(X0, Y0), NsDraw::w(X1, Y1), 5 * P.k); }
     else P.frame(X0, Y0, X1, Y1, IM_COL32(120, 80, 36, 180), 2);
-    P.text(f, NsDraw::FS_TITLE, X0 + 5, Y0 + 2, IM_COL32(130, 30, 18, 255), "The enemy");     /* (a rubric, as a bestiary's) */
-    P.text(fo, NsDraw::FS_SMALL, 0, Y0 + 4, dim, "press a key or click to return to the battle", X1 - 4);
+    P.text(f, NsDraw::FS_TITLE, X0 + 5, Y0 + 2, IM_COL32(130, 30, 18, 255), "敌人");     /* (a rubric, as a bestiary's) */
+    P.text(fo, NsDraw::FS_SMALL, 0, Y0 + 4, dim, "按下按键或点击返回战斗", X1 - 4);
     float cw = (X1 - X0 - 6 - (cols - 1) * 3) / cols;
     int size = gm_party_size(); if (size < 0 || size > 5) size = 0;
     for (int i = 0; i < m.n; i++) {
@@ -71,8 +71,8 @@ extern "C" void enemyview_draw(void)
         }
         P.text(f, NsDraw::FS_HEAD, tx, y + 1.5f, ink, ns_gtext(e.name), -1, x + cw - 2);
         char b[160];
-        if (e.count > 1) snprintf(b, sizeof b, "%d on the field, %d still fighting", e.count, e.able);
-        else snprintf(b, sizeof b, "%s", e.able ? "still fighting" : "down");
+        if (e.count > 1) snprintf(b, sizeof b, "场上还有%d个敌人，仍有%d个在战斗", e.count, e.able);
+        else snprintf(b, sizeof b, "%s", e.able ? "仍在战斗" : "down");
         P.text(fo, NsDraw::FS_SMALL, tx, y + 9.5f, soft, b);
         float ly = y + 15.5f, lw = x + cw - 3 - tx;
         auto line = [&](const std::string &s, ImU32 c) { if (ly < y + ch - 4) ly += P.para(fo, 4.4f, tx, ly, lw, c, s) + 0.3f; };
@@ -82,9 +82,9 @@ extern "C" void enemyview_draw(void)
         if (e.human) {
             std::string a;
             if (e.vital >= 67 && e.vital <= 84) { h = rb(G_FAR20A5, (u16)(0x781e + e.vital)); a = "Body: " + type_name(e.vital, K_ARMOR) + " (" + (h >= 0 && h < 6 ? HN[h] : "?") + ")"; }
-            else a = "Body: none";
-            if (e.limb >= 67 && e.limb <= 84) a += ", legs: " + type_name(e.limb, K_ARMOR);
-            if (e.shield >= 0) a += ", shield: " + type_name(e.shield, K_SHIELD);
+            else a = "身体：无";
+            if (e.limb >= 67 && e.limb <= 84) a += "，腿：" + type_name(e.limb, K_ARMOR);
+            if (e.shield >= 0) a += "，盾牌：" + type_name(e.shield, K_SHIELD);
             if (e.armour_magic) a += " (enchanted)";
             line(a, ink);
             std::string w;
@@ -93,8 +93,8 @@ extern "C" void enemyview_draw(void)
             if (e.weapon_magic && !w.empty()) w += " (enchanted)";
             if (!w.empty()) line(w, ink);
         } else {
-            line(std::string("Natural armor") + (m.difficulty != 2 ? std::string(" - ") + m.quality[e.natural] : ""), ink);
-            line("Natural weapons" + word_m, ink);
+            line(std::string("自然护甲") + (m.difficulty != 2 ? std::string(" - ") + m.quality[e.natural] : ""), ink);
+            line("自然武器" + word_m, ink);
         }
         /* the party's weapons against its body armour (the game's rule: penetration above the
            hardness pierces, equal is halved, below is deflected) */
@@ -111,7 +111,7 @@ extern "C" void enemyview_draw(void)
                     int mw = (s8)g_rb((u16)(G_MEMBER(p) + (k ? 0x0e : 0x3d)));
                     if (mw < 0 || mw > 62) continue;
                     int pen = rb(G_FAR20A5, (u16)(0x76a8 + mw)) & 15, r = pen > h ? 0 : pen == h ? 1 : 2;
-                    seg.push_back({ type_id(mw, K_WEAPON, K_MISSILE), r == 0 ? "pierces" : r == 1 ? "half damage" : "mostly deflected",
+                    seg.push_back({ type_id(mw, K_WEAPON, K_MISSILE), r == 0 ? "pierces" : r == 1 ? "减半伤害" : "大部分被弹开",
                                     r == 0 ? IM_COL32(40, 96, 34, 255) : r == 1 ? IM_COL32(176, 124, 0, 255) : NsDraw::RED });
                 }
                 if (seg.empty() || ly >= y + ch - 4) continue;

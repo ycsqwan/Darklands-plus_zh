@@ -208,9 +208,9 @@ struct ShopKind { int shop; u32 cats; const char *name; };
    guild's card, whose street-level shopfronts sell every weapon and armour (0x040000ff, s063/s064).
    The first is the way most visits go and the one worked out here; a list seen replaces it */
 static const ShopKind SHOPS[] = {
-    { 0, 0x040000ffu, "Blacksmith" }, { 1, 0x0002c100u, "Goods merchant" }, { 2, 0x0000000fu, "Swordsmith" },
-    { 3, 0x040000c0u, "Armorer" }, { 5, 0x083c0030u, "Bowyer" }, { 6, 0x0000800eu, "Artificer" },
-    { 8, 0x04000000u, "Clothmaker" }, { -1, 0x00000400u, "Pharmacist" } };
+    { 0, 0x040000ffu, "锻铁匠" }, { 1, 0x0002c100u, "商品商人" }, { 2, 0x0000000fu, "锻剑师" },
+    { 3, 0x040000c0u, "锻甲师" }, { 5, 0x083c0030u, "弓箭匠" }, { 6, 0x0000800eu, "工艺师" },
+    { 8, 0x04000000u, "布料商" }, { -1, 0x00000400u, "药剂师" } };
 
 /* the worked-out lists of an older journal: a town shop's guessed with wares no longer guessed
    (the swordsmith's and armorer's, before 1.3), and any guess for a shop whose list has been seen */
@@ -396,7 +396,7 @@ extern "C" void chronicle_capture(void)
     int loc = (s16)g_rw(G_CUR_LOC);
     std::string place;
     if (loc >= 0) place = loc_name(loc);
-    else { int ui_nearest_town(void); int k = ui_nearest_town(); place = k >= 0 ? "near " + loc_name(k) : "the countryside"; }
+    else { int ui_nearest_town(void); int k = ui_nearest_town(); place = k >= 0 ? "near " + loc_name(k) : "乡村"; }
     chron.push_back({ game_date(), place, t, "", (s16)g_rw(G_CUR_HOUR) });
     chron_pending = true;
     if (chron.size() > 20000) chron.erase(chron.begin(), chron.begin() + 1000);
@@ -454,11 +454,11 @@ static void chron_days(const std::string &find, std::vector<ChronDay> &out)
 /* test (ucmd uchronfill:n): n made-up texts over some weeks and towns, in memory only */
 extern "C" void journal_test_chronicle(int n)
 {
-    static const char *T[4] = { "Strassburg", "Basel", "near Basel", "the countryside" };
+    static const char *T[4] = { "斯特拉斯堡", "巴塞尔", "巴塞尔附近", "乡村" };
     for (int i = 0; i < n; i++) {
         char d[32]; snprintf(d, sizeof d, "%d %s 1400", 1 + (i / 6) % 28, gm_month_short((5 + i / 40) % 12));
-        chron.push_back({ d, T[(i / 3) % 4], "A made-up text, number " + std::to_string(i) + ", to try the chronicle's days and places. "
-                          "It runs on a little so that it wraps over two lines in the window.", i % 2 ? "...leave." : "", 6 + (i % 6) * 2 });
+        chron.push_back({ d, T[(i / 3) % 4], "一段虚构的文字，数字" + std::to_string(i) + "，用来尝试编年史中的日期和地点。"
+                          "它运行得有点小，以至于在窗口中会换行显示。", i % 2 ? "...leave." : "", 6 + (i % 6) * 2 });
     }
 }
 
@@ -467,15 +467,15 @@ static void chronicle_page(void)
 {
     int seed = g_rw(G_PARTY_SEED);
     if (game_mode() != GM_OTHER && seed != chron_seed) chron_load(seed);
-    if (!chron_on()) { ImGui::TextWrapped("The chronicle is off: tick both boxes above (the Full Original preset keeps it off)."); return; }
+    if (!chron_on()) { ImGui::TextWrapped("编年史已关闭：请同时勾选上面的两个复选框（“完整原始”预设会保持其关闭状态）。"); return; }
     static bool nav_open = true;
-    if (ImGui::SmallButton(nav_open ? "Hide the list of days" : "Show the list of days")) nav_open = !nav_open;
+    if (ImGui::SmallButton(nav_open ? "隐藏日期列表" : "显示日期列表")) nav_open = !nav_open;
     ImGui::SameLine();
-    ImGui::SetNextItemWidth(UIS(260)); ImGui::InputTextWithHint("##cfind", "find words (a name, a place, a clue)", chron_find, sizeof chron_find);
-    ImGui::SameLine(); ImGui::TextDisabled("%d text%s read in this game", (int)chron.size(), chron.size() == 1 ? "" : "s");
+    ImGui::SetNextItemWidth(UIS(260)); ImGui::InputTextWithHint("##cfind", "查找文字（姓名、地点、线索）", chron_find, sizeof chron_find);
+    ImGui::SameLine(); ImGui::TextDisabled("本游戏中读取的%d条文本%s", (int)chron.size(), chron.size() == 1 ? "" : "s");
     ImGui::SameLine();
     static std::string wrote;
-    if (ImGui::SmallButton("Save as a text file")) {
+    if (ImGui::SmallButton("另存为文本文件")) {
         extern char dlp_data_dir[];
         char b[1200]; snprintf(b, sizeof b, "%s/darklands_chronicle_%u_book.txt", dlp_data_dir, (unsigned)chron_seed);
         FILE *f = fopen(b, "w");
@@ -489,7 +489,7 @@ static void chronicle_page(void)
                 fprintf(f, "\n");
             }
             fclose(f); wrote = b;
-        } else wrote = "Could not write the file.";
+        } else wrote = "无法写入文件。";
     }
     if (!wrote.empty()) ImGui::TextDisabled("%s", wrote.c_str());
 
@@ -502,7 +502,7 @@ static void chronicle_page(void)
     sel_n = chron.size(); sel_f = f;
     if (days.empty()) {
         ImGui::BeginChild("chron", ImVec2(0, 0), ImGuiChildFlags_Border);
-        ImGui::TextWrapped(chron.empty() ? "Every text the cards show is kept here, with the date, the place and the choice you made." : "Nothing found.");
+        ImGui::TextWrapped(chron.empty() ? "卡牌上显示的每一条文本都会在这里保存，附带日期、地点以及您所做的选择。" : "未找到任何内容。");
         ImGui::EndChild();
         return;
     }
@@ -526,7 +526,7 @@ static void chronicle_page(void)
             }
             if (!month_open) continue;
             ImGui::PushID(k);
-            char dl[64]; snprintf(dl, sizeof dl, "%d %s  (%d)", D.d, gm_month_short(D.m % 12), (int)D.idx.size());
+            char dl[64]; snprintf(dl, sizeof dl, "%d %s （%d）", D.d, gm_month_short(D.m % 12), (int)D.idx.size());
             ImGuiTreeNodeFlags fl = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth | (k == sel ? ImGuiTreeNodeFlags_Selected : 0)
                                   | (D.places.size() <= 1 ? ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen : 0);
             bool open = ImGui::TreeNodeEx("day", fl, "%s", dl);
@@ -550,11 +550,11 @@ static void chronicle_page(void)
     /* the day chosen, in the order it was read: its places as headings, the time, the choice */
     ImGui::BeginChild("chron", ImVec2(0, 0), ImGuiChildFlags_Border);
     const ChronDay &D = days[(size_t)sel];
-    ImGui::BeginDisabled(sel <= 0); if (ImGui::SmallButton("< Day before")) { sel--; scroll_to = -2; } ImGui::EndDisabled();
+    ImGui::BeginDisabled(sel <= 0); if (ImGui::SmallButton("< 前一天")) { sel--; scroll_to = -2; } ImGui::EndDisabled();
     ImGui::SameLine();
-    ImGui::BeginDisabled(sel >= (int)days.size() - 1); if (ImGui::SmallButton("Day after >")) { sel++; scroll_to = -2; } ImGui::EndDisabled();
+    ImGui::BeginDisabled(sel >= (int)days.size() - 1); if (ImGui::SmallButton("后一天 >")) { sel++; scroll_to = -2; } ImGui::EndDisabled();
     ImGui::SameLine();
-    ImGui::TextDisabled("%s%s", D.date.c_str(), f.empty() ? "" : " (matching texts only)");
+    ImGui::TextDisabled("%s%s", D.date.c_str(), f.empty() ? "" : "（仅匹配文本）");
     const ChronDay &S = days[(size_t)sel];
     if (scroll_to == -2) { ImGui::SetScrollY(0); scroll_to = -1; }
     std::string place;
@@ -632,7 +632,7 @@ static void facts_scan(int block)
     if (phys && block == 8) {
         size_t e = t.rfind(" skill"), h = e == std::string::npos ? e : t.rfind(" has ", e);
         if (h != std::string::npos) { std::string w = t.substr(h + 5, e - h - 5); if (!w.empty()) w[0] = (char)tolower((unsigned char)w[0]); facts_set(loc, "physician", w + " skill"); }
-    } else if (phys && block == 10) facts_set(loc, "physician", "a complete idiot: worse than none");
+    } else if (phys && block == 10) facts_set(loc, "physician", "完全的白痴：比没有还糟");
 }
 
 static void text_expand_hook(void)         /* s043 150b:06fe text_expand(idx, out): the block shown before is done */
@@ -662,13 +662,13 @@ static int notes_resize(ImGuiInputTextCallbackData *d)
 static void notes_page(void)
 {
     int seed = g_rw(G_PARTY_SEED);
-    if (game_mode() == GM_OTHER) { ImGui::TextWrapped("Start or load a game first: each game has its own notes."); return; }
+    if (game_mode() == GM_OTHER) { ImGui::TextWrapped("请先开始或加载一局游戏：每局游戏都有自己的备注。"); return; }
     if (seed != notes_seed) {
         notes_save(); notes_seed = seed; notes_text.clear();
         FILE *f = fopen(notes_path(seed).c_str(), "r");
         if (f) { char b[4096]; size_t n; while ((n = fread(b, 1, sizeof b, f)) > 0) notes_text.append(b, n); fclose(f); }
     }
-    ImGui::TextDisabled("Your own notes for this game: clues, plans, who wanted what. Kept as darklands_notes_%u.txt.", (unsigned)seed);
+    ImGui::TextDisabled("您为本局游戏所做的个人备注：线索、计划、谁想要什么。以 darklands_notes_%u.txt 的形式保存。", (unsigned)seed);
     if (ImGui::InputTextMultiline("##notes", (char *)notes_text.c_str(), notes_text.capacity() + 1, ImVec2(-1, -1),
                                   ImGuiInputTextFlags_CallbackResize, notes_resize, &notes_text)) { notes_dirty = true; notes_edit_t = ImGui::GetTime(); }
     if (notes_dirty && ImGui::GetTime() - notes_edit_t > 1.5) notes_save();     /* a moment after typing stops */
@@ -779,8 +779,8 @@ static std::string travel_days(int m)
 {
     if (m < 0) return "";
     if (m == 0) return "here";
-    if (m < 9 * 60) return "under a day";
-    if (m < 18 * 60) return "half a day";
+    if (m < 9 * 60) return "一天之内";
+    if (m < 18 * 60) return "半天";
     int d = (m + 12 * 60) / (24 * 60); if (d < 1) d = 1;
     return std::to_string(d) + (d == 1 ? " day" : " days");
 }
@@ -823,12 +823,12 @@ extern "C" void journal_town_wares(int loc)
     for (size_t k = 0; k < t.shops.size(); k++) {
         const Shop &s = t.shops[k];
         ImGui::PushID((int)k);
-        char hd[160]; snprintf(hd, sizeof hd, "%s  (%d wares, noted %s)", s.name.c_str(), (int)s.items.size(), s.date.c_str());
+        char hd[160]; snprintf(hd, sizeof hd, "%s （%d件商品，注明%s）", s.name.c_str(), (int)s.items.size(), s.date.c_str());
         if (ImGui::TreeNodeEx(hd, ImGuiTreeNodeFlags_SpanAvailWidth)) {
             if (ImGui::BeginTable("wares", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_Sortable)) {
-                ImGui::TableSetupColumn("Item", ImGuiTableColumnFlags_WidthStretch);
-                ImGui::TableSetupColumn("Quality", ImGuiTableColumnFlags_WidthFixed, UIS(70));
-                ImGui::TableSetupColumn("Price", ImGuiTableColumnFlags_WidthFixed, UIS(130));
+                ImGui::TableSetupColumn("物品", ImGuiTableColumnFlags_WidthStretch);
+                ImGui::TableSetupColumn("品质", ImGuiTableColumnFlags_WidthFixed, UIS(70));
+                ImGui::TableSetupColumn("价格", ImGuiTableColumnFlags_WidthFixed, UIS(130));
                 ImGui::TableHeadersRow();
                 std::vector<int> rows; for (int r = 0; r < (int)s.items.size(); r++) rows.push_back(r);
                 static std::map<std::string, TableSort> sorts;
@@ -876,7 +876,7 @@ std::string journal_where_sold(int id)
         if (price < 0) continue;
         if (kv.first == cur) {
             for (char &c : shop) c = (char)tolower((unsigned char)c);
-            return shop.empty() ? "sold here" : "sold here (" + shop + ")";
+            return shop.empty() ? "在此出售" : "在此出售（" + shop + ")";
         }
         int m = travel_min_to(kv.first), d = m >= 0 ? m : (here ? loc_distance(kv.first, px, py) * 600 : 1 << 29);
         if (d < bd) { bd = d; best = kv.first; bp = price; }
@@ -902,7 +902,7 @@ std::string journal_where_sold(int id)
     if (it == sold_at.end()) return "";
     bd = 1 << 30; best = -1;
     for (int c : it->second) {
-        if (c == cur) return "sold here (expected)";
+        if (c == cur) return "在此出售（预期）";
         int m = travel_min_to(c), d = m >= 0 ? m : (here ? loc_distance(c, px, py) * 600 : 1 << 29); if (d < bd) { bd = d; best = c; }
     }
     if (best < 0) return "";
@@ -922,17 +922,17 @@ extern "C" int sharedstore_on(void);       /* mods/sharedstore.c */
 static void storage_page(void)
 {
     int gm = game_mode();
-    if (gm == GM_OTHER) { ImGui::TextWrapped("Start or load a game first."); return; }
-    if (gm == GM_BATTLE) { ImGui::TextWrapped("Available after the battle."); return; }
+    if (gm == GM_OTHER) { ImGui::TextWrapped("请先开始或加载游戏。"); return; }
+    if (gm == GM_BATTLE) { ImGui::TextWrapped("战斗结束后可用。"); return; }
     std::vector<unsigned char> buf;
     { char path[1200]; dos_host_path("CACHE.TMP", path, sizeof path);
       FILE *f = fopen(path, "rb");
       if (f) { unsigned char b[4096]; size_t n; while ((n = fread(b, 1, sizeof b, f)) > 0) buf.insert(buf.end(), b, b + n); fclose(f); } }
     int ncache = buf.size() > 1 ? buf[1] : 0;
     {
-      if (sharedstore_on()) ImGui::TextWrapped("What the party has left with innkeepers (\"store items with the innkeeper\" at a town's inn): one store room, the same at every inn (the Darklands+ switch \"One store room shared by every inn\" in F12 > Settings > New screens).");
-      else ImGui::TextWrapped("What the party has left with innkeepers (\"store items with the innkeeper\" at a town's inn), and where. "
-                              "The original game shows a store room only while the party is in it."); }
+      if (sharedstore_on()) ImGui::TextWrapped("队伍在旅店老板那里留下的物品（城镇旅店中的“与旅店老板存放物品”功能）：一个储物间，每家旅店都一样（Darklands+ 开关“所有旅店共用一个储物间”位于 F12 > 设置 > 新界面）。");
+      else ImGui::TextWrapped("队伍在旅店老板那里留下的物品（城镇旅店中的“与旅店老板存放物品”功能），以及存放位置。"
+                              "原版游戏中，只有当队伍身处其中时才会显示储物间。"); }
     ImGui::Spacing();
     int px, py; travel_party_tile(&px, &py);
     struct Store { int loc, places; double d; std::vector<SeenItem> items; };
@@ -960,20 +960,20 @@ static void storage_page(void)
         stores.push_back(st);
     }
     stores.erase(std::remove_if(stores.begin(), stores.end(), [](const Store &s) { return s.items.empty(); }), stores.end());
-    if (stores.empty()) { ImGui::TextDisabled("Nothing stored anywhere."); return; }
+    if (stores.empty()) { ImGui::TextDisabled("任何地方都没有存放任何东西。"); return; }
     std::sort(stores.begin(), stores.end(), [](const Store &a, const Store &b) { return a.places != b.places ? a.places > b.places : a.d < b.d; });
     int cur = (s16)g_rw(G_CUR_LOC);
     ImGui::BeginChild("stores", ImVec2(0, 0));
     for (const Store &st : stores) {
         ImGui::PushID(st.loc);
-        std::string kinds = std::to_string(st.items.size()) + (st.items.size() == 1 ? " kind of item" : " kinds of items");
-        std::string head = st.places > 1 ? "Every inn's store room  -  " + kinds
+        std::string kinds = std::to_string(st.items.size()) + (st.items.size() == 1 ? "一种物品" : "种物品");
+        std::string head = st.places > 1 ? "每家旅店的储物间 -" + kinds
                                          : loc_name(st.loc) + (st.loc == cur ? "  (here)" : "") + "  -  " + kinds;
         if (ImGui::CollapsingHeader(head.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
             if (ImGui::BeginTable("st", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_SizingStretchProp)) {
-                ImGui::TableSetupColumn("Item", ImGuiTableColumnFlags_WidthStretch, 1.0f);
-                ImGui::TableSetupColumn("Quality", ImGuiTableColumnFlags_WidthFixed, ImGui::CalcTextSize("Quality").x + UIS(10));
-                ImGui::TableSetupColumn("Number", ImGuiTableColumnFlags_WidthFixed, ImGui::CalcTextSize("Number").x + UIS(10));
+                ImGui::TableSetupColumn("物品", ImGuiTableColumnFlags_WidthStretch, 1.0f);
+                ImGui::TableSetupColumn("品质", ImGuiTableColumnFlags_WidthFixed, ImGui::CalcTextSize("品质").x + UIS(10));
+                ImGui::TableSetupColumn("数量", ImGuiTableColumnFlags_WidthFixed, ImGui::CalcTextSize("数量").x + UIS(10));
                 ImGui::TableHeadersRow();
                 for (const SeenItem &it : st.items) {
                     ImGui::TableNextRow();
@@ -998,30 +998,30 @@ extern "C" void tab_journal(void)
 {
     if (cur_seed < 0 && game_mode() != GM_OTHER) ensure_game();
     int want = ui_want_subtab; ui_want_subtab = -1;
-    ImGui::TextDisabled("The quests and every town (its shops, the wares noted, where to buy an item) are on the world map (M).");
+    ImGui::TextDisabled("任务和每个城镇（及其商店、所售商品、购买地点）都显示在世界地图上（M）。");
     {   /* the two switches of what is noted (on unless switched off here) */
         bool tj = journal_on != 0, ch = config_get_int("journal.chronicle", 1) != 0;
-        if (ImGui::Checkbox("Note each town's shops and wares", &tj)) { journal_set(tj); ui_dirty_config = 1; }
+        if (ImGui::Checkbox("记录各城镇的商店与商品", &tj)) { journal_set(tj); ui_dirty_config = 1; }
         ImGui::SameLine(0, 24);
         ImGui::BeginDisabled(!tj);
-        if (ImGui::Checkbox("Keep the chronicle (every card's text)", &ch)) { config_set_int("journal.chronicle", ch); ui_dirty_config = 1; }
+        if (ImGui::Checkbox("保存编年史（每张卡片的文字）", &ch)) { config_set_int("journal.chronicle", ch); ui_dirty_config = 1; }
         ImGui::EndDisabled();
     }
     if (ui_subtabs_begin("jtabs")) {
-        if (ui_subtab("Chronicle", want == 7)) { chronicle_page(); ImGui::EndTabItem(); }
-        if (ui_subtab("Notes", want == 8)) { notes_page(); ImGui::EndTabItem(); }
-        if (ui_subtab("Stored", want == 6)) { storage_page(); ImGui::EndTabItem(); }
-        if (ui_subtab("Battle log", want == 5)) { battlelog_tab(); ImGui::EndTabItem(); }
-        if (config_get_int("assist.hall_of_fame", 0) && !config_get_int("original", 0) && ui_subtab("Honor Roll", want == 4)) {   /* (restored: F12 > Reconstructed Content) */
-            ImGui::TextWrapped("The Honor Roll of Glory: the four most famous parties. MicroProse drew it and wrote the code for it, "
-                               "but never finished it (the manual mentions a Hall of Fame, the game's README says there is none). "
-                               "A party enters it when its journey ends, or now with the button.");
+        if (ui_subtab("编年史", want == 7)) { chronicle_page(); ImGui::EndTabItem(); }
+        if (ui_subtab("备注", want == 8)) { notes_page(); ImGui::EndTabItem(); }
+        if (ui_subtab("已存储", want == 6)) { storage_page(); ImGui::EndTabItem(); }
+        if (ui_subtab("战斗日志", want == 5)) { battlelog_tab(); ImGui::EndTabItem(); }
+        if (config_get_int("assist.hall_of_fame", 0) && !config_get_int("original", 0) && ui_subtab("名誉榜", want == 4)) {   /* (restored: F12 > Reconstructed Content) */
+            ImGui::TextWrapped("荣耀榜：四支最著名的队伍。MicroProse绘制并编写了相关代码，"
+                               "但从未完成（说明书提到有名人堂，而游戏自述中则称并无此设置）。"
+                               "队伍在旅程结束时会进入该榜单，或通过按钮即时加入。");
             ImGui::Spacing();
-            if (ImGui::Button("Show the Honor Roll of Glory")) halloffame_open();
+            if (ImGui::Button("显示荣耀榜")) halloffame_open();
             ImGui::SameLine();
             static std::string msg;
             ImGui::BeginDisabled(game_mode() == GM_OTHER);
-            if (ImGui::Button("Enter the party now")) msg = halloffame_record() ? "The party is on the roll." : "The party is not yet famous enough to be among the four best (or the roll could not be saved).";
+            if (ImGui::Button("立即加入队伍")) msg = halloffame_record() ? "队伍已在榜单之上。" : "队伍尚未足够著名，无法跻身前四（或榜单未能保存）。";
             ImGui::EndDisabled();
             if (!msg.empty()) ImGui::TextDisabled("%s", msg.c_str());
             ImGui::EndTabItem();
@@ -1074,13 +1074,13 @@ extern "C" int journal_buy_window(bool *open, int what)
     if (!ImGui::Begin(what == 0 ? "Find alchemical ingredients###wtb0" : "Find any ware###wtb1", open, ImGuiWindowFlags_NoCollapse)) { ImGui::End(); return -1; }
     int px = 0, py = 0; bool here = party_where(&px, &py);
     size_t nshops = 0; for (auto &kv : towns) nshops += kv.second.shops.size();
-    if (!nshops) ImGui::TextDisabled("Nothing noted yet: the wares of each shop are noted as the party sees them.");
+    if (!nshops) ImGui::TextDisabled("尚无记录：各商店的商品均按队伍所见记录。");
     int have[200] = {};                                    /* what the party carries now (all its members) */
     { GmItem g; for (int m = 0; m < 5; m++) if (gm_member_present(m)) for (int i = 0; i < gm_item_count(m); i++) if (gm_item(m, i, &g) && g.id >= 0 && g.id < 200) have[g.id] += g.count; }
     auto town_link = [&](int loc, const char *id) {        /* a town's name: a click shows it on the map */
         ImGui::PushID(id); ImGui::PushID(loc);
         if (ImGui::SmallButton(loc_name(loc).c_str())) pick = loc;
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Show %s on the world map", loc_name(loc).c_str());
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("在世界地图上显示%s", loc_name(loc).c_str());
         ImGui::PopID(); ImGui::PopID();
     };
     /* the columns' headers sort (a click; again the other way) */
@@ -1089,7 +1089,7 @@ extern "C" int journal_buy_window(bool *open, int what)
     };
     const ImGuiTableFlags TF = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_Sortable | ImGuiTableFlags_ScrollY;
     if (what == 0) {
-        ImGui::TextDisabled("Bought ingredients are always quality 25. A click on a column's head sorts by it%s.", here ? "" : " (the nearest: not known now, the party's position is not)");
+        ImGui::TextDisabled("购买的食材品质始终为25。点击列头可按其排序%s。", here ? "" : "（最近的：目前未知，队伍位置亦未确定）");
         struct Row { int id; struct Seen { int loc, dist; }; std::vector<Seen> at; };
         std::vector<Row> rows;
         for (int id = 72; id <= 94; id++) {
@@ -1104,10 +1104,10 @@ extern "C" int journal_buy_window(bool *open, int what)
         }
         if (ImGui::BeginTable("ingr", 4, TF)) {
             ImGui::TableSetupScrollFreeze(0, 1);
-            ImGui::TableSetupColumn("Ingredient", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_DefaultSort, UIS(230));
-            ImGui::TableSetupColumn("Carried", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_PreferSortDescending, UIS(80));
-            ImGui::TableSetupColumn("Nearest town", ImGuiTableColumnFlags_WidthFixed, UIS(240));
-            ImGui::TableSetupColumn("Also sold at", ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_NoSort);
+            ImGui::TableSetupColumn("食材", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_DefaultSort, UIS(230));
+            ImGui::TableSetupColumn("携带中", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_PreferSortDescending, UIS(80));
+            ImGui::TableSetupColumn("最近的城镇", ImGuiTableColumnFlags_WidthFixed, UIS(240));
+            ImGui::TableSetupColumn("同时也在以下地点出售", ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_NoSort);
             ImGui::TableHeadersRow();
             int col = 0; bool asc = true; sort_of(&col, &asc);
             std::stable_sort(rows.begin(), rows.end(), [&](const Row &a, const Row &b) {
@@ -1124,12 +1124,12 @@ extern "C" int journal_buy_window(bool *open, int what)
                 ImGui::TableNextColumn();
                 if (have[id]) ImGui::Text("%d", have[id]); else ImGui::TextColored(ImVec4(0.6f, 0.2f, 0.1f, 1), "none");
                 ImGui::TableNextColumn();
-                if (at.empty()) { ImGui::TextDisabled("not seen in a shop yet"); ImGui::TableNextColumn(); ImGui::PopID(); continue; }
+                if (at.empty()) { ImGui::TextDisabled("尚未在任何商店出现"); ImGui::TableNextColumn(); ImGui::PopID(); continue; }
                 town_link(at[0].loc, "n");
                 { std::string t = travel_days(travel_min_to(at[0].loc)); if (!t.empty()) { ImGui::SameLine(); ImGui::TextDisabled("%s", t.c_str()); } }
                 ImGui::TableNextColumn();
                 for (size_t k = 1; k < at.size() && k < 7; k++) { if (k > 1) ImGui::SameLine(); town_link(at[k].loc, "a"); }
-                if (at.size() > 7) { ImGui::SameLine(); ImGui::TextDisabled("and %d more", (int)at.size() - 7); }
+                if (at.size() > 7) { ImGui::SameLine(); ImGui::TextDisabled("还有%d种", (int)at.size() - 7); }
                 if (at.size() < 2) ImGui::TextDisabled("-");
                 ImGui::PopID();
             }
@@ -1140,8 +1140,8 @@ extern "C" int journal_buy_window(bool *open, int what)
         static char q_buf[48];
         ImGui::SetNextItemWidth(UIS(320));
         if (ImGui::IsWindowAppearing()) ImGui::SetKeyboardFocusHere();
-        ImGui::InputTextWithHint("##wtb", "type to narrow: a ware's name, e.g. plate or crossbow", q_buf, sizeof q_buf);
-        ImGui::SameLine(); ImGui::TextDisabled("A click on a column's head sorts by it.");
+        ImGui::InputTextWithHint("##wtb", "类型以缩小范围：商品名称，例如盘子或弩", q_buf, sizeof q_buf);
+        ImGui::SameLine(); ImGui::TextDisabled("点击列头可按其排序。");
         std::string q = q_buf; std::transform(q.begin(), q.end(), q.begin(), ::tolower);
         struct H { int id, q, loc, min; std::string shop; };
         std::map<std::pair<int, int>, H> best;              /* one row a ware and a town: its best quality there */
@@ -1152,13 +1152,13 @@ extern "C" int journal_buy_window(bool *open, int what)
             if (it == best.end() || i.q > it->second.q) { int m = travel_min_to(kv.first); best[key] = { i.id, i.q, kv.first, m >= 0 ? m : 1 << 29, sh.name }; }
         }
         std::vector<H> hits; for (auto &kv : best) hits.push_back(kv.second);
-        if (hits.empty()) ImGui::TextDisabled(q.empty() ? "No shop's wares noted yet." : "Not seen in any shop yet.");
+        if (hits.empty()) ImGui::TextDisabled(q.empty() ? "尚未记录任何商店的商品。" : "尚未在任何商店出现。");
         else if (ImGui::BeginTable("wares", 4, TF)) {
             ImGui::TableSetupScrollFreeze(0, 1);
-            ImGui::TableSetupColumn("Ware", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_DefaultSort, UIS(260));
-            ImGui::TableSetupColumn("Quality", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_PreferSortDescending, UIS(80));
-            ImGui::TableSetupColumn("Town (nearest first)", ImGuiTableColumnFlags_WidthFixed, UIS(260));
-            ImGui::TableSetupColumn("Shop", ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_NoSort);
+            ImGui::TableSetupColumn("商品", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_DefaultSort, UIS(260));
+            ImGui::TableSetupColumn("品质", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_PreferSortDescending, UIS(80));
+            ImGui::TableSetupColumn("城镇（最近的优先）", ImGuiTableColumnFlags_WidthFixed, UIS(260));
+            ImGui::TableSetupColumn("商店", ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_NoSort);
             ImGui::TableHeadersRow();
             int col = 0; bool asc = true; sort_of(&col, &asc);
             std::stable_sort(hits.begin(), hits.end(), [&](const H &a, const H &b) {

@@ -37,15 +37,15 @@ int ui_town_teachers(int loc, TchSource *out, int max)
 
 const char *ui_teacher_short(int src)
 {
-    static const char *const N[] = { "Blacksmiths", "Swordsmiths", "Armorers", "Bowyers", "Artificers", "The guild",
-                                     "University", "Monastery", "Physician", "Alchemists" };
+    static const char *const N[] = { "锻造师", "剑匠", "盔甲匠", "弓匠", "工匠", "公会",
+                                     "大学", "修道院", "医生", "炼金术士" };
     return src >= 0 && src < (int)(sizeof N / sizeof N[0]) ? N[src] : "?";
 }
 
 static const char *skill_short(int k)
 {
-    static const char *const S[19] = { "Edged", "Impact", "Flails", "Polearms", "Thrown", "Bows", "Missile Devices", "Alchemy",
-        "Religion", "Virtue", "Speak Common", "Latin", "Read & Write", "Healing", "Artifice", "Stealth", "Streetwise", "Riding", "Woodwise" };
+    static const char *const S[19] = { "锋利武器", "冲击", "棍棒类武器", "长柄武器", "投掷", "弓箭", "投射装置", "炼金术",
+        "宗教", "美德", "通用语言", "拉丁文", "读写能力", "治疗", "工艺", "潜行", "精通街头", "骑术", "精通林地" };
     return k >= 0 && k < 19 ? S[k] : "?";
 }
 
@@ -61,30 +61,30 @@ std::string ui_teacher_skills(const TchSource &s)              /* their shields 
 std::string ui_teacher_text(const TchSource &s)
 {
     std::string t = std::string(s.who) + "\n";
-    if (!s.n) t += "Teaches: nothing that can be learned.\n";
+    if (!s.n) t += "教授的内容：无法学习任何东西。\\n";
     else {
         bool same = true;
         for (int k = 1; k < s.n; k++) if (s.fee[k] != s.fee[0]) same = false;
         t += "Teaches: ";
         for (int k = 0; k < s.n; k++) {
             t += (k == 0 ? "" : k + 1 == s.n ? " and " : ", ") + std::string("{") + gm_skill_name(s.skill[k]) + "}";
-            if (!same) t += " (" + money_str(s.fee[k]) + " a day)";
+            if (!same) t += " (" + money_str(s.fee[k]) + "（每天）";
         }
         t += ".\n";
-        if (same) t += "Fee: " + money_str(s.fee[0]) + " per student per day.\n";
+        if (same) t += "Fee: " + money_str(s.fee[0]) + "每位学生每天。\\n";
         int c = teach_chance(s.strength), days = c > 0 ? (100 + c / 2) / c : 0;
         char b[240];
         if (fix_is_on("teachcap"))
-            snprintf(b, sizeof b, "Lessons go up to %d, the teacher's own ability, and no further.\n", s.strength);
+            snprintf(b, sizeof b, "课程最高可达%d，即老师自身的技能水平，不再更高。\\n", s.strength);
         else
-            snprintf(b, sizeof b, "The teacher's own ability is %d, but lessons go past it: students can reach 99, as in the original game.\n", s.strength);
+            snprintf(b, sizeof b, "老师自身的技能是%d，但课程可以超过这个水平：学生最高可达到99，如同原版游戏一样。\\n", s.strength);
         t += b;
-        snprintf(b, sizeof b, "Each day of lessons: %s %d%% chance of +1 to the skill (about one point every %d day%s).\n", gm_a_an(c), c, days, days == 1 ? "" : "s");
+        snprintf(b, sizeof b, "每日课程：%s %d%% 技能提升 +1 的几率（约每 %d 天%s 获得一点）。", gm_a_an(c), c, days, days == 1 ? "" : "s");
         t += b;
     }
-    t += "\nHow to hire: " + std::string(s.ask) + " The teacher then stays in town for a week; at the inn, set a member to \"Train or study\".";
-    if (s.cond && *s.cond) t += "\nWho they accept: " + std::string(s.cond);
-    if (s.now[0]) t += "\nRight now: " + std::string(s.now);
+    t += "\\n如何雇佣：" + std::string(s.ask) + "然后老师会在镇上待一周；在旅店中，将某位成员设置为“训练或学习”。";
+    if (s.cond && *s.cond) t += "\\n他们接受的对象：" + std::string(s.cond);
+    if (s.now[0]) t += "\\n目前：" + std::string(s.now);
     return t;
 }
 
@@ -96,7 +96,7 @@ std::string ui_teachers_hired_line(int loc)
     for (int k = 0; k < n; k++) {
         char b[80];
         if (h[k].skill < 0 || h[k].skill >= 19) continue;
-        snprintf(b, sizeof b, "{%s} (until %d %s)", skill_short(h[k].skill), h[k].day, gm_month_name((h[k].month % 12 + 12) % 12));
+        snprintf(b, sizeof b, "{%s}（直到%d %s）", skill_short(h[k].skill), h[k].day, gm_month_name((h[k].month % 12 + 12) % 12));
         r += (r.empty() ? "" : ", ") + std::string(b);
     }
     return r;

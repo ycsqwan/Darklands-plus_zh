@@ -70,7 +70,7 @@ void autopause_frame(void)
         if (autopause_foes && !config_get_int("original", 0) && !g_rb(GV_pause_depth) && now - last_pause >= 1500 && now - floor_changed > 2000) {
             last_pause = now;
             plat_press_key(SDL_SCANCODE_SPACE);
-            ui_notice("Paused: enemies come out to fight");
+            ui_notice("暂停：敌人现身迎战");
         }
     }
     last_floor = floor; last_groups = groups;
@@ -85,7 +85,7 @@ void autopause_frame(void)
         last_pause = plat_ticks_ms();
         plat_press_key(SDL_SCANCODE_SPACE);
         char n[16]; g_str(G_DGROUP, (u16)(G_MEMBER(m) + G_M_SHORTNAME), n, sizeof n);
-        char msg[80]; snprintf(msg, sizeof msg, s == 2 ? "Paused: %s has fallen" : "Paused: %s is badly hurt", n);
+        char msg[80]; snprintf(msg, sizeof msg, s == 2 ? "暂停：%s已倒下" : "暂停：%s重伤", n);
         ui_notice(msg);
     }
 }

@@ -21,8 +21,8 @@ extern char game_dialog_text[600];
 
 namespace {
 struct Pic { int screen; const char *name, *label; SDL_Texture *tex = nullptr; int w = 0, h = 0; bool tried = false, have = false; };
-Pic P[5] = { { NS_CARD, "card", "A card" }, { NS_BARTER, "shop", "A shop" }, { NS_SHEET, "sheet", "The character sheet" },
-             { NS_LODGE, "inn", "The inn" }, { NS_ALCHEMY, "alchemy", "Alchemy" } };
+Pic P[5] = { { NS_CARD, "card", "一张卡牌" }, { NS_BARTER, "shop", "一家商店" }, { NS_SHEET, "sheet", "角色面板" },
+             { NS_LODGE, "inn", "旅店" }, { NS_ALCHEMY, "alchemy", "炼金术" } };
 SDL_Renderer *ren;
 std::string path_of(const Pic &p) { return std::string(dlp_data_dir) + "/previews/" + p.name + ".png"; }
 bool exists(const std::string &f) { struct stat st; return stat(f.c_str(), &st) == 0; }
@@ -128,7 +128,7 @@ extern "C" bool screenpics_scaling(ImDrawList *dl, ImVec2 a, ImVec2 b, int mode)
 
 /* the world map (M), kept the same way the first time it has been open a moment, for its switch's
    picture in the settings */
-static Pic MAPPIC = { -1, "worldmap", "The world map (M)" };
+static Pic MAPPIC = { -1, "worldmap", "世界地图（M）" };
 extern "C" void screenpics_map_frame(int map_open, int other_open)
 {
     static u32 since; static int was;
@@ -170,7 +170,7 @@ extern "C" bool screenpics_map_draw(ImDrawList *dl, ImVec2 a, ImVec2 b)
 /* the overland view (the game's own travel screen, with Darklands+'s names and quest marks on it),
    kept the same way, for those switches' pictures */
 extern "C" int game_mode(void);
-static Pic LANDPIC = { -1, "overland", "The overland view" };
+static Pic LANDPIC = { -1, "overland", "陆地视图" };
 extern "C" void screenpics_land_frame(int any_open)
 {
     static u32 since; static int was; static bool checked;

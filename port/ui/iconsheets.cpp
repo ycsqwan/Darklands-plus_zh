@@ -32,8 +32,8 @@ extern "C" void ui_icon_styles_draw(void)
     ImDrawList *dl = ImGui::GetForegroundDrawList(); ImVec2 ds = ImGui::GetIO().DisplaySize;
     dl->AddRectFilled(ImVec2(0, 0), ds, IM_COL32(246, 236, 212, 255));
     if (sheet_on == 2) {   /* every other set of icons, to look for one drawn twice for two things (uiconstyles:2) */
-        static const char *SECT[] = { "Preset", "New screens", "Text", "Frames and clock", "Cards and towns", "The party and its items", "Battles", "Travel",
-                                      "Fixes for bugs of the original", "Screen", "Intro", "Sound", "Controller" };
+        static const char *SECT[] = { "预设", "新屏幕", "文本", "框架与时钟", "卡牌与城镇", "队伍及其物品", "战斗", "旅行",
+                                      "修复原版漏洞", "屏幕", "开场", "音效", "控制器" };
         float cell = fminf(ds.x / 14, ds.y / 9.1f), sz = cell * 0.5f; int n = 0;   /* (its ten rows all in the window) */
         auto at = [&](int k) { return ImVec2(cell * 0.5f + (k % 14) * cell, cell * 0.45f + (k / 14) * cell * 0.9f); };
         for (int i = 0; i < 40; i++) ui_draw_town_icon(dl, at(n++), sz, i);                 /* (the town icons: as many as there are) */
@@ -83,7 +83,7 @@ extern "C" void ui_icon_styles_draw(void)
         };
         for (int k = 0; k < 7; k++) cell(0, k, gm_attr_name(k));
         for (int k = 0; k < 19; k++) cell(1, k, gm_skill_name(k));
-        cell(2, 0, "Reputation"); cell(2, 1, "Fame");
+        cell(2, 0, "声望"); cell(2, 1, "名声");
         return;
     }
     if (sheet_on == 7) {   /* the ingredients' signs large, to look at the strokes' joins (uiconstyles:7) */
@@ -96,14 +96,14 @@ extern "C" void ui_icon_styles_draw(void)
     if (sheet_on == 4) {   /* the ingredients by family, each sign with its name (uiconstyles:4) */
         struct Fam { const char *name; int ids[8]; };
         static const Fam FAM[] = {
-            { "The four bases: the elements' triangles", { 91, 92, 93, 94, 0 } },
-            { "Metals and their ores: the planets' signs, in pewter (gold in gold)", { 72, 89, 87, 88, 78, 77, 73, 0 } },
-            { "Sulphurs, salts and poisons", { 90, 79, 80, 85, 0 } },
-            { "Waters, oils and vapours", { 82, 74, 83, 75, 0 } },
-            { "Herbs: no sign in the tables, one made as theirs are", { 76, 81, 84, 86, 0 } } };
-        static const char *NM[23] = { "Pure Gold", "Manganes", "Naptha", "Marsh Vapor", "E. Black Bean", "Zincblende", "Antimoni", "Orpiment", "White Cinnabar",
-                                      "Solanaceae", "Aqua Regia", "Gum", "Mondragora", "Alum", "Camomile", "Nikel", "Pitchblende", "Zinken", "Brimstone",
-                                      "Choleric Base", "Phlegmatic Base", "Sanguine Base", "Melancholic Base" };
+            { "四大基础：元素三角形", { 91, 92, 93, 94, 0 } },
+            { "金属及其矿石：行星标志，以锡制成（黄金则用黄金）", { 72, 89, 87, 88, 78, 77, 73, 0 } },
+            { "硫磺、盐类和毒物", { 90, 79, 80, 85, 0 } },
+            { "水、油与蒸汽", { 82, 74, 83, 75, 0 } },
+            { "草药：表格中无标志，按其样式单独制作", { 76, 81, 84, 86, 0 } } };
+        static const char *NM[23] = { "纯金", "锰", "石脑油", "沼泽蒸气", "黑豆E", "方铅矿", "锑", "砒霜", "白辰砂",
+                                      "茄科植物", "王水", "树胶", "蒙德拉戈拉", "明矾", "洋甘菊", "镍", "铀矿", "辛肯", "硫磺",
+                                      "胆汁质基底", "黏液体质基底", "血液质基底", "忧郁体质基底" };
         ImFont *f = ImGui::GetFont(); const ImU32 INK = IM_COL32(60, 40, 20, 255), SOFT = IM_COL32(120, 90, 60, 255);
         const int COLS = 7; float cw = ds.x / COLS, fs = ds.y / 52, sz = fminf(cw * 0.5f, ds.y / 13.5f), rh = sz * 1.32f + fs * 1.3f, y = fs * 0.5f;
         for (const Fam &F : FAM) {
@@ -132,7 +132,7 @@ extern "C" void ui_icon_styles_draw(void)
         ui_draw_teach_mark(dl, at(n++), sz * 0.9f, IM_COL32(80, 50, 24, 255), IM_COL32(252, 246, 228, 255));
         return;
     }
-    static const char *TITLE[2] = { "Drawn in color (no disc)", "Heraldic" }; static const int ST[2] = { 0, 2 };
+    static const char *TITLE[2] = { "彩色绘制（无光盘）", "纹章式" }; static const int ST[2] = { 0, 2 };
     float colw = ds.x / 2, row = ds.y / 27.5f, sz = row * 0.8f;
     for (int j = 0; j < 2; j++) {
         float x = j * colw + 20;

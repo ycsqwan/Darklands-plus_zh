@@ -22,14 +22,14 @@ static void add(TchSource *o, int skill, int fee) { if (o->n < TCH_MAXSK) { o->s
 /* the guilds: quality index in shopq, the card's standing test ($MilCr00: seed offset, threshold; the
    artificers' street has none), the source */
 static const struct { int src, q, off, need; const char *who, *ask; } GUILDS[5] = {
-    { TCH_BLACKSMITHS, 0, 20, 100, "Blacksmiths' guild", "In the daytime, go to the blacksmiths' guild and choose \"request a meeting with the guild's masters\"." },
-    { TCH_SWORDSMITHS, 2, 19, 90, "Swordsmiths' guild", "In the daytime, go to the swordsmiths' guild and choose \"request a meeting with the guild's masters\"." },
-    { TCH_ARMORERS, 3, 18, 95, "Armorers' guild", "In the daytime, go to the armorers' guild and choose \"request a meeting with the guild's masters\"." },
-    { TCH_BOWYERS, 5, 17, 85, "Bowyers' guild", "In the daytime, go to the bowyers' and gunsmiths' guild and choose \"request a meeting with the guild's masters\"." },
-    { TCH_ARTIFICERS, 6, 0, 0, "Artificers' guild", "In the daytime, go to the artificers' guild and choose \"request a meeting with the guild's masters\"." },
+    { TCH_BLACKSMITHS, 0, 20, 100, "锻造公会", "白天前往锻造公会，选择“请求与公会大师会面”。" },
+    { TCH_SWORDSMITHS, 2, 19, 90, "刀匠公会", "白天前往刀匠公会，选择“请求与公会大师会面”。" },
+    { TCH_ARMORERS, 3, 18, 95, "盔甲匠公会", "白天前往盔甲匠公会，选择“请求与公会大师会面”。" },
+    { TCH_BOWYERS, 5, 17, 85, "弓箭匠公会", "白天前往弓箭匠与枪匠公会，选择“请求与公会大师会面”。" },
+    { TCH_ARTIFICERS, 6, 0, 0, "工匠公会", "白天前往工匠公会，选择“请求与公会大师会面”。" },
 };
-static const char GUILD_COND[] = "The guild only lets in a party with enough fame, reputation in this town and {Charisma} "
-                                 "(otherwise its street leads only to the shop). While the guild is split by a dispute, its masters want help with that first.";
+static const char GUILD_COND[] = "公会只接纳在本城拥有足够声望、名望以及{魅力}的队伍。"
+                                 "（否则其街道仅通向商店）。当公会因争执而分裂时，其大师们首先希望得到解决这一问题的帮助。";
 
 static int is_here(int loc) { return loc >= 0 && loc == (s16)g_rw(GV_cur_loc); }
 
@@ -106,7 +106,7 @@ int teach_town(int loc, const TchTown *t, TchSource *out, int max)
         if (q <= 0) continue;
         TchSource *o = NEXT(); if (!o) return n;
         o->src = GUILDS[k].src; o->who = GUILDS[k].who; o->ask = GUILDS[k].ask;
-        o->cond = GUILDS[k].need ? GUILD_COND : "While the guild is split by a dispute, its masters want help with that first.";
+        o->cond = GUILDS[k].need ? GUILD_COND : "当公会因争执而分裂时，其大师们首先希望得到解决这一问题的帮助。";
         o->strength = q + (int)(seed % 15) - 5;
         switch (GUILDS[k].src) {
         case TCH_BLACKSMITHS: add(o, SKILL_EDGED, 50); add(o, SKILL_IMPACT, 50); break;
@@ -116,35 +116,35 @@ int teach_town(int loc, const TchTown *t, TchSource *out, int max)
         default: add(o, SKILL_ARTIFICE, 50); break;
         }
         if (here) {
-            if (dispute_at(loc)) snprintf(o->now, sizeof o->now, "A guild here is split by a dispute, and its masters want help with that first.");
+            if (dispute_at(loc)) snprintf(o->now, sizeof o->now, "此地的公会因争执而分裂，其大师们首先希望得到解决这一问题的帮助。");
             else if (GUILDS[k].need) {
                 int d = standing(k, seed, loc);
-                snprintf(o->now, sizeof o->now, d >= 0 ? "The guild would receive the party now, in the daytime." : "The guild would not receive the party yet (it needs more fame, reputation here or {Charisma}).");
+                snprintf(o->now, sizeof o->now, d >= 0 ? "公会现在会在白天接纳该队伍。" : "公会暂时还不会接纳该队伍（还需要更多的声望、名望或{魅力}）。");
                 o->off = d < 0;
             }
         }
     }
     if (t->buildings & 0x100) {
         TchSource *o = NEXT(); if (!o) return n;
-        o->src = TCH_UNIVERSITY; o->who = "University";
-        o->ask = "In the daytime, go to the university and choose \"a teacher you can hire\".";
-        o->cond = "They may say no (it depends on {Perception}, {Intelligence}, {Latin}, the party's best {Alchemy} and fame). A refusal shuts their door for a week and lowers the party's reputation here a little.";
+        o->src = TCH_UNIVERSITY; o->who = "大学";
+        o->ask = "白天前往大学，选择“雇佣一位教师”。";
+        o->cond = "他们可能会拒绝（这取决于{感知}、{智力}、{拉丁语}、队伍的最佳{炼金术}以及声望）。一旦被拒绝，他们的大门将关闭一周，并使队伍在此地的声望略微下降。";
         o->strength = (int)(seed % 15) + 45;
         add(o, SKILL_ALCHEMY, 90); add(o, SKILL_RELIGION, 70); add(o, SKILL_LATIN, 50); add(o, SKILL_RW, 50); add(o, SKILL_HEALING, 110);
     }
     if (t->buildings & 0x80) {
         TchSource *o = NEXT(); if (!o) return n;
-        o->src = TCH_MONASTERY; o->who = "Monastery";
-        o->ask = "Go to the monastery and choose \"inquire about tutoring in various disciplines\".";
-        o->cond = "Only for a party of good name ({Virtue}, {Charisma}, reputation here), and only while no other teacher is hired in the town. After a refusal, wait two days.";
+        o->src = TCH_MONASTERY; o->who = "修道院";
+        o->ask = "前往修道院，选择“咨询各学科的辅导事宜”。";
+        o->cond = "仅限于具有良好名声（{美德}、{魅力}、此处声望）的队伍，且必须是在本城尚未聘请其他教师的情况下。被拒绝后，请等待两天。";
         o->strength = 50;
         add(o, SKILL_RELIGION, 50); add(o, SKILL_LATIN, 25); add(o, SKILL_RW, 25);
     }
     if (t->physician) {
         TchSource *o = NEXT(); if (!o) return n;
-        o->src = TCH_PHYSICIAN; o->who = "Physician";
-        o->ask = "In the daytime, go to the physician and choose \"beg him to allow you to be his students\".";
-        o->cond = "He takes no one who already heals better than he does himself (his own {Healing} changes from week to week; visiting him shows it). Some years he takes no students.";
+        o->src = TCH_PHYSICIAN; o->who = "医生";
+        o->ask = "白天前往医生处，选择“恳求他允许你成为他的学生”。";
+        o->cond = "他不收那些已经比自己治愈得更好的人（他自己的{治疗}每周都会变化；亲自拜访才能了解情况）。有些年份他甚至不收任何学生。";
         o->strength = 50;
         add(o, SKILL_HEALING, 60);
         int year = (s16)g_rw(G_CUR_YEAR);
@@ -155,21 +155,21 @@ int teach_town(int loc, const TchTown *t, TchSource *out, int max)
         if (here) { int e = event_at(0x37, loc, -1); if (e >= 0) { u32 p = g_event(e); P = (s16)rw((u16)(p >> 16), (u16)((u16)p + 0x1e)); } }
         int best = party_best_skill(SKILL_HEALING);
         /* (in the game's order: the party healing better first, then the year) */
-        if (P > 1 && best > P) { snprintf(o->now, sizeof o->now, "His own {Healing:%d} this week, and the party's best is %d: he will not teach you.", P, best); o->off = 1; }
-        else if (P < 0 && best > hi) { snprintf(o->now, sizeof o->now, "His own {Healing:%d} at most, and the party's best is %d: he will not teach you.", hi, best); o->off = 1; }
-        else if ((s16)(seed + year) % 3 == 0) { snprintf(o->now, sizeof o->now, "He takes no students this year."); o->off = 1; }
+        if (P > 1 && best > P) { snprintf(o->now, sizeof o->now, "他本周的{治疗:%d}，而队伍中的最佳是%d：他不会教你。", P, best); o->off = 1; }
+        else if (P < 0 && best > hi) { snprintf(o->now, sizeof o->now, "他本周的{治疗:%d}最多，而队伍中的最佳是%d：他不会教你。", hi, best); o->off = 1; }
+        else if ((s16)(seed + year) % 3 == 0) { snprintf(o->now, sizeof o->now, "他今年不收学生。"); o->off = 1; }
         else if (P >= 0) {
-            if (P <= 1) { snprintf(o->now, sizeof o->now, "He takes no students at the moment."); o->off = 1; }
-            else if (best > P) { snprintf(o->now, sizeof o->now, "His own {Healing:%d} this week, and the party's best is %d: he will not teach you.", P, best); o->off = 1; }
-            else snprintf(o->now, sizeof o->now, "His own {Healing:%d} this week: he will teach you.", P);
-        } else if (best > hi) { snprintf(o->now, sizeof o->now, "His own {Healing:%d} at most, and the party's best is %d: he will not teach you.", hi, best); o->off = 1; }
-        else if (best > lo) snprintf(o->now, sizeof o->now, "His own {Healing:%d to %d} this week (visiting him shows which): he teaches only if it is at least the party's best, %d.", lo, hi, best);
+            if (P <= 1) { snprintf(o->now, sizeof o->now, "他目前不收学生。"); o->off = 1; }
+            else if (best > P) { snprintf(o->now, sizeof o->now, "他本周的{治疗:%d}，而队伍中的最佳是%d：他不会教你。", P, best); o->off = 1; }
+            else snprintf(o->now, sizeof o->now, "他本周的{治疗:%d}：他会教你。", P);
+        } else if (best > hi) { snprintf(o->now, sizeof o->now, "他本周的{治疗:%d}最多，而队伍中的最佳是%d：他不会教你。", hi, best); o->off = 1; }
+        else if (best > lo) snprintf(o->now, sizeof o->now, "他本周的{治疗:%d至%d}（拜访他时可见具体数值）：只有当数值至少达到队伍最佳的%d时，他才会授课。", lo, hi, best);
     }
     if (t->alchemist) {
         TchSource *o = NEXT(); if (!o) return n;
-        o->src = TCH_ALCHEMIST; o->who = "Alchemists";
-        o->ask = "In the daytime, go to Astrologists' Lane and choose \"receiving additional instruction in alchemy\".";
-        o->cond = "They may say no (it depends on {Charisma}, {Speak Common}, the party's best {Alchemy} and reputation here). After a refusal, wait two and a half days.";
+        o->src = TCH_ALCHEMIST; o->who = "炼金术士";
+        o->ask = "白天时，前往占星师巷，选择“接受炼金术的额外指导”。";
+        o->cond = "他们可能会拒绝（这取决于{魅力}、{通用语言}、队伍中最佳的{炼金术}以及这里的声望）。被拒绝后，请等待两天半。";
         o->strength = t->size * 3 + (int)((u16)(seed + 4) % 41) + ((t->buildings & 0x100) ? (int)((u16)(seed + 9) % 11) + 10 : 0);
         add(o, SKILL_ALCHEMY, o->strength / 4 + 12);
     }
@@ -180,11 +180,11 @@ int teach_town(int loc, const TchTown *t, TchSource *out, int max)
     for (int k = 0; k < n; k++) {
         TchSource *o = &out[k];
         if (o->off) continue;
-        if (o->src == TCH_MONASTERY && nh) { snprintf(o->now, sizeof o->now, "Another teacher is hired in the town, so the monks will not teach for now."); o->off = 1; continue; }
+        if (o->src == TCH_MONASTERY && nh) { snprintf(o->now, sizeof o->now, "镇上已聘请了另一位老师，因此僧侣们暂时不再授课。"); o->off = 1; continue; }
         if (o->src == TCH_ARTIFICERS || o->src == TCH_UNIVERSITY || o->src == TCH_ALCHEMIST) continue;
         int all = o->n > 0;
         for (int i = 0; i < o->n; i++) { int got = 0; for (int j = 0; j < nh; j++) if (h[j].skill == o->skill[i]) got = 1; if (!got) all = 0; }
-        if (all) { snprintf(o->now, sizeof o->now, "Already hired: the teacher is at the inn now."); o->off = 1; }
+        if (all) { snprintf(o->now, sizeof o->now, "已经聘请：老师现在就在旅店。"); o->off = 1; }
     }
     return n;
 }
@@ -221,12 +221,12 @@ int teach_card_option(const char *card, int opt, TchSource *out)
         int bit = (s16)g_rw(GV_party_x);
         u16 seed = (u16)(t.seed + (s16)g_rw(G_PARTY_SEED));
         memset(out, 0, sizeof *out);
-        out->src = TCH_GUILD; out->who = "The guild's masters";
-        out->ask = "Here: choose \"inquire about special training\".";
-        out->cond = "They may say no (it depends on {Charisma}, reputation here and fame); they always agree if the guild owes the party a favor.";
+        out->src = TCH_GUILD; out->who = "公会的师傅们";
+        out->ask = "在这里：选择“询问特殊训练”。";
+        out->cond = "他们可能会拒绝（这取决于{魅力}、这里的声望和名气）；如果公会欠队伍人情，他们总是同意。";
         int q = bit == 2 || bit == 0x10 ? t.shopq[0] : bit == 4 ? t.shopq[2] : bit == 8 ? t.shopq[5] : t.shopq[6];
         out->strength = q + (int)(seed % 15) - 5;
-        if (bit == 8) snprintf(out->now, sizeof out->now, "A bug in the original game: this guild's teacher teaches no skill at all.");
+        if (bit == 8) snprintf(out->now, sizeof out->now, "原版游戏中的一个漏洞：这个公会的老师根本不教授任何技能。");
         else if (bit == 2 || bit == 0x10 || bit == 4) { add(out, SKILL_EDGED, 50); add(out, SKILL_IMPACT, 50); }
         else add(out, SKILL_ARTIFICE, 50);
         return 1;

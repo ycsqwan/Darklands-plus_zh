@@ -103,7 +103,7 @@ extern "C" void menuview_draw(void)
         if (M.menu[j].native) { tx[j] = right - tw[j]; right = tx[j] - 1.0f; continue; }
         tx[j] = x; x += tw[j] + 1.0f;
     }
-    {   const char *h = M.keyboard ? "Arrows, Enter; Esc closes" : "Click to choose; Esc or a click elsewhere closes";
+    {   const char *h = M.keyboard ? "箭头键、回车键；Esc 键关闭" : "点击选择；Esc 键或点击其他位置可关闭";
         float hw = P.width(P.fo, NsDraw::FS_SMALL, h);
         if (x + hw + 4 < right) P.text(P.fo, NsDraw::FS_SMALL, 0, 3.0f, GREY, h, right - 2.5f); }
     int over_title = -1;

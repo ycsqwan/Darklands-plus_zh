@@ -174,8 +174,8 @@ void draw_chances(void)
     if (tip_line >= 0) {                                          /* what the badge is */
         char t[200], nm[24] = "";
         if (tip_who >= 0 && tip_who < 5) g_str(G_DGROUP, (u16)(G_MEMBER(tip_who) + G_M_SHORTNAME), nm, sizeof nm);
-        if (nm[0]) snprintf(t, sizeof t, "This option tests %s: %s %d%% chance of success.\nThe original game shows this number while you hold Shift over an option; it rises with the skills and attributes tested.", nm, gm_a_an(tip_pct), tip_pct);
-        else snprintf(t, sizeof t, "This option tests the whole party: %s %d%% chance of success.\nThe original game shows this number while you hold Shift over an option; it rises with the skills and attributes tested.", gm_a_an(tip_pct), tip_pct);
+        if (nm[0]) snprintf(t, sizeof t, "此选项测试%s：有%s %d%%的成功几率。原版游戏中，当你将鼠标悬停于某选项上方时会显示这一数值；其高低随所测试的技能与属性而变化。", nm, gm_a_an(tip_pct), tip_pct);
+        else snprintf(t, sizeof t, "此选项测试全队：有%s %d%%的成功几率。原版游戏中，当你将鼠标悬停于某选项上方时会显示这一数值；其高低随所测试的技能与属性而变化。", gm_a_an(tip_pct), tip_pct);
         ImFont *tf = f;
         float ts = ui_text_px() * 0.8f, pad = ts * 0.45f;           /* sized like the other tooltips */
         float wrap = fminf(ImGui::GetIO().DisplaySize.x * 0.45f, ts * 26);
@@ -209,15 +209,15 @@ static std::string utf8(const char *s)
 int ui_spell_out = 1;
 struct Abbr { const char *ab, *full, *mid; };
 static const Abbr ABBR[] = {
-    { "wEdg", "Edged Weapons", "Edged Wpns" }, { "wImp", "Impact Weapons", "Impact Wpns" }, { "wFll", "Flail Weapons", "Flail Wpns" },
-    { "wPol", "Polearm Weapons", "Polearm Wpns" }, { "wThr", "Thrown Weapons", "Thrown Wpns" }, { "wBow", "Bow Weapons", "Bow Wpns" },
-    { "wMsD", "Missile Devices", "Missile Dev." }, { "Alch", "Alchemy", 0 }, { "Relg", "Religion", 0 }, { "Virt", "Virtue", 0 },
-    { "SpkC", "Speak Common", "Spk Common" }, { "SpkL", "Speak Latin", "Spk Latin" }, { "R&W", "Read & Write", 0 },
-    { "Heal", "Healing", 0 }, { "Artf", "Artifice", 0 }, { "Stlh", "Stealth", 0 }, { "StrW", "Streetwise", 0 },
-    { "Ride", "Riding", 0 }, { "WdWs", "Woodwise", 0 }, { "No Msl Wpn", "No Missile Weapon", "No Missile Wpn" },
-    { "No V:Armor", "No Vitals Armor", "No V:Armor" }, { "No L:Armor", "No Limb Armor", "No L:Armor" },
-    { "End", "Endurance", 0 }, { "Str", "Strength", 0 }, { "Agl", "Agility", 0 }, { "Per", "Perception", 0 },
-    { "Int", "Intelligence", "Intellect" }, { "Chr", "Charisma", 0 }, { "DF", "Divine Favor", "Divine Favor" },
+    { "wEdg", "锋利武器", "锋利武器" }, { "wImp", "冲击武器", "冲击武器" }, { "wFll", "棍棒类武器", "棍棒类武器" },
+    { "wPol", "长柄武器", "长柄类武器" }, { "wThr", "投掷武器", "投掷武器" }, { "wBow", "弓类武器", "弓类武器" },
+    { "wMsD", "投射装置", "弹射器研发" }, { "炼金术", "炼金术", 0 }, { "宗教", "宗教", 0 }, { "美德", "美德", 0 },
+    { "演说", "通用语言", "普通话" }, { "语言L", "拉丁语", "拉丁语" }, { "攻击与防御", "读写能力", 0 },
+    { "治疗", "治疗", 0 }, { "艺术", "工艺", 0 }, { "灵巧", "潜行", 0 }, { "力量", "精通街头", 0 },
+    { "骑术", "骑术", 0 }, { "WdWs", "精通林地", 0 }, { "无魔法武器", "无投射武器", "无投射武器" },
+    { "无护甲", "无生命护甲", "无护甲" }, { "无肢体护甲", "无四肢护甲", "无肢体护甲" },
+    { "结束", "耐力", 0 }, { "力量", "力量", 0 }, { "敏捷", "敏捷", 0 }, { "耐力", "感知", 0 },
+    { "智力", "智力", "智慧" }, { "气质", "魅力", 0 }, { "DF", "神恩", "神恩" },
 };
 /* the item names the sheet shortens (ShrSword, V:Brgdn), from DARKLAND.LST */
 static const char *item_full(const std::string &t)
@@ -308,8 +308,8 @@ static void spell_columns(std::vector<Spelled> &out, ImFont *font, float size)
 int ui_skill_icons = 1;
 static int skill_of(const char *t)
 {
-    static const char *SK[19] = { "wEdg", "wImp", "wFll", "wPol", "wThr", "wBow", "wMsD", "Alch", "Relg", "Virt", "SpkC", "SpkL", "R&W",
-                                  "Heal", "Artf", "Stlh", "StrW", "Ride", "WdWs" };
+    static const char *SK[19] = { "wEdg", "wImp", "wFll", "wPol", "wThr", "wBow", "wMsD", "炼金术", "宗教", "美德", "演说", "语言L", "攻击与防御",
+                                  "治疗", "艺术", "灵巧", "力量", "骑术", "WdWs" };
     for (int i = 0; i < 19; i++) if (!strcmp(t, SK[i])) return i;
     return -1;
 }
@@ -317,7 +317,7 @@ static void skill_icon(ImDrawList *dl, ImVec2 c, float s, int k) { ui_skill_icon
 /* the attributes on the character sheet and in character creation: a picture each */
 static int attr_of(const char *t)
 {
-    static const char *AT[7] = { "End", "Str", "Agl", "Per", "Int", "Chr", "DF" };       /* (the game's words, spelled out when drawn) */
+    static const char *AT[7] = { "结束", "力量", "敏捷", "耐力", "智力", "气质", "DF" };       /* (the game's words, spelled out when drawn) */
     for (int i = 0; i < 7; i++) if (!strcmp(t, AT[i])) return i;
     return -1;
 }

@@ -262,7 +262,7 @@ extern "C" void niche_test_sheet_draw(void)
     if (!niche_sheet) return;
     ImDrawList *dl = ImGui::GetForegroundDrawList();
     float k = 2.6f;
-    static const char *N[4] = { "Acanthus", "Tracery", "Shield", "Rose" };
+    static const char *N[4] = { "银莲花", "花窗装饰", "盾牌", "玫瑰" };
     dl->AddRectFilled(ImVec2(0, 0), ImVec2(4 * (136 * k + 12) + 12, 175 * k + 40), IM_COL32(40, 30, 22, 255));
     for (int st = 0; st < 4; st++) {
         ImVec2 o(12 + st * (136 * k + 12), 10);

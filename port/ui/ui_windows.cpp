@@ -70,28 +70,28 @@ extern "C" const char dlp_version[];
 void tab_about(void)
 {
     ImGui::PushFont(font_head); ImGui::Text("Darklands+"); ImGui::PopFont();
-    ImGui::SameLine(); ImGui::TextDisabled("build %s", dlp_version);
-    ImGui::TextWrapped("Darklands+ is made by Yassine Meskhout.");
-    ImGui::TextWrapped("Darklands (c) 1992 MicroProse. This is the original game, rebuilt to run directly on today's computers, with the "
-                       "game files of your own copy. F12 > Settings has the Full Original preset, the game as it played, and switches for most of what Darklands+ adds.");
+    ImGui::SameLine(); ImGui::TextDisabled("构建 %s", dlp_version);
+    ImGui::TextWrapped("Darklands+由Yassine Meskhout制作。");
+    ImGui::TextWrapped("Darklands（c）1992 MicroProse。这是原版游戏，现已重新构建，可直接在当今电脑上运行，使用的是"
+                       "您自己副本中的游戏文件。F12 > 设置中有“完整原版”预设，即游戏最初运行时的状态，并提供了Darklands+所新增功能的大部分开关选项。");
     ImGui::Spacing();
-    ImGui::TextWrapped("F11: the keys for the current screen.  F12: this window (the game waits while it is open).  Alt+Enter: full screen.  "
-                       "Ctrl+F12: screenshot.  Ctrl+S: quick save.  F9 or Ctrl+L: quick load.  M: world map.  G: go to (in cities).");
-    ImGui::PushFont(font_head); orn_septext("Files"); ImGui::PopFont();
+    ImGui::TextWrapped("F11：当前屏幕的快捷键。F12：此窗口（打开时游戏会暂停）。Alt+Enter：全屏模式。"
+                       "Ctrl+F12：截图。Ctrl+S：快速保存。F9或Ctrl+L：快速载入。M：世界地图。G：前往（城市内）。");
+    ImGui::PushFont(font_head); orn_septext("文件"); ImGui::PopFont();
     {   extern char dos_shadow[];
-        if (dos_shadow[0]) bulletf("saved games, and every other file the game writes: %s (Darklands+ cannot write to the game "
-                                             "folder; the saved games in its SAVES folder can still be loaded)", dos_shadow);
-        else bulletf("saved games: the SAVES folder of the game folder, as in the original"); }
+        if (dos_shadow[0]) bulletf("存档及其他所有游戏生成的文件：%s（Darklands+无法写入游戏目录；但其SAVES文件夹中的存档仍可正常加载）"
+                                             "存档：位于游戏目录下的SAVES文件夹，与原版一致。", dos_shadow);
+        else bulletf("保存的游戏：游戏文件夹中的 SAVES 文件夹，与原版一致"); }
     {   extern char dlp_data_dir[];
         bool own = strcmp(dlp_data_dir, game_dir) != 0;    /* the game folder could not be written */
         bulletf("the game: %s", game_dir);
-        bulletf("settings: darklands_port.ini in %s", own ? dlp_data_dir : "the game folder");
+        bulletf("设置：%s 中的 darklands_port.ini", own ? dlp_data_dir : "游戏文件夹");
         extern char dlp_user_dir[];
-        bulletf("mods, replacement art and sounds: the mods, art and sounds folders in %s", own ? dlp_user_dir : "the game folder");
-        bulletf("screenshots (Ctrl+F12, the window as you see it): the screenshots folder in %s", own ? dlp_data_dir : "the game folder");
-        bulletf("the session log: darklands_port.log (Windows) in %s; Report a problem below puts it in a zip with what else a report needs", own ? dlp_data_dir : "the game folder");
+        bulletf("截图（Ctrl+F12，以您看到的画面为准）：位于%s中的screenshots文件夹", own ? dlp_user_dir : "游戏文件夹");
+        bulletf("会话日志：位于%s中的darklands_port.log（Windows）；下方的“报告问题”按钮会将其与报告所需的其他内容一同打包成zip文件", own ? dlp_data_dir : "游戏文件夹");
+        bulletf("游戏程序：首次启动时由您的DARKLAND.EXE生成：%s（删除后可重新生成）", own ? dlp_data_dir : "游戏文件夹");
 #ifdef DL_RTSPLIT
-        bulletf("the game's program, made from your DARKLAND.EXE on the first start: %s (delete it to have it made again)",
+        bulletf("游戏程序，首次启动时由您的 DARKLAND.EXE 生成：%s（删除后将重新生成）",
 #ifdef _WIN32
                           "darklands_game.dll");
 #else
@@ -99,15 +99,15 @@ void tab_about(void)
 #endif
 #endif
     }
-    ImGui::PushFont(font_head); orn_septext("Report a problem"); ImGui::PopFont();
+    ImGui::PushFont(font_head); orn_septext("制作"); ImGui::PopFont();
     { void ui_report_section(void); ui_report_section(); }   /* (ui/report.cpp) */
-    ImGui::PushFont(font_head); orn_septext("Made with"); ImGui::PopFont();
-    ui_hint("Dear ImGui (MIT license); Nuked OPL3, the Sound Blaster FM synthesis (LGPL 2.1); Munt's libmt32emu, the Roland MT-32 (LGPL 2.1); stb_image, stb_image_write, "
-         "stb_vorbis (public domain); SDL2 (zlib license); fonts EB Garamond, Alegreya, Atkinson Hyperlegible, IM Fell English, "
-         "MedievalSharp, UnifrakturMaguntia, Grenze Gotisch and Comic Neue (SIL Open Font License 1.1).");
-    ui_hint("Darklands was designed by Arnold Hendrick and made by MicroProse; everything here stands on their game.");
-    ui_hint("With thanks to the Darklands community: vvendigo's tools, Merle's and Joel \"Quadko\" McIntyre's documentation "
-         "of the file formats, the Darklands Companion, and Arkana Mechanika (Darklands Restoration) for bug reports.");
+    ImGui::PushFont(font_head); orn_septext("使用"); ImGui::PopFont();
+    ui_hint("Dear ImGui（MIT许可证）；Nuked OPL3，Sound Blaster FM合成（LGPL 2.1）；Munt的libmt32emu，Roland MT-32（LGPL 2.1）；stb_image、stb_image_write、"
+         "stb_vorbis（公有领域）；SDL2（zlib 许可证）；字体 EB Garamond、Alegreya、Atkinson Hyperlegible、IM Fell English，"
+         "MedievalSharp、UnifrakturMaguntia、Grenze Gotisch 和 Comic Neue（SIL 开源字体许可证 1.1）。");
+    ui_hint("Darklands 由 Arnold Hendrick 设计，MicroProse 制作；此处的一切均基于他们的游戏。");
+    ui_hint("感谢 Darklands 社区：vvendigo 的工具、Merle 与 Joel “Quadko” McIntyre 对文件格式的文档，"
+         "Darklands Companion 以及 Arkana Mechanika（Darklands 修复版）提供的错误报告。");
 }
 
 /* F11: the keys and clicks of the moment (F1 ... F5 are the game's: a member's sheet) (the game's own and Darklands+'s) */
@@ -121,27 +121,27 @@ void welcome_window(void)
     ImGui::SetNextWindowSize(ImVec2(w, 0), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::PushFont(font_body);
-    if (ImGui::Begin("Welcome to Darklands+", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)) {
+    if (ImGui::Begin("欢迎来到Darklands+", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)) {
         extern char dos_shadow[];
         if (dos_shadow[0])
-            ImGui::TextWrapped("This is Darklands (MicroProse, 1992), rebuilt to run directly on today's computers, with the game files of your own copy. "
-                               "Windows does not let programs write to the game folder where it is installed, so your saved games go to %s "
-                               "(the ones already in the game folder can be loaded as always).", dos_shadow);
+            ImGui::TextWrapped("这是 Darklands（MicroProse，1992），已重新构建，可在当今电脑上直接运行，并使用您自己副本的游戏文件。"
+                               "Windows 不允许程序写入其安装的游戏文件夹，因此您的存档会保存在 %s 中，"
+                               "（已存放在游戏文件夹中的存档仍可照常加载）。", dos_shadow);
         else
-            ImGui::TextWrapped("This is Darklands (MicroProse, 1992), rebuilt to run directly on today's computers, with the game files of your own copy. "
-                               "Your saved games stay in the game folder as always.");
+            ImGui::TextWrapped("这是 Darklands（MicroProse，1992），已重新构建，可在当今电脑上直接运行，并使用您自己副本的游戏文件。"
+                               "您的存档依然保留在游戏文件夹中，一如既往。");
         ImGui::Spacing();
-        ImGui::TextWrapped("Darklands+ adds what players have long wished for: crisp text, chances on the cards, a character sheet "
-                           "for the whole party, journals, a world map, a battle log, quick saves and fixes for old bugs. Choose how much of it below; "
-                           "most of it can also be switched on or off one by one.");
+        ImGui::TextWrapped("Darklands+ 增加了玩家长久以来的期待：清晰的文字、卡牌上的机会、全队伍的角色表，"
+                           "日记、世界地图、战斗日志、快速存档以及旧有漏洞的修复。请在下方选择启用多少功能；"
+                           "其中大部分还可单独开关。");
         bool done = false;
         {   /* how much of Darklands+: the presets (mods/options.h), the recommended one chosen */
-            ImGui::PushFont(font_head); orn_septext("How would you like to play?"); ImGui::PopFont();
+            ImGui::PushFont(font_head); orn_septext("您希望如何游玩？"); ImGui::PopFont();
             static int pick = -1;
             if (pick < 0) { pick = preset_current(); if (pick < 0) pick = PRESET_PLUS; }
             for (int p : PRESET_SHOWN) {                /* (Darklands+ first, Full Original last) */
                 ImGui::PushID(p);
-                std::string nm = std::string(PRESETS[p].name) + (p == PRESET_PLUS ? " (recommended)" : "");
+                std::string nm = std::string(PRESETS[p].name) + (p == PRESET_PLUS ? "（推荐）" : "");
                 if (ImGui::RadioButton("##p", pick == p)) pick = p;
                 ImGui::SameLine();
                 if (ui_title_desc(nm.c_str(), PRESETS[p].desc)) pick = p;
@@ -152,24 +152,24 @@ void welcome_window(void)
                 bool im = config_get_int("saves.ironman", 0) != 0, click = false;
                 if (ImGui::Checkbox("##iron", &im)) click = true;
                 ImGui::SameLine();
-                if (ui_title_desc("Ironman", "one save, kept by the game itself as you go; no loading back. For your next new game, with any of the three.")) { im = !im; click = true; }
+                if (ui_title_desc("铁人模式", "一种存档，由游戏本身随您进程自动保存，无需再次加载。适用于您的下一场新游戏，三种模式任选。")) { im = !im; click = true; }
                 if (click) { config_set_int("saves.ironman", im); config_save(); }
                 ImGui::PopID();
             }
-            ImGui::TextColored(ImVec4(0.18f, 0.40f, 0.16f, 1), "Saved games stay compatible with the original game whichever you choose.");
-            if (ui_pad_prompts()) ui_pad_text("Change it at any time, or turn single features on or off: {START} > Settings. {LSTICK} moves the pointer, {A} clicks.", true);
-            else ImGui::TextDisabled("Change it at any time, or turn single features on or off: F12 > Settings.");
+            ImGui::TextColored(ImVec4(0.18f, 0.40f, 0.16f, 1), "无论您选择哪一种，存档都与原版游戏保持兼容。");
+            if (ui_pad_prompts()) ui_pad_text("您可随时更改设置，或单独开启/关闭各项功能：{START} > 设置。{LSTICK} 移动光标，{A} 点击。", true);
+            else ImGui::TextDisabled("您可随时更改设置，或单独开启/关闭各项功能：F12 > 设置。");
             ImGui::Spacing();
-            if (ImGui::Button("  Play  ") || ImGui::IsKeyPressed(ImGuiKey_Enter)) { if (pick != preset_current()) preset_apply(pick); done = true; }
+            if (ImGui::Button("游戏") || ImGui::IsKeyPressed(ImGuiKey_Enter)) { if (pick != preset_current()) preset_apply(pick); done = true; }
         }
         ImGui::Spacing();
-        ImGui::PushFont(font_head); orn_septext("Keys"); ImGui::PopFont();
-        { ImGui::Bullet(); ImGui::TextWrapped("%s", "F12: the Darklands+ window (the game waits while it is open)"); }
-        { ImGui::Bullet(); ImGui::TextWrapped("%s", "F11: the keys and clicks for the current screen, including the game's hidden ones"); }
-        { ImGui::Bullet(); ImGui::TextWrapped("%s", "Click a party member on the left (in a battle, right-click: a click there selects them for orders): their character sheet, with the whole party's saints and formulae"); }
-        { ImGui::Bullet(); ImGui::TextWrapped("%s", "M: the world map, to find a place and travel there"); }
-        { ImGui::Bullet(); ImGui::TextWrapped("%s", "Right-click: the game's menu bar (save, load, orders in battle)"); }
-        { ImGui::Bullet(); ImGui::TextWrapped("%s", "Alt+Enter: full screen   Ctrl+S: quick save   F9: quick load"); }
+        ImGui::PushFont(font_head); orn_septext("键盘"); ImGui::PopFont();
+        { ImGui::Bullet(); ImGui::TextWrapped("%s", "F12：Darklands+ 窗口（窗口打开时游戏暂停）"); }
+        { ImGui::Bullet(); ImGui::TextWrapped("%s", "F11：当前屏幕的按键与点击操作，包括游戏隐藏的功能"); }
+        { ImGui::Bullet(); ImGui::TextWrapped("%s", "左侧点击队伍成员（战斗中右键：点击后可为其下达指令）：查看其角色表，包含全队的圣人与配方"); }
+        { ImGui::Bullet(); ImGui::TextWrapped("%s", "M：世界地图，用于寻找地点并前往"); }
+        { ImGui::Bullet(); ImGui::TextWrapped("%s", "右键：游戏菜单栏（存档、载入、战斗中的指令）"); }
+        { ImGui::Bullet(); ImGui::TextWrapped("%s", "Alt+Enter：全屏   Ctrl+S：快速存档   F9：快速载入"); }
         if (ImGui::IsKeyPressed(ImGuiKey_Escape)) done = true;
         if (done) { open_welcome = false; config_set_int("ui.welcome_seen", 1); if (!news_key().empty()) config_set("ui.news_seen", news_key().c_str()); config_save(); }
     }
@@ -195,30 +195,30 @@ void news_window(void)
     ImGui::SetNextWindowSize(ImVec2(w, 0), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::PushFont(font_body);
-    std::string title = "New in Darklands+ " + news_key();
+    std::string title = "Darklands+ 新增内容" + news_key();
     if (ImGui::Begin(title.c_str(), nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)) {
         static const char *NEWS[] = {
-            "The Darklands+ window (F12) has fewer, clearer tabs: Journal, Settings, Reconstructed Content, Mods, Editor, Appendices, About. "
-            "Settings lists its sections on the left.",
-            "The quests are on the world map (M), grouped by kind and nearest first, with windows to find alchemical ingredients and any ware.",
-            "Saving and loading happen in the game's own Save and Load screens, drawn anew, with their options there.",
-            "Improved combat: between your orders, shooters keep shooting, step aside for a clear line, and fight hand to hand to help a friend set upon; "
-            "a member with no orders joins a fight beside it. Orders take one click (a member, then an enemy or a spot). The first battle explains it.",
-            "On a card, beside each chance: the head of who tries it, and what it rests on (skills, attributes, the town's opinion, fame).",
-            "Ironman: one save, kept by the game itself as you go, no loading back (F12 > Settings > Preset, for your next new game).",
-            "The whole soundtrack can be played in F12 > Settings > Sound, on the device you choose.",
-            "More screens drawn anew: the inn and the camp, the alchemist's desk, Party Info, the marching order (drag the members into place), enemy info.",
-            "City politics, cities at war and other things MicroProse wrote and never switched on, reconstructed by Darklands+ (experimental, all off "
-            "until you tick them): F12 > Reconstructed Content.",
-            "A controller's buttons are shown on screen and can be changed: F12 > Settings > Controller.",
-            "Your saved games are copied into \"Darklands+ save backups\" the first time each new version starts." };
+            "Darklands+ 窗口（F12）拥有更少、更清晰的标签页：日记、设置、重构内容、模组、编辑器、附录、关于。"
+            "设置界面左侧列出了各部分。",
+            "任务显示在世界地图上（M），按类型分组并优先显示最近的任务，同时提供窗口以查找炼金术原料及各类物品。",
+            "存档与载入均在游戏自带的存档与载入界面进行，界面全新绘制，选项亦在此呈现。",
+            "改进后的战斗：在您下达指令期间，射手持续射击，为确保视线畅通而让出位置，并近身格斗以协助被攻击的队友；"
+            "无指令的队员也可加入战斗。下达指令只需一次点击（先选队员，再选敌人或目标）。首次战斗将详细说明操作。",
+            "卡牌上每个机会旁均标注尝试者及其依据（技能、属性、城镇舆论、声望）。",
+            "铁人模式：一种存档，由游戏随您进程自动保存，无需再次加载（F12 > 设置 > 预设，适用于您的下一场新游戏）。",
+            "整个配乐可在 F12 > 设置 > 声音中播放，选择您偏好的设备。",
+            "更多界面全新绘制：旅店与营地、炼金术师的书桌、队伍信息、行军命令（拖动队员至指定位置）、敌人信息。",
+            "城市政治、交战城市及其他 MicroProse 曾撰写却从未启用的内容，均由 Darklands+ 重构（实验性，默认全部关闭，"
+            "直到您勾选启用）：F12 > 构建内容。",
+            "控制器按键在屏幕上显示并可自定义：F12 > 设置 > 控制器。",
+            "您的存档将在每个新版本首次启动时复制到“Darklands+ 存档备份”中。" };
         for (const char *t : NEWS) { ImGui::Bullet(); ImGui::TextWrapped("%s", t); }
         ImGui::Spacing();
         ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-        ImGui::TextWrapped("Most changes can be switched off in F12 > Settings (the Full Original preset turns off all that changes the play). F11 lists the keys for the current screen.");
+        ImGui::TextWrapped("大多数改动都可以在F12 > 设置中关闭（“完整原版”预设会关闭所有影响游戏体验的改动）。F11列出当前屏幕的按键。");
         ImGui::PopStyleColor();
         ImGui::Spacing();
-        bool done = ImGui::Button("  Back to the game  ") || ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsKeyPressed(ImGuiKey_Escape);
+        bool done = ImGui::Button("返回游戏") || ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsKeyPressed(ImGuiKey_Escape);
         if (done) { open_news = false; config_set("ui.news_seen", news_key().c_str()); config_save(); }
     }
     ImGui::End();
@@ -235,21 +235,21 @@ void mt32_window(void)
     ImGui::SetNextWindowSize(ImVec2(w, 0), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::PushFont(font_body);
-    if (ImGui::Begin("Darklands sounds best on a Roland MT-32", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)) {
-        ImGui::TextWrapped("Darklands was written for the Roland MT-32, a synthesizer of 1987 (or its sibling the LAPC-I, a card inside the computer). Everything the game "
-                           "plays goes through it as notes, the battle sounds too. The game first loads instruments of its own into it, so the music comes out as composed, "
-                           "with flutes, strings and horns, and the battles sound like swords and shields... sort of: each blow is still a synthesizer playing a note.");
+    if (ImGui::Begin("Darklands在罗兰MT-32上听起来效果最佳", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)) {
+        ImGui::TextWrapped("Darklands是为罗兰MT-32这款1987年的合成器编写的（或者它的兄弟型号LAPC-I，一种内置于电脑中的扩展卡）。游戏中的一切音效都以音符的形式经过它处理，战斗音效也不例外。游戏会先将自身内置的乐器载入其中，因此音乐听起来就像精心创作的一样，"
+                           "有长笛、弦乐和号角，而战斗声则像是刀剑与盾牌……大致如此：每一次击打其实都是合成器在弹奏一个音符。"
+                           "其他所有的声音设置都只是替代品。当时的主流声卡Sound Blaster只能播放更简单的音乐版本，并且对战斗音效的模仿也较为粗糙；而普通的合成器，比如Windows自带的那种，则完全使用了");
         ImGui::Spacing();
-        ImGui::TextWrapped("Every other sound setting is a stand-in. The Sound Blaster, the usual sound card of the time, plays simpler versions of the music and "
-                           "rougher imitations of the battle sounds; an ordinary synthesizer, such as the one built into Windows, plays the "
+        ImGui::TextWrapped("错误的乐器。"
+                           "Darklands+内置了一台MT-32（Munt对其的仿制品）。它只需要从真正的MT-32内存中复制两个文件——其ROM文件："
                            "wrong instruments altogether.");
         ImGui::Spacing();
-        ImGui::TextWrapped("Darklands+ has an MT-32 built in (Munt's imitation of it). It only needs two files copied from a real one's memory, its ROM files: "
-                           "control and PCM, of an MT-32 or of the later CM-32L (either works and they sound much the same; with both, Darklands+ plays the MT-32). "
-                           "They are usually named MT32_CONTROL.ROM and MT32_PCM.ROM (CM32L_CONTROL.ROM and CM32L_PCM.ROM for a CM-32L); any names do, Darklands+ knows them by what is in them. "
-                           "They belong to Roland, so they cannot come "
-                           "with this download. If you play other games with Munt or DOSBox and an MT-32, you have them already: "
-                           "show Darklands+ the folder.");
+        ImGui::TextWrapped("这两个文件通常被命名为MT32_CONTROL.ROM和MT32_PCM.ROM（如果是CM-32L，则分别为CM32L_CONTROL.ROM和CM32L_PCM.ROM）；尽管名称可以随意取，Darklands+依然能通过文件内容识别它们。"
+                           "它们属于罗兰公司，因此无法随本次下载提供。"
+                           "如果你用Munt或DOSBox搭配MT-32玩其他游戏，那么这些文件你早已拥有："
+                           "把Darklands+指向那个文件夹即可。"
+                           "选择包含ROM文件的文件夹……"
+                           "包含MT-32或CM-32L ROM文件（控制区和PCM区）的文件夹：");
         ImGui::Spacing();
         ImGui::Separator();
         static char romdir[1024]; static bool init; static std::string msg;
@@ -258,32 +258,32 @@ void mt32_window(void)
         if (have) { ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.18f, 0.40f, 0.16f, 1)); ImGui::TextWrapped("%s", mt32_status()); ImGui::PopStyleColor(); }
         else {
 #ifdef _WIN32
-            if (ImGui::Button("Choose the folder with the ROM files...")) {
+            if (ImGui::Button("该文件夹中没有MT-32或CM-32L的ROM文件。")) {
                 char d[1024];
-                if (plat_choose_folder("The folder with the MT-32 or CM-32L ROM files (control and PCM):", d, sizeof d)) {
+                if (plat_choose_folder("或者手动输入：", d, sizeof d)) {
                     snprintf(romdir, sizeof romdir, "%s", d); config_set("sound.mt32_roms", romdir); config_save(); mt32_rescan();
-                    msg = mt32_available() ? "" : "No MT-32 or CM-32L ROM files in that folder.";
+                    msg = mt32_available() ? "" : "目前尚未找到任何ROM文件。";
                 }
             }
-            ImGui::SameLine(); ImGui::TextDisabled("or type it:");
+            ImGui::SameLine(); ImGui::TextDisabled("或者直接输入：");
 #endif
             ImGui::SetNextItemWidth(UIS(380));
             if (ImGui::InputTextWithHint("##mt32dir", "C:\\path\\to\\the\\roms", romdir, sizeof romdir)) config_set("sound.mt32_roms", romdir);
             ImGui::SameLine();
-            if (ImGui::Button("Look again")) { config_save(); mt32_rescan(); msg = mt32_available() ? "" : "No ROM files found there yet."; }
+            if (ImGui::Button("再次查看")) { config_save(); mt32_rescan(); msg = mt32_available() ? "" : "使用MT-32重新启动"; }
             if (!msg.empty()) ui_hint("%s", msg.c_str());
-            ui_hint("Darklands+ also looks in Munt's ROM folder, DOSBox Staging's mt32-roms folder, and a \"roms\" folder in the Darklands+ folder or the game folder.");
+            ui_hint("关闭");
         }
         ImGui::Spacing();
         bool done = false;
         if (have && !mt32_is_open()) {
-            if (ImGui::Button("Restart with the MT-32")) { config_save(); plat_restart(); }
+            if (ImGui::Button("现在：保存游戏")) { config_save(); plat_restart(); }
             ImGui::SameLine();
         }
         static bool never;
-        if (ImGui::Button(have ? "  Close  " : "  Not now  ")) done = true;
+        if (ImGui::Button(have ? "现在：加载游戏" : "暂不")) done = true;
         if (!have) tips_never_box(&never);
-        ImGui::TextDisabled("F12 > Settings > Sound has all of this too.");
+        ImGui::TextDisabled("加载它（或者先点击再选择“加载”）");
         if (ImGui::IsKeyPressed(ImGuiKey_Escape)) done = true;
         if (done) { open_mt32 = false; if (never && !have) config_set_int("sound.mt32_prompt", 0); config_save(); }
     }
@@ -299,7 +299,7 @@ void help_window(void)
     ImGui::SetNextWindowSizeConstraints(ImVec2(w, 0), ImVec2(w, io.DisplaySize.y * 0.94f));
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::PushFont(font_body);
-    if (ImGui::Begin("Keys and clicks (F11)", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar)) {
+    if (ImGui::Begin("上下键、回车键", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar)) {
         ImGui::SetWindowFontScale(fminf(1.0f, fmaxf(0.7f, io.DisplaySize.y / 1000.0f)));
         auto row = [](const char *k, const char *d) {     /* (a label too long for its column wraps within it) */
             ImGui::BeginGroup();
@@ -312,130 +312,130 @@ void help_window(void)
         int gm = game_mode();
         int sv_loading = 0;
         if (savesview_showing(&sv_loading)) {
-            orn_septext(sv_loading ? "Now: loading a game" : "Now: saving the game");
-            if (sv_loading) { row("Double-click a save", "load it (or click it, then Load)"); row("Up, Down, Enter", "choose a save, load it"); }
-            else { row("Type", "a name for the save (22 characters at most; Backspace deletes one)"); row("Enter or Save", "save it"); }
-            row("Esc or Cancel", "back to the game as it was");
+            orn_septext(sv_loading ? "选择一个存档并加载" : "输入");
+            if (sv_loading) { row("为存档命名（最多22个字符；按Backspace可删除一个）", "按Enter或Save"); row("保存它", "Esc或取消"); }
+            else { row("返回到游戏初始状态", "现在：营地"); row("现在：旅店住宿", "保存它"); }
+            row("Esc 或 取消", "返回游戏初始状态");
         } else if (lodgeview_showing()) {          /* (a stay: the game counts it as a card) */
-            orn_septext(lodgeview_camping() ? "Now: a camp" : "Now: a stay at the inn");
-            row("A member, or 1 ... 5", "choose the member whose day you are planning");
-            row("J R P A E G T", "Regain Endurance (Just Relax), Regain Strength, Pray, Alchemy work, Earn a little money, Guard the camp, Train or study (the original's keys)");
-            row("S or A day", "one day passes; A week: seven days; Until rested: members short of Strength who only relax switch to Regain Strength, then days pass until nobody is regaining Strength or praying");
-            row("L, Esc or Leave", "leave");
+            orn_septext(lodgeview_camping() ? "现在：一个营地" : "现在：在旅店休息");
+            row("一名成员，或 1 … 5", "选择你要安排一天的成员");
+            row("J R P A E G T", "恢复耐力（只需放松）、恢复力量、祈祷、炼金术工作、赚点钱、守营、训练或学习（原版的按键）");
+            row("S 或 A 的一天", "一天过去；一周：七天；直到休息为止：那些力量不足、只放松的成员会切换为恢复力量，然后直到没有人再恢复力量或祈祷为止");
+            row("L、Esc 或离开", "leave");
         } else if (gm == GM_CARD) {
-            orn_septext("Now: a card");
-            row("Click an option", "or press its number, 1 to 9");
-            row("Hold Shift over an option", "the chance of success as the original game shows it (Darklands+'s badges show every option's chance)");
-            row("G", "go to a place in this city (Darklands+)");
-            row("M", "the world map (Darklands+)");
-            row("Town icons", "(in the right margin) what this town has that most towns lack, and its notable shops: point at one to see what it offers");
+            orn_septext("现在：一张卡片");
+            row("点击一个选项", "或按下其编号，1 到 9");
+            row("将 Shift 键按住某个选项上", "成功几率，按照原版游戏显示（Darklands+ 的徽章会显示每个选项的成功几率）");
+            row("G", "前往这座城市中的某个地点（Darklands+）");
+            row("M", "世界地图（Darklands+）");
+            row("城镇图标", "（在右侧边栏）这个城镇拥有的、大多数城镇所缺乏的东西，以及其著名的商店：指向其中一个即可查看它提供的服务");
         } else if (gm == GM_MAP) {
-            orn_septext("Now: the overland view");
-            row("Click", "walk towards that spot");
-            row("Ctrl+click", "travel there along the roads (Darklands+; any key or click stops)");
-            row("M", "the world map (Darklands+): find a place, double-click to travel there");
-            row("Point at a quest's icon", "the quest that leads there (a portcullis or a pillory beside a town: the town bars the party, or its watch wants the party)");
-            row("A quest in the left margin", "click to open it, then Travel there");
-            row("Town icons", "(in the right margin, near a town) what that town has that most towns lack, and its notable shops (point at one to see what it offers)");
+            orn_septext("现在：陆地视图");
+            row("单击", "向那个地点走去");
+            row("Ctrl+点击", "沿着道路前往那里（Darklands+；任何按键或点击都会停止）");
+            row("M", "世界地图（Darklands+）：找到一个地点，双击即可前往");
+            row("指向某个任务的图标", "引导你前往那里的任务（城镇旁的吊闸或枷锁：城镇禁止队伍进入，或其守卫想要队伍）");
+            row("左侧边栏中的一个任务", "点击打开它，然后前往");
+            row("城镇图标", "（在右侧边栏、靠近某个城镇的地方）这个城镇拥有的、大多数城镇所缺乏的东西，以及其著名的商店（指向其中一个即可查看它提供的服务）");
         } else if (gm == GM_BATTLE) {
-            orn_septext("Now: a battle");
-            row("Space", "pause / resume; orders can be given while paused");
+            orn_septext("现在：一场战斗");
+            row("空间", "暂停/继续；暂停时仍可下达命令");
             if (!ui_original_mode() && config_get_int("battle.quick_orders", 1)) {
-                row("Click a member", "then click an enemy (attack) or a spot (walk there): that click gives the order");
-                row("1 to 5", "select a member; Esc: cancel the order being given");
-                if (config_get_int("battle.panel_select", 1)) row("A member's box at the left", "click: select them (double-click: and move the view to them); right-click: their sheet");
-                if (config_get_int("battle.volley_toggle", 1)) row("Bow or sword on a member's box", "that member shoots or fights hand to hand when you click an enemy (click it to switch)");
-                row("The buttons at the foot of the field", "the selected member's orders, grouped (Attack, Move, Here, Potions and items, Battle); for a member already fighting, an attack is given against that enemy at once. Fast forward and Resume stand at the top of the right margin");
+                row("点击一名成员", "然后点击一名敌人（攻击）或一个地点（前往）：这次点击即下达命令");
+                row("1 到 5", "选择一名成员；Esc：取消正在下达的命令");
+                if (config_get_int("battle.panel_select", 1)) row("左侧的成员信息框", "点击：选中他们（双击：视图随之移动到他们身上）；右键：查看他们的资料");
+                if (config_get_int("battle.volley_toggle", 1)) row("成员信息框上的弓或剑", "当你点击敌人时，该成员会射击或进行近身格斗（点击切换）");
+                row("场地底部的按钮", "被选中成员的命令，分组排列（攻击、移动、在此、药剂与物品、战斗）；对于已经交战的成员，会立即对其敌方发动攻击。快进与继续位于右侧边栏的顶部");
             } else
-                row("Click a member", "then click an enemy, a spot or a menu choice; Enter gives the order");
-            row("Ctrl+click a member", "make that member the active one: the view follows them (scrolling at an edge stops it)");
-            row("Point at anyone", "who it is and how badly hurt");
-            if (levelmap_available()) row("Tab", "a map of the level as far as the party has seen it (Darklands+)");
-            if (!ui_original_mode() && config_get_int("battle.fast_key", 1)) row("Z", "fast forward (six times the pace) / back to the chosen speed (Darklands+)");
-            { extern int ui_battle_log; if (ui_battle_log && !ui_original_mode()) row("The battle log", "every blow and wound: the left margin on a wide window, else the bottom right; F12 > Journal > Battle log keeps it all"); }
+                row("点击一名成员", "然后点击一名敌人、一个地点或菜单选项；Enter 键下达命令");
+            row("Ctrl+点击一名成员", "让该成员成为当前活跃者：视图随之移动（边缘滚动时会停止）");
+            row("指向任意一人", "确认他是谁以及伤势有多重");
+            if (levelmap_available()) row("切换标签页", "显示队伍已探索过的关卡地图（Darklands+）");
+            if (!ui_original_mode() && config_get_int("battle.fast_key", 1)) row("Z", "快进（速度为正常六倍）/ 返回至所选速度（Darklands+）");
+            { extern int ui_battle_log; if (ui_battle_log && !ui_original_mode()) row("战斗日志", "记录每一次攻击与伤口：在宽屏窗口中显示于左边缘，否则位于右下角；按F12进入“日志”→“战斗记录”即可保存全部信息"); }
         } else if (loot_active && lootview_showing()) {
-            orn_septext("Now: the loot");
-            row("Take / Put back", "on the row under the pointer: the whole stack (1: just one)");
-            if (loot_model.shared) { row("Take all", "everything into the party's pack"); row("Potions", "go to the member shown above the right list (each member's own); the rest into the party's pack"); }
-            else { row("Take all / Share out", "everything to the member shown / to whoever has some already, else whoever has the most room (A / S)");
-                   row("Names above the right list, D", "switch to another member"); }
-            row("L, Esc or Leave", "leave (what is left stays behind)");
+            orn_septext("现在：战利品");
+            row("取出 / 放回", "在指针下方的行上：整叠物品（1：仅取一件）");
+            if (loot_model.shared) { row("全部取出", "将所有物品放入队伍背包"); row("药剂", "转到右侧列表上方显示的成员（每位成员专属）；其余物品放入队伍背包"); }
+            else { row("全部取出 / 分配", "所有物品分配给显示的成员 / 或分配给已有物品者，若无人持有则分配给空间最大的人（A / S）");
+                   row("右侧列表上方显示姓名，D", "切换至其他成员"); }
+            row("L、Esc 或离开", "离开（剩余物品留在原地）");
         } else if (loot_active) {
-            orn_septext("Now: the loot");
-            row("G / P", "get the chosen item from the pile / put one back (the cursor's list)");
-            row("D", "switch to the next member (the one who gets what you take)");
-            if (loot_enabled()) { row("A", "take the whole pile for the member shown"); row("S", "share the pile out: each item to whoever has some already, else whoever has the most room"); }
-            row("L or Esc", "leave (what is left stays behind)");
+            orn_septext("现在：战利品");
+            row("G / P", "从堆中取出选定物品 / 放回一件（光标所在列表）");
+            row("D", "切换至下一位成员（即获得你所取物品的人）");
+            if (loot_enabled()) { row("A", "为显示的成员取走整堆物品"); row("S", "分配整堆物品：每件物品分给已有者，若无人持有则分给空间最大的人"); }
+            row("L或Esc", "离开（剩余物品留在原地）");
         } else if (barter_active && barterview_showing()) {
-            orn_septext("Now: a shop");
-            row("Buy / Sell", "on the row under the pointer; with Shift: ten / the whole stack");
-            row("Names above your list", "whose items are listed (B: the next member); right-click a name: that member holds the purse");
-            row("Wheel, Up, Down", "scroll the list under the pointer");
-            row("L, Esc or Leave", "leave");
+            orn_septext("现在：商店");
+            row("买卖", "在指针下方的行上；按Shift可选择十件 / 整叠物品");
+            row("你的列表上方显示姓名", "哪些人的物品被列出（B：下一位成员）；右键点击某姓名：该成员掌管钱包");
+            row("鼠标滚轮、向上、向下", "滚动指针下方的列表");
+            row("L、Esc 或离开", "leave");
         } else if (barter_active) {
-            orn_septext("Now: a shop");
-            row("P / S", "buy the merchant's chosen item / sell your chosen item (one at a time)");
-            if (loot_enabled()) { row("T", "buy ten of the merchant's chosen item (while the money lasts)"); row("A", "sell the whole stack of your chosen item"); }
-            row("B", "barter for the next member");
-            row("L or Esc", "leave");
+            orn_septext("现在：商店");
+            row("P / S", "购买商人选定的物品 / 出售你选定的物品（每次一件）");
+            if (loot_enabled()) { row("T", "购买商人选定的十件物品（资金允许范围内）"); row("A", "出售你选定物品的整叠"); }
+            row("B", "与下一位成员以物易物");
+            row("L或Esc", "leave");
         } else if (cacheview_showing()) {
-            orn_septext("Now: the store room");
-            row("Take / Put", "on the row under the pointer: the whole stack (1: just one)");
-            row("Put away", "every item not equipped (with the party's pack, Darklands+: except kept items and potions)");
-            if (cacheview_shared_pack()) row("Potions", "a potion taken goes to the member shown above the right list; the rest into the party's pack");
-            if (cacheview_every_inn()) row("The store room", "the same at every inn (Darklands+; F12 > Settings > New screens)");
-            row("L, Esc or Leave", "leave");
+            orn_septext("现在：储物间");
+            row("取出 / 放入", "在指针下方的行上：整叠物品（1：仅取一件）");
+            row("收起", "所有未装备的物品（随队伍背包携带，Darklands+：除保留物品与药水外）");
+            if (cacheview_shared_pack()) row("药剂", "服用的药水会分配给右侧列表上方显示的成员；其余物品放入队伍背包");
+            if (cacheview_every_inn()) row("仓库", "各旅店均同此规则（Darklands+；F12 > 设置 > 新界面）");
+            row("L、Esc 或离开", "leave");
         } else if (sheetview_showing()) {
-            orn_septext("Now: a character sheet");
-            if (sheet_model.shared) { row("Equip / Unequip / Drink / Keep / Drop", "on the row under the pointer on the Items page: with the shared pack (Darklands+) the spare items are in the party's pack, and Equip moves the item from the pack to this member and equips it (Drop with Shift: all of them)");
-                                      row("Potions", "each member's own: drag one onto someone at the left to give it");
-                                      row("Keep", "marks an item never to be sold or dropped (a small seal on its row)");
-                                      row("The load", "only equipped items count toward the load, as in the original"); }
-            else row("Equip / Unequip / Drink / Give / Drop", "on the row under the pointer on the Items page (Give and Drop with Shift: the whole stack)");
-            row("Items, Skills, Saints, Formulae", "the pages at the top (Tab or Right: next page; Shift+Tab or Left: previous page)");
-            row("Portraits, F1 ... F5", "another member's sheet; this member's own portrait, Esc or Close: back");
-            row("Ctrl+F1 ... Ctrl+F5", "make member 1 ... 5 the leader (or Make leader)");
-            row("Wheel, Up, Down", "scroll the list");
+            orn_septext("现在：角色面板");
+            if (sheet_model.shared) { row("装备 / 除装 / 饮用 / 保留 / 抛弃", "在物品页面指针下方的行上：使用共享背包（Darklands+）时，备用物品在队伍的背包里，装备会将物品从背包移至该成员并装备（按Shift抛弃：全部）");
+                                      row("药剂", "每个成员自己的：将一件拖到左侧某人身上即可赠送");
+                                      row("保留", "标记某件物品永不出售或丢弃（其所在行上的小印章）");
+                                      row("负重", "只有已装备的物品计入负重，与原版相同"); }
+            else row("装备 / 除装 / 饮用 / 赠送 / 抛弃", "在物品页面指针下方的行上（按Shift赠送和抛弃：整叠物品）");
+            row("物品、技能、圣人、配方", "顶部的页面（Tab或右键：下一页；Shift+Tab或左键：上一页）");
+            row("肖像、F1…F5", "另一个成员的界面；本成员的肖像，Esc或关闭：返回");
+            row("Ctrl+F1 ... Ctrl+F5", "将成员1…5设为队长（或设为队长）");
+            row("鼠标滚轮、向上、向下", "滚动列表");
         } else if (hdart_on_screen("ARMBACK")) {        /* the character sheet (s031's keys) */
-            orn_septext("Now: a character sheet");
-            row("Ctrl+F1 ... Ctrl+F5", "make member 1 ... 5 the leader (or Make leader at the top)");
-            row("Up, Down, PgUp, PgDn", "move in a list (the mouse wheel too)");
-            row("1 ... 5", "in the equipment list: give the chosen item to member 1 ... 5 (with Shift: all of them)");
-            row("A", "in the equipment list: ready or wear the chosen item");
-            row("D", "in the equipment list: drop the chosen item (with Shift: all of them)");
+            orn_septext("现在：角色面板");
+            row("Ctrl+F1 ... Ctrl+F5", "将成员1…5设为队长（或在顶部设为队长）");
+            row("上、下、PgUp、PgDn", "在列表中移动（鼠标滚轮亦可）");
+            row("1 ... 5", "在装备列表中：将选定物品赠予成员1…5（按Shift：全部）");
+            row("A", "在装备列表中：准备或穿戴选定物品");
+            row("D", "在装备列表中：抛弃选定物品（按Shift：全部）");
         }
-        orn_septext("Keys of the original game");
-        if (!ui_original_mode()) row("Right-click", "the menu bar: click an entry (or hold the button and let go on it); a click elsewhere or any key closes it; F10 with the keyboard");
-        else row("Right mouse button", "the menu bar, while it is held: let go on an entry (F10 with the keyboard)");
-        row("Alt+S / Alt+L", "save / load, with a comment (the original's screens list nine saves)");
-        row("Alt+O", "the marching order");
-        row("Alt+D", "difficulty    Alt+M music    Alt+F sound effects");
-        row("Alt+C", "messages about saints' changes on / off");
-        row("F6", "Party Info");
-        row("Alt+Q", "quit to the desktop");
+        orn_septext("原版游戏的按键");
+        if (!ui_original_mode()) row("右键单击", "菜单栏：点击某项（或按住按钮后松开）；其他位置点击或任意按键均会关闭；键盘F10");
+        else row("右键", "菜单栏，按住时：松开某项（键盘F10）");
+        row("Alt+S / Alt+L", "保存/载入，并可添加备注（原版屏幕列出九个存档）");
+        row("Alt+O", "行军顺序");
+        row("Alt+D", "难度    Alt+M 音乐    Alt+F 音效");
+        row("Alt+C", "关于圣人状态切换的消息开关");
+        row("F6", "队伍信息");
+        row("Alt+Q", "退出到桌面");
         orn_septext("Darklands+");
-        row("F12", "the Darklands+ window (pauses the game)");
-        row("Ctrl+S / F9 or Ctrl+L", "quick save / quick load");
-        row("Alt+Enter", "full screen    Ctrl+F12 screenshot");
+        row("F12", "Darklands+窗口（暂停游戏）");
+        row("Ctrl+S / F9 或 Ctrl+L", "快速存档 / 快速载入");
+        row("Alt+Enter", "全屏    Ctrl+F12 截图");
         { if ((plat_controller_connected() || ui_pad_prompts()) ) {
             /* the buttons drawn as the controller in use has them (padglyphs.h), else named */
-            orn_septext("The controller");
+            orn_septext("控制器");
             auto prow = [](const char *keys, const char *d) {     /* keys: "{A} {B}" */
                 float x0 = ImGui::GetCursorPosX();
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.45f, 0.18f, 0.10f, 1)); ui_pad_text(keys); ImGui::PopStyleColor();
                 (void)x0; ImGui::SameLine(UIS(230)); ImGui::TextWrapped("%s", d);
             };
-            prow("{LSTICK}", "moves the pointer (slowly while the left trigger is held)");
-            prow("{RSTICK}", "the mouse wheel; pressed: Z (fast forward in a battle)");
-            prow("{A} {B}", "click / right-click (the menu bar)");
-            prow("{X} {Y}", "Enter / Esc");
-            prow("{DPAD}", "the arrow keys");
-            prow("{LB} {RB}", "Tab (the level map) / Space (pause)");
-            prow("{START} {BACK}", "F12 (the Darklands+ window) / M (the world map)");
-            prow("{RT}", "held: Ctrl (in the overland view: Ctrl+click travels there)");
-            prow("{LS}", "pressed: F11 (this list)");
+            prow("{LSTICK}", "移动指针（在按住左扳机时缓慢移动）");
+            prow("{RSTICK}", "鼠标滚轮；按下时：Z（战斗中快进）");
+            prow("{A} {B}", "点击 / 右键点击（菜单栏）");
+            prow("{X} {Y}", "回车 / Esc");
+            prow("{DPAD}", "方向键");
+            prow("{LB} {RB}", "Tab（关卡地图）/ 空格（暂停）");
+            prow("{开始} {返回}", "F12（Darklands+窗口）/ M（世界地图）");
+            prow("{RT}", "按住时：Ctrl（在陆地视图中：Ctrl+点击即可前往）");
+            prow("{LS}", "按下时：F11（此列表）");
           } }
-        ImGui::TextDisabled("F11, Esc or a click closes this.");
+        ImGui::TextDisabled("F11、Esc 或点击均可关闭此界面。");
     }
     ImGui::End();
     ImGui::PopFont();

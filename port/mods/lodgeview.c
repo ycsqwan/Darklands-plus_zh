@@ -137,18 +137,18 @@ static void job_rename(int who, u8 marks)
     u16 o = (u16)(0x8a4e + who * 20);
     char nm[20]; g_str(G_DGROUP, o, nm, sizeof nm);
     static const struct { const char *was; u8 mark; const char *with, *without; } R[] = {
-        { "Bodyguard", 0x04, "Castle Guard", "Bodyguard" },          /* Endurance, edged and impact weapons */
-        { "Clerk", 0x08, "Town Clerk", "Clerk" },                    /* Intelligence, speaking and writing */
-        { "Scribe", 0x10, "Notary", "Scribe" },                      /* Intelligence, Latin and writing */
-        { "Servant", 0x04, "Castle Servant", "Servant" },            /* Perception, Streetwise, Virtue */
-        { "Courtier", 0x04, "Castle Steward", "House Steward" },     /* the same, better paid: running a household */
-        { "Preaching Friar", 0x40, "Preaching Friar", "Street Preacher" },   /* Charisma, speaking, Religion or Virtue */
-        { "Guard Sergeant", 0, "Mounted Sergeant", 0 },              /* Strength, polearms, Riding */
-        { "Taskmaster", 0, "Overseer", 0 },                          /* Perception, Streetwise, flails (the whip) */
-        { "Troubador", 0, "Juggler", 0 },                            /* Agility, speaking, thrown weapons */
-        { "Entertainer", 0, "Street Performer", 0 },                 /* the same, in a crowd */
-        { "Mendicant Friar", 0, "Hospital Helper", 0 },              /* Perception, Healing, Virtue */
-        { "Militiaman", 0, "Town Militia", 0 },                      /* Strength, edged weapons, polearms */
+        { "保镖", 0x04, "城堡卫兵", "保镖" },          /* Endurance, edged and impact weapons */
+        { "文书", 0x08, "城镇文书", "文书" },                    /* Intelligence, speaking and writing */
+        { "书记", 0x10, "公证人", "书记" },                      /* Intelligence, Latin and writing */
+        { "仆人", 0x04, "城堡仆人", "仆人" },            /* Perception, Streetwise, Virtue */
+        { "宫廷侍从", 0x04, "城堡管家", "家庭管家" },     /* the same, better paid: running a household */
+        { "传道修士", 0x40, "传道修士", "街头传道者" },   /* Charisma, speaking, Religion or Virtue */
+        { "卫兵中士", 0, "骑兵中士", 0 },              /* Strength, polearms, Riding */
+        { "工作主管", 0, "监督", 0 },                          /* Perception, Streetwise, flails (the whip) */
+        { "游吟诗人", 0, "杂耍艺人", 0 },                            /* Agility, speaking, thrown weapons */
+        { "艺人", 0, "街头表演者", 0 },                 /* the same, in a crowd */
+        { "托钵修士", 0, "医院助手", 0 },              /* Perception, Healing, Virtue */
+        { "民兵", 0, "城镇民兵", 0 },                      /* Strength, edged weapons, polearms */
     };
     for (size_t i = 0; i < sizeof R / sizeof R[0]; i++) {
         if (strcmp(nm, R[i].was)) continue;
@@ -507,12 +507,12 @@ static int day_changed(const LodgeModel *was, const LodgeModel *now, int until_r
         if (a->act == 6 && a->skill >= 0) {
             int there = 0;
             for (int t = 0; t < now->nteach; t++) if (now->t[t].skill == a->skill && now->t[t].days_left > 0) there = 1;
-            if (!there || b->act != 6) { snprintf(msg, sizeof msg, "The days stop: %s's teacher has gone.", nm); break; }
+            if (!there || b->act != 6) { snprintf(msg, sizeof msg, "白天停止：%s的老师已经离开。", nm); break; }
         }
-        if (a->act != b->act) { snprintf(msg, sizeof msg, "The days stop: what %s does each day has changed.", nm); break; }
+        if (a->act != b->act) { snprintf(msg, sizeof msg, "白天停止：%s每天所做的事情发生了变化。", nm); break; }
         if (until_rested) continue;                             /* (Until rested runs on while anyone still rests) */
-        if (b->act == 1 && a->str < a->str_max && b->str >= b->str_max) snprintf(msg, sizeof msg, "The days stop: %s has regained all {Strength}.", nm);
-        if (b->act == 2 && a->df < a->df_max && b->df >= b->df_max) snprintf(msg, sizeof msg, "The days stop: %s's {Divine Favor} is full.", nm);
+        if (b->act == 1 && a->str < a->str_max && b->str >= b->str_max) snprintf(msg, sizeof msg, "白天停止：%s已恢复全部{力量}。", nm);
+        if (b->act == 2 && a->df < a->df_max && b->df >= b->df_max) snprintf(msg, sizeof msg, "白天停止：%s的{神恩}已满。", nm);
     }
     if (!msg[0]) return 0;
     ui_notice(msg);

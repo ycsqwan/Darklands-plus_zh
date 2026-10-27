@@ -36,10 +36,10 @@ void ui_guide_tab(void)
     ImGui::SameLine();
     ImGui::BeginChild("##gbody", ImVec2(0, 0));
     std::vector<std::string> now; int top_found = -1; float view_top = ImGui::GetWindowPos().y + UIS(30);
-    ImGui::TextWrapped("Darklands has no tutorial: this page sums up how it works, with the advice players have long given one another. "
-                       "F11 (a Darklands+ addition) lists the keys and clicks of the current screen at any time; a right-click opens the game's menus.");
+    ImGui::TextWrapped("Darklands 没有教程：本页面总结了游戏的运作方式，以及玩家们长期以来彼此分享的建议。"
+                       "F11（Darklands+ 的一项新增功能）可随时列出当前屏幕上的按键与点击操作；右键单击则打开游戏菜单。");
     ImGui::PushStyleColor(ImGuiCol_Text, PLUS_INK);
-    ImGui::TextWrapped("Lines in this color depend on something Darklands+ adds (most can be switched off in F12 > Settings).");
+    ImGui::TextWrapped("此颜色的线条取决于 Darklands+ 所添加的内容（大多数可在 F12 > 设置中关闭）。");
     ImGui::PopStyleColor();
     ImGui::Spacing();
     auto topic = [&](const char *title, std::initializer_list<const char *> lines, bool = false) {
@@ -58,107 +58,107 @@ void ui_guide_tab(void)
         }
         ImGui::Unindent();
     };
-    topic("First steps", {
-        "A new party starts with 200 florins and whatever armor each member wore in their last career. Buy the best armor the members can carry before anything else (mail if you can): a blow whose penetration is below the armor's hardness seldom wounds (Battle, below).",
-        "The usual way to toughen a new party: walk a town's side streets at night. Cutthroats lie in wait for a party leaving a side street (a stealthy, streetwise party slips past them); each fight raises the weapon skills used, and their weapons and armor bring a little money (clothing none: no shop buys it). The cutthroats come stronger and more numerous as the party grows, and losing to them costs the party its money and belongings and a little of its name in that town. Go back to the inn to rest between rounds.",
-        "The night watch stops a party in the streets at night. Owning up costs a fine (more for a bigger party and a fuller purse). Fighting the watch costs a great deal of the town's opinion and turns the town hostile for days, and losing to them means prison and the loss of the party's arms, armor and valuables.",
-        "+Darklands+ can make these night ambushes rarer (F12 > Mods: Night encounters in the streets); leave it as the original if you mean to train this way.",
-        "Quests (paid work) come from a town's merchants, foreign traders and pharmacists (at the marketplace), the Fugger, the Medici, the Hanse, the town council and the cathedral: robber knights to kill, items to fetch. The town council pays best; the Fugger, the Medici and the Hanse pay about a third as much. The original game keeps no record of them: players kept pen and paper at hand.",
-        "+Darklands+ keeps the record: a quest log. The left margin lists the party's quests, and the world map (M) lists them too and marks where each one leads.",
-        "Rest when Strength is low, and set out with it full: at an inn, or in camp in the wilds, where healing and prayer work the same.",
-        "Camping costs no money, but each day in camp makes it likelier that bandits or a lord's huntsmen find it: post a guard (Woodwise and Stealth count, and a weapon skill of 30 or more) and move on after a few days. A guard does not rest that day; a camp found with no guard is taken by surprise.",
-        "Keep the party's Virtue up: a saint helps less the less Virtue the caller has. Fighting a friar on the road costs every member Virtue and Divine Favor, win or lose. Cleared streets and good deeds raise the town's opinion of the party.",
-        "A good party has a leader with high Charisma and Speak Common, someone with Speak Latin (a skill of its own, apart from Read & Write), and a woodsman (Woodwise) for the road.",
-        "+Sell what nobody uses: in a shop, the Sell spare gear button sells at once every weapon, armor and shield that is not equipped and brings a price (not ammunition, throwing weapons or items marked Keep).",
-        "Save often: the game saves anywhere but in a fight and on the shop, character sheet, inn or camp, loot and party screens.",
-        "+Darklands+ also saves by itself on arriving at a town or any other place, and before a battle.",
+    topic("初步步骤", {
+        "新队伍初始拥有 200 弗罗林，以及每位成员在上一段生涯中所穿戴的盔甲。在购买其他物品之前，优先为队员配备他们能携带的最好盔甲（若可能，选择锁子甲）：当攻击的穿透力低于盔甲的硬度时，几乎难以造成伤害（参见下方“战斗”部分）。",
+        "锻炼新队伍的常规方法：夜间穿行于城镇的小巷。歹徒常埋伏在小巷出口处，等待队伍离开（机敏且熟悉街道的队伍可悄然通过）；每场战斗都会提升所用武器的技能，而其武器与盔甲还能带来些许收入（衣物除外：商店不收购）。随着队伍规模扩大，歹徒会变得更强、更多，一旦败于他们，队伍将损失金钱、财物，甚至在当地声名受损。回合间请返回旅店休息。",
+        "夜巡队会在夜间拦下队伍。主动认罚需缴纳罚款（队伍越大、钱包越鼓，罚款越高）。与夜巡队交战会严重损害城镇声誉，并使城镇数日敌视队伍；若败于他们，则可能入狱，并失去队伍的武器、盔甲及贵重物品。",
+        "+Darklands+ 可使此类夜间伏击更为稀少（F12 > 模组：街道上的夜间遭遇）；若您打算以此方式训练，可保留原设定。",
+        "任务（有偿工作）来自城镇的商人、外国贸易商与药剂师（市场）、富格尔家族、美第奇家族、汉萨同盟、市政议会及大教堂：击杀强盗骑士、取回物品等。市政议会支付最高；富格尔、美第奇与汉萨同盟的报酬约为其三分之一。原版游戏中并无相关记录：玩家通常随身备好纸笔。",
+        "+Darklands+ 会记录任务：任务日志。左侧栏列出队伍的任务，世界地图（M）亦同步标注，并标明每项任务的去向。",
+        "力量值较低时请休息，待恢复后再启程：可在旅店，或在野外扎营，此时治疗与祈祷效果相同。",
+        "扎营无需花费，但每日扎营都可能招致盗匪或领主的猎人发现：应安排守卫（木艺与潜行技能有效，且武器技能须达 30 或以上），数日后方可继续前行。守卫当日不得休息；未设守卫的营地易遭突袭。",
+        "维持队伍的美德：圣人的帮助程度与召唤者美德成反比。路上与修士交战无论胜负，都会消耗每位成员的美德与神恩。清理街道与行善之举则能提升城镇对队伍的好感。",
+        "一支优秀的队伍应由一位魅力高、精通通用语的领袖带领，另需一名精通拉丁语（独立技能，与读写分开）的人，以及一名擅长林地的伐木者（木艺）同行。",
+        "+出售无人使用的物品：在商店中，“出售闲置装备”按钮可一次性售出所有未装备的武器、盔甲与盾牌，并获得相应价格（不包括弹药、投掷武器或标有“保留”的物品）。",
+        "经常存档：游戏除战斗场景、商店、角色面板、旅店或营地、战利品与队伍界面外，其他任何地方均可存档。",
+        "+Darklands+ 还会在抵达城镇或其他地点时，以及战斗前自动存档。",
     }, true);
-    topic("The party: Endurance, Strength, Divine Favor", {
-        "Endurance (End) is breath and bruises: every blow takes some. A day's rest brings it back, and outside a battle much of it comes back by itself hour by hour. At 0 a member falls unconscious.",
-        "Strength (Str) is real wounds: a blow takes some of it too, more when it pierces the armor, and it comes back slowly. At 0 the member is dead. Below half, keep that member out of the fight.",
-        "Divine Favor (DF) is spent calling on saints and comes back with prayer (and slowly by itself).",
-        "Each member's attributes and skills are on the character sheet (click the member in the party panel at the left, or press F1 ... F5).",
-        "+The bars on the party panel show End, Str and DF all the time, with numbers.",
-        "The party has five places: up to four characters of your own (at an inn, \"reconsider the composition of your party\" creates a new one for an empty place or dismisses one), and companions some cards bring along for a while (a village's headman, a knight), each taking a free place.",
-        "Each member carries their own items. Only equipped items (weapons, armor, shield) count toward a member's load, and a heavy load slows them in battle.",
-        "+With the shared pack (Darklands+), everything not equipped goes into one pack for the whole party, so nobody has to pass items between members. Each member keeps their equipped weapons and armor, their mount and their own potions. When the game needs a particular member to have something (lock picks at a lock, arrows before a battle, a horse), Darklands+ hands it to them from the pack first.",
-        "On a card, the leader speaks for the party; many other tests count the party's best member at it, or its weakest.", "+Where the leader would take a test, Darklands+ has the member best at it take it instead (F12 > Settings > Cards and towns: The best member speaks for the party), with the chance and that member's head beside the option; the arrow at the end of the chance shows every member's, and a click on one has that member speak instead. Whoever speaks also bears what comes of it, as the card's text says: wounds, a trap's lasting harm, a shrine's favor. On the alchemist's formula options you pick who speaks (each member with their own chance), since what is traded is learned by the one who speaks. In a battle or a dungeon, while unpaused, the leader deals with doors, chests and locks.",
+    topic("队伍：耐力、力量、神圣恩典", {
+        "耐力（End）代表体力与伤痕：每次受到攻击都会消耗一些。休息一天即可恢复，而在战斗之外，每小时也会自行恢复一部分。当耐力降为0时，队员会昏迷。",
+        "力量（Str）代表真实伤害：每次攻击同样会消耗力量，穿透护甲时消耗更多，且恢复缓慢。当力量降为0时，队员死亡。低于一半时，请让该队员暂时退出战斗。",
+        "神圣恩典（DF）用于召唤圣人，可通过祈祷恢复（也可缓慢自行恢复）。",
+        "每位队员的属性与技能都显示在角色面板上（点击左侧队伍栏中的队员，或按F1至F5）。",
+        "+队伍栏始终显示耐力、力量和神圣恩典，并附带数值。",
+        "队伍共有五个位置：最多可容纳四名己方队员（在旅店中，“重新考虑队伍构成”可为空位创建新队员或遣散旧队员），另有随行伙伴——如村长、骑士等——可临时加入，每人占据一个空位。",
+        "每位队员都携带自己的物品。只有装备物品（武器、护甲、盾牌）会计入队员的负重，而过重的负重会降低其战斗速度。",
+        "+借助共享背包（Darklands+），所有未装备的物品都会集中存放在全队公用的背包中，无需队员之间互相传递物品。每位队员保留自己的装备武器与护甲、坐骑及个人药剂。当游戏需要某位队员携带特定物品（如开锁用的工具、战斗前的箭矢、马匹）时，Darklands+会优先从背包中取出交给该队员。",
+        "在卡牌上，队长代表队伍发言；许多其他测试则以队伍中表现最佳或最差的队员为准。", "+当队长需参加测试时，Darklands+会让队伍中该项能力最强的队员代为完成（F12 > 设置 > 卡牌与城镇：由最佳队员代表队伍发言），并可在选项旁选择是否启用该队员的头像；选项末尾的箭头显示所有队员的表现，点击其中一位即可让该队员代替发言。无论谁发言，都需承担相应后果，正如卡牌文字所言：受伤、陷阱的持续伤害、神殿的庇佑。在炼金术配方选项中，你可指定由哪位队员发言（每位队员都有独立的机会），因为交易内容由发言者掌握。在战斗或地牢中，未暂停时，队长负责处理门、箱子与锁具。",
     });
-    topic("Money and reputation", {
-        "1 florin = 20 groschen; 1 groschen = 12 pfennigs. The purse is the party's. A shop's prices depend on the town's size, the leader's Charisma (each point above or below 25 is 1% better or worse) and a bad name in the town.",
-        "The party has a separate reputation in each town: good deeds there raise it, crimes and brawls lower it. A bad one (-2 and below) makes prices up to 9% worse; a good one gives no discount. At -75 and below the town is hostile.",
-        "A reputation runs from -99 to 99, in six named levels: hunted (-75 and below), wanted, suspected, unknown (-9 to 10), respected (11 to 50) and a local hero (above 50). Most deeds and saints move it by a random amount, and the further it is from 0 the likelier it stays as it is: at 50 one deed in two counts, at 90 one in ten.",
-        "Fame is the party's renown everywhere; it brings a new title every 50 points.",
-        "Party Info (F6, or the Party menu) shows the fame, the money and the reputation in the town the party is in; on its small map, point at a town to see the reputation there.", "+Darklands+'s Party Info lists the reputation in every town at once.",
+    topic("金钱与声望", {
+        "1弗罗林 = 20格罗申；1格罗申 = 12芬尼。钱包归队伍所有。商店价格取决于城镇规模、队长的魅力值（每高于或低于25点，影响程度为1%）以及城镇的负面名声。",
+        "队伍在每个城镇都有独立的声望：善行会提升声望，犯罪与斗殴则会降低。负面声望（-2及以下）会使物价最高上涨9%；正面声望则不打折。当声望降至-75及以下时，该城镇将对队伍怀有敌意。",
+        "声望范围从-99到99，分为六个等级：被追捕（-75及以下）、通缉、可疑、未知（-9至10）、受尊敬（11至50）以及本地英雄（50以上）。多数善行与圣人事件会随机改变声望，且越远离0，声望保持不变的可能性越高：50时每两件善行有一件生效，90时则每十件有一件生效。",
+        "名声是队伍在各地的知名度；每50点可获得一个新的称号。",
+        "队伍信息（F6，或队伍菜单）显示队伍所在城镇的名声、金钱与声望；在其小地图上，点击某个城镇即可查看该地的声望。", "+Darklands+ 的队伍信息一次性列出所有城镇的声望。",
     });
-    topic("Towns", {
-        "+G opens Go to: a list of the town's places (shops, churches, the inn, the gates ...); pick one and Darklands+ takes the party there, choosing the town's menu entries for you.",
-        "The inn: a room for the night, or stay for days to rest, regain Strength, pray, brew, earn a little or study with a teacher.",
-        "+The inn's screen shows each member's day and what it costs; \"Until rested\" and \"A week\" spend the days for you, stopping when something changes.",
-        "The innkeeper keeps items for the party (store items, recover items stored here), in a store room of each town's own.",
-        "+With the shared store room (Darklands+), one store room serves every inn: what is left in one town is there in all of them (F12 > Journal > Stored lists it).",
-        "Teachers: a guild's masters (blacksmiths, swordsmiths, armorers, bowyers, artificers), the university, the monks, the physician and the alchemists can be asked to teach; a teacher found stays in town for a week and teaches at the inn, for a fee each day.",
-        "Each shop's goods have a quality, written like 29q: most shops' weapons and armor are about 25q, the best weapon and armor shops in the land near 38q.",
-        "+The right margin marks a town's notable shops (30q and better) with an icon and their quality; the world map (M) lists them all and finds where to buy a thing. In a shop, a weapon or armor is compared with what the member has equipped.",
-        "Almost every town has a monastery (where the monks teach saints, pray for the party and heal), a physician, and the Fugger's, the Medici's and the Hanse's offices at the marketplace; most have an alchemist and docks. A cathedral is in about half the towns, a university in thirteen.",
-        "+Under a town's name, the margin shows icons for what the town has that most towns lack (point at one to see what it offers); the world map (M) finds every town that has one.",
-        "Night falls at 19:00 and lasts until 5:00. At night the streets have the night watch, cutthroats lie in wait for a party leaving a side street (a stealthy, streetwise party slips past them), and gates may be closed.",
-        "+At night the margin shows \"Night in the streets\" with the party's chances.",
-        "Witches gather at Sabbats on set nights at places in the wilds. Now and then a card gives away a Sabbat's night or place (a dying cultist, a witch's lover, a hidden note).",
-        "+Once the party has heard of a Sabbat, it is listed among the quests and its place is marked on the world map (M) and in the overland view. A town that bars the party, or whose watch wants the party, has a sign beside its name on both.",
+    topic("城镇", {
+        "+G键打开“前往”功能：列出城镇的所有场所（商店、教堂、旅店、城门……）；选择一处，Darklands+便会带领队伍前往，并为你挑选合适的城镇菜单选项。",
+        "旅店：可供过夜的房间，也可停留数日休养、恢复力量、祈祷、酿酒、赚取些许收入或跟随老师学习。",
+        "+旅店界面显示每位队员的一天及所需花费；“直至休息”与“一周”会帮你安排每日行程，直到发生变动为止。",
+        "旅店老板为队伍保管物品（储存物品、回收在此存放的物品），各城镇均设有专门的储物间。",
+        "+借助共享储物间（Darklands+），每个旅店共用一间储物室：某一城镇剩余的物品将在所有旅店通用（F12 > 日志 > 储存列表）。",
+        "教师：公会大师（铁匠、剑匠、铠甲师、弓匠、工匠）、大学、僧侣、医师以及炼金术士均可受邀授课；找到的教师会在城镇停留一周，在旅店授课，按日收取费用。",
+        "每家商店的商品都有质量等级，标注如29q：大多数商店的武器与护甲约为25q，全国顶尖的武器与护甲商店接近38q。",
+        "+右侧边栏以图标标明城镇内值得关注的优质商店（30q及以上），并注明其质量；世界地图（M）列出所有此类商店，并指引购买地点。在商店里，武器或护甲会与队员已装备的进行对比。",
+        "几乎每个城镇都有修道院（僧侣在此教授圣人知识、为队伍祈祷并施治）、医师，以及富格尔、美第奇与汉萨同盟的市场办事处；多数还设有炼金术士与码头。约半数城镇拥有大教堂，十三个城镇设有大学。",
+        "+城镇名称下方的边栏以图标展示该城镇独有的特色（点击图标即可了解其优势）；世界地图（M）会找出所有具备这些特色的城镇。",
+        "夜幕于19:00降临，持续至次日5:00。夜间街道有巡逻队，歹徒潜伏伺机袭击从侧巷走出的队伍（机敏、熟悉街路的队伍可悄然通过），城门也可能关闭。",
+        "+夜间边栏显示“街头之夜”，并列出队伍的行动机会。",
+        "巫婆们会在固定夜晚聚集于野外的特定场所举行安息日聚会。偶尔会有卡牌透露安息日的夜晚或地点（濒死的信徒、巫婆的情人、隐藏的纸条）。",
+        "+一旦队伍得知某处有安息日聚会，它就会被列入任务清单，其地点也会在世界地图（M）及陆地视图中标出。禁止队伍进入或巡逻队希望拦截队伍的城镇，会在其名称旁同时标注警示标志。",
     });
-    topic("Healing and rest", {
-        "At an inn or in camp, a member who relaxes or regains Strength has full Endurance again the next morning. Regain Strength adds (the party's best Healing skill) / 15 Strength a day (at least 1).",
-        "Praying (at an inn or in camp) adds (Religion + Virtue) / 12 + 1 Divine Favor a day.",
-        "A wounded party should not travel far: an encounter on the road at low Strength can kill.",
+    topic("治疗与休息", {
+        "在旅店或营地，放松或恢复力量的队员次日清晨即可恢复满额的耐力。恢复力量还会额外增加（队伍中最佳治疗技能）/每天15点力量（至少1点）。",
+        "祈祷（在旅店或营地）可额外增加（宗教+美德）/每天12点神圣恩典加上1点。",
+        "受伤的队伍不宜长途跋涉：低力量下遭遇路上的意外可能致命。",
     });
-    topic("Alchemy", {
-        "Alchemy is strong but slow to build up: each member knows formulae of their own, and a formula makes one potion. Alchemists sell formulae.",
-        "Each town's alchemist sells four formulae, the same for the whole game, and only the formulae of the first seven potions (Noxious Aroma to Sunburst) and one Thunderbolt formula are ever sold: the others are traded for or found.",
-        "+The character sheet's Formulae page, set to All formulae, names the nearest visited alchemist that sells each formula the party lacks; the margin (\"Formulae sold here\", with the prices) and the world map's tooltip on a town list what its alchemist sells.",
-        "The ingredients are sold by a marketplace's pharmacists, by universities and at some mines, and a physician or an alchemist will trade in them; ingredients carried by any member count.",
-        "+In such a shop, the Formulae button lists the party's formulae; +1 or +5 beside one buys the ingredients for one or five more batches.",
-        "A batch's chance of success: 100 + the Philosopher's Stone's quality + Intelligence + Alchemy - the formula's mystic number. The 100 is less when more batches are made at once: 50 for four or five, 33 for six or seven, and so on. The party has one Philosopher's Stone at most (Party Info, F6, shows its quality). Brewing takes a day of alchemy at an inn or in camp.",
-        "A failed batch at an inn, in a village or a hideout ends in a mishap one time in two: an explosion (the party hurt, damages to pay, no room at that inn for four months) or a stink (no room for a month). Which of the two it is goes by the formula's risk (low, medium, high), but backwards: an explosion three times in four at low risk, two in three at medium, one in two at high. In a camp in the wilds a failure only costs the ingredients: brew there when the chance is poor.",
-        "+The fix \"The risk levels of alchemy formulae work the right way around\" (F12 > Settings > Fixes) makes it one time in four at low risk, one in three at medium and one in two at high.",
-        "A potion is as good as the formula it was brewed with: each potion has three formulae, of grade 1, 2 and 3.",
-        "+The marks on a flask (one, two or three) show its grade (their look: F12 > Settings > Frames and clock), and the Formulae page lists every formula the party knows: who knows it, its ingredients against those carried, the batches they make and each alchemist's chance.",
+    topic("炼金术", {
+        "炼金术虽强，但积累缓慢：每位队员都掌握自己的配方，一个配方只能制作一瓶药剂。炼金术士出售配方。",
+        "每个城镇的炼金术士出售四种配方，全游戏统一，且仅前七种药剂的配方（如“恶臭之香”至“旭日”）以及一种“雷霆”配方会被出售：其余皆以交换或寻找方式获取。",
+        "+角色面板的“配方”页面设为“全部配方”，会列出最近造访过的、能出售队伍所缺配方的炼金术士；边栏（“此处出售的配方”，附带价格）以及世界地图上的城镇提示，都会说明当地炼金术士所售配方。",
+        "食材由集市的药剂师、大学以及部分矿井出售，医生或炼金术士也会交易这些食材；任何成员携带的食材均计入负重。",
+        "+在这样的商店里，“配方”按钮会列出队伍的配方；+1或+5旁边表示购买一剂或五剂配方所需的食材。",
+        "一剂配方的成功几率：100 + 哲人石的品质 + 智力 + 炼金术 - 配方的神秘数值。同时制作的配方越多，100的值越低：四到五剂为50，六到七剂为33，以此类推。队伍最多只有一颗哲人石（队伍信息，F6，显示其品质）。酿造需要在旅店或营地进行一天的炼金术操作。",
+        "在旅店、村庄或藏身处失败的一剂配方，每两次就会有一次意外：要么爆炸（队伍受伤，需赔偿损失，该旅店四个月内无法入住），要么臭气熏天（一个月内无法入住）。具体是哪种情况取决于配方的风险等级（低、中、高），但顺序相反：低风险下爆炸概率为四分之三，中风险为三分之二，高风险为二分之一。而在野外营地，失败只会损失食材：当成功率较低时，就在那里酿造。",
+        "+修复“炼金术配方的风险等级正好相反”（F12 > 设置 > 修复）使低风险下变为四分之一，中风险为三分之一，高风险为二分之一。",
+        "药剂的好坏取决于其所用的配方：每种药剂都有三种配方，分别对应1级、2级和3级。",
+        "+烧瓶上的标记（一、二或三）表示其等级（外观：F12 > 设置 > 框架与时钟），而“配方”页面则列出了队伍所知的每一项配方：谁掌握它、其成分与队员携带的对比、他们制作的批次以及每位炼金术士的成功几率。",
     });
-    topic("Saints", {
-        "Saints are learned in a library (a town's monastery or university, or a monastery in the country) and called upon with Divine Favor, in a card's options or from the menu. Each saint helps with something different; the chance goes by the caller's Virtue and the Divine Favor spent, against what that saint asks for.",
-        "Each library teaches four saints, the same for the whole game: one saint to one member a visit, for a small gift.",
-        "+The character sheet's Saints page, set to All saints, names the libraries visited that teach each saint the party lacks, and says what each saint really does; the margin (\"Saints taught here\") and the world map say what a town's library teaches.",
-        "+Darklands+ shows the chance on the prayer screen and in a card's options.",
-        "Most saints' help lasts about a day; healing and a better name in a town stay, and St. Drogo's and St. Wilfrid's shelter from ambushes lasts a week. Some saints ask a price for it, a loss of Perception, Intelligence, Agility or Charisma for that day (the saint's legend says so), which comes back when the help runs out; St. Edward the Confessor takes a quarter of the party's money.",
-        "+The margin's \"Blessings and potions\" shows what is at work on each member, and for how long; on the character sheet's Skills page a raised value is blue.",
+    topic("圣人", {
+        "圣人在图书馆（城镇的修道院或大学，或乡村的修道院）中被学习，并可通过神恩召唤，在卡牌选项或菜单中使用。每位圣人都有独特的帮助方式；成功率取决于召唤者的美德与消耗的神恩，与该圣人所要求的内容相对应。",
+        "每座图书馆教授四位圣人，整个游戏都相同：每位成员可拜访一位圣人，作为小小礼物。",
+        "+角色面板的“圣人”页面设为“所有圣人”，会列出队伍尚未掌握的、各圣人所在图书馆的名字，并说明每位圣人的实际作用；边栏（“此处教授的圣人”）及世界地图则显示某座城镇的图书馆教授了哪些圣人。",
+        "+Darklands+会在祈祷界面和卡牌选项中显示成功率。",
+        "大多数圣人的帮助持续约一天；治疗效果和城镇中的好名声会保留，而圣德罗戈和圣威尔弗里德提供的避难所则能抵御伏击一周。有些圣人会收取代价——当天感知、智力、敏捷或魅力的损耗（圣人传说如此记载），待帮助结束后恢复；圣爱德华忏悔者还会拿走队伍四分之一的钱。",
+        "+边栏的“祝福与药剂”显示每位成员当前生效的效果及其持续时间；角色面板技能页上，提升的数值以蓝色显示。",
     });
-    topic("Battle", {
-        "Battles run in real time; Space pauses. To give an order, select a member (click them, or press 1 to 5), pick the order from the menus (Std Attack, Vulnerable, Berserk, Parry, Use Missile, Walk towards, Halt and more), click the enemy or the spot it is for, then press Enter.",
-        "+With Easier battle controls (Darklands+), a click on an enemy (to attack it) or a spot (to walk there) gives the order at once, with no menu and no Enter, and if selecting the member paused the battle, it goes on; while the battle is paused, the next member without an order is selected. A shooter's box at the left has a bow or a sword on it: click it to choose whether a click on an enemy makes them shoot or fight hand to hand. Z fast-forwards.", "+The selected member's orders are buttons at the foot of the field, grouped by what they do, so the menus are not needed; Fast forward and Resume are at the top of the right margin.",
-        "+With Improved combat (Darklands+), members fight on sensibly between orders: a shooter keeps shooting (at the nearest enemy in sight when the target falls), steps aside for a clear line, and draws a melee weapon once an enemy is close, or to help a party member nearby who is set upon by two or more or badly hurt; a member whose enemy falls turns on one close by.",
-        "Ctrl+click a member and the view follows them.", "+The view scrolls when the pointer rests on its edge (the original needs Shift held there), and selecting a member does not move it: press their number twice to bring the view to them.",
-        "Armor has a hardness (soft, stiff, scale, mail, plate) and a weapon a penetration. Above the hardness, a blow does its full damage and much of it wounds (Strength); equal to it, the weapon's extra damage is halved and less of it wounds; below it, that extra is cut to an eighth and the blow seldom wounds. Plate turns every sword, dagger and axe unless the blow is aimed at the gaps (Vulnerable: 1 to 4 more penetration); the great hammer, the long and composite bows, crossbows and the brass handgun pierce it. E (Enemy Info) shows the first two kinds of enemy on the field.",
-        "+Point at an enemy to see how your weapons fare against its armor; Enemy Info shows it for every kind of enemy on the field.",
-        "Skills grow with use in battle (and with lessons at an inn); when a fight ends, each gain shows in the member's box at the left.",
-        "+Darklands+ also shows each gain rising in gold over the fighter's head (+2 Edged).",
-        "Missile weapons need ammunition. A shooter needs a clear line to the target: party members, enemies and corners all block it, so move the shooter where the line is clear.",
-        "+Darklands+ can give the party endless ammunition (F12 > Settings > The party and its items).",
-        "After a fight in a street or a dungeon, walk the party out through an exit to go on.",
-        "In a castle, dungeon or mine the battle goes on after each fight; it ends when the master of the place has fallen and his fight is over. Walking out while enemies are at the party is fleeing; between fights it brings the party back to the place's card.",
-        "+The battle margin marks the master among the enemies, and the battle pauses when a group of enemies comes out to fight. With Enemies still waiting (F12 > Mods), it also counts the enemies not yet met, floor by floor, and says on which floor the master waits.",
+    topic("战斗", {
+        "战斗以实时方式进行；空间暂停。下达指令时，先选择一名队员（点击或按1至5），再从菜单中挑选指令（普通攻击、弱点攻击、狂暴、格挡、使用投射物、朝目标前进、停止等），然后点击敌人或目标位置，最后按回车键。",
+        "+借助更简易的战斗控制（Darklands+），点击敌人（攻击）或目标位置（前进）即可立即下达指令，无需菜单也不必按回车；若选择队员时战斗暂停，则战斗将继续；战斗暂停期间，系统会自动选择下一位未下达指令的队员。左侧的射击框上标有弓或剑：点击可选择点击敌人时是射击还是近战。Z键用于快进。", "+被选队员的指令以按钮形式显示在战场底部，按功能分组，因此无需菜单；右上角则有快进与继续按钮。",
+        "+借助改进后的战斗模式（Darklands+），队员们能在指令之间合理地战斗：射手持续射击（目标倒下时瞄准最近的敌人），为确保视线清晰让开，待敌人靠近时才拔出近战武器，或协助附近遭到两人以上围攻或重伤的队友；而敌方倒下的队员则会转向附近的敌人。",
+        "Ctrl+点击队员，视角便会跟随其移动。", "+当指针停留在视图边缘时，视图会自动滚动（原版需按住Shift），而选择队员并不会改变视图位置：连续按两次队员编号即可将视图移至其身旁。",
+        "盔甲有硬度（软、硬、鳞片、锁子甲、板甲）和武器有穿透力。高于硬度时，打击会造成全部伤害且大部分会造成创伤（力量）；等于硬度时，武器额外伤害减半，造成的创伤也减少；低于硬度时，额外伤害仅剩八分之一，打击几乎不会造成创伤。板甲能抵挡所有剑、匕首和斧头，除非打击专门针对缝隙（弱点：额外穿透力1至4）；大锤、长弓与复合弓、弩以及黄铜手枪都能穿透它。E（敌人信息）显示战场上前两种类型的敌人。",
+        "+指向敌人，即可查看你的武器对其盔甲的应对情况；敌人信息会显示场上每种敌人的相关数据。",
+        "技能随战斗使用（以及旅店课程）而增长；每次战斗结束，每项提升都会显示在队员左侧的方框中。",
+        "+Darklands+还显示战士头顶上方金币不断攀升（+2刃器）。",
+        "投射武器需要弹药。射手必须确保对目标有清晰的视线：队员、敌人和角落都会阻挡，因此要将射手移到视线畅通的地方。",
+        "+Darklands+还能为队伍提供无限弹药（F12 > 设置 > 队伍及其物品）。",
+        "街道或地牢战斗结束后，带领队伍从出口离开，继续前行。",
+        "在城堡、地牢或矿井中，每次战斗后战斗仍会继续；直到场所主人倒下、战斗结束时才会终止。在敌人仍在场时离开，即属逃亡；战斗间隙则会让队伍回到该场所的卡片。",
+        "+战斗边栏会标记敌人中的首领，当一群敌人出来作战时，战斗便会暂停。若有敌人仍在等待（F12 > 模组），还会逐层统计尚未遭遇的敌人，并标明首领所在楼层。",
     });
-    topic("Travel", {
-        "In the overland view, clicking a spot walks the party towards it.",
-        "+Ctrl+click travels there along the roads, around rivers (any key or click stops). M opens the world map: double-click a place to go there.",
-        "Each step costs time, and the road brings encounters. Roads are quickest, marsh and mountains slowest. The texts of St. Christopher, St. Drogo and St. Wilfrid promise faster travel, and St. Eustace's faster travel through woods, but in the original game they do not speed the party.",
-        "+The fix \"Saints do what their texts say\" (Darklands+, F12 > Settings > Fixes) makes these saints keep their texts' promise: faster travel for a week, so fewer days pass on the way.",
-        "Winter is hard on the road: from November to March a blizzard can catch the party in the open (in the high mountains from October to April). Keep going, call on a saint, or camp and wait it out.",
-        "Castles, monasteries, mines and the rest open their own card when the party steps on them.",
+    topic("旅行", {
+        "在野外视图中，点击某个地点即可带领队伍朝那里前进。",
+        "+Ctrl+点击可沿道路、绕过河流前往目的地（任意按键或点击均可停止）。M打开世界地图：双击某地即可到达。",
+        "每一步都需要时间，沿途还会遇到各种情况。道路最快，沼泽与山地最慢。圣克里斯托弗、圣德罗戈和圣威尔弗里德的文本承诺更快的旅行，圣尤斯塔斯还宣称可在林间加速，但在原版游戏中这些圣人并未真正加快队伍速度。",
+        "+修复“圣人言行一致”（Darklands+，F12 > 设置 > 修复）使这些圣人兑现承诺：一周内旅行更快，路上耗费的时间更少。",
+        "冬季路况艰难：从11月到3月，暴风雪可能在野外困住队伍（高山地区则从10月到4月）。继续前行，呼唤圣人，或扎营等待。",
+        "城堡、修道院、矿井及其他场所，每当队伍踏入其中，都会开启属于自己的卡片。",
     });
-    topic("Saving", {
-        "Alt+S saves, with a comment, and Alt+L loads; each save is kept as a new one. Saving works anywhere but in a fight (some places allow it between fights: \"Battlefield save rules are in effect\") and on the shop, character sheet, inn or camp, loot and party screens.",
-        "+Ctrl+S quick-saves; F9 or Ctrl+L loads the quick save. On Darklands+'s Save screen, clicking an old save replaces it with the new one, and the Load screen has a Delete button.",
-        "+Ironman (F12 > Settings > Preset, for the next new game): the game keeps one save and saves over it as you go (every card, each arrival, before each battle, on quitting). There is no loading back, and when the party's journey ends its save is deleted.",
+    topic("保存", {
+        "Alt+S可保存并附带备注，Alt+L可加载；每次保存都会被视为新存档。保存可在任何地方进行，除了战斗中（某些场所允许战斗间隙保存：“战场保存规则生效”），也可在商店、角色面板、旅店或营地、战利品及队伍屏幕中进行。",
+        "+Ctrl+S可快速保存；F9或Ctrl+L可加载快速存档。在Darklands+的保存界面，点击旧存档即可替换为新存档，而加载界面则设有删除按钮。",
+        "+铁人模式（F12 > 设置 > 预设，适用于下一场新游戏）：游戏会保留一份存档，并在你游玩过程中不断覆盖保存（每张卡片、每次抵达、每次战斗前、退出时）。不再支持加载回退，当队伍旅程结束时，存档将被删除。",
     });
     titles = now; at_top = top_found < 0 ? 0 : top_found;
     ImGui::EndChild();

@@ -47,9 +47,9 @@ static int logon;
 
 enum { S_MISS, S_PARRY, S_HIT, S_KNOCK, S_DEATH, S_BOW, S_GUN, S_BURST, S_MAGIC, S_AMBUSH, S_CANTGO, NS };
 const char *SFX_NAMES[NS] = { "miss", "parry", "hit", "knockback", "death", "bow", "gun", "burst", "magic", "ambush", "cantgo" };
-const char *SFX_DESC[NS] = { "an attack that misses", "a parried or blocked blow", "a blow that lands",
-    "a heavy blow that knocks back", "a death", "a bow or crossbow shot", "a handgun shot", "a potion bursting",
-    "a magical effect", "hidden enemies appear", "\"cannot go there\"" };
+const char *SFX_DESC[NS] = { "一次未命中的攻击", "一次被招架或格挡的打击", "一次命中目标的打击",
+    "一次重击，将对手击退", "一次死亡", "一次弓箭或弩箭射击", "一次手枪射击", "一瓶药剂爆炸",
+    "一种魔法效果", "隐藏的敌人现身", "无法前往此处" };
 int SFX_COUNT = NS;
 
 #define MAXVAR 8
@@ -590,7 +590,7 @@ int sfx_export(char *msg, int n)
         }
     }
     rs = save;
-    snprintf(msg, (size_t)n, "%d sounds written to %s", done, dir);
+    snprintf(msg, (size_t)n, "%d 声音已写入 %s", done, dir);
     return done;
 }
 

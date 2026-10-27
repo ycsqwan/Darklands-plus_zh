@@ -185,42 +185,42 @@ enum Dest {
    gunsmith), and its picture (ui/townicons.h) */
 struct DestInfo { const char *label; const char *desc; int group; int building; int shop; int icon; };
 static const DestInfo DEST[D_N] = {
-    { "Merchant", "Market stalls: everyday goods to buy and sell.", 0, -1, 1, TI_MARKET },
-    { "Foreign trader", "Pavilions of traders from distant lands: goods to buy and sell.", 0, -1, -1, TI_FOREIGN },
-    { "Swordsmith", "Swordsmith's Lane: weapons, and the swordsmiths' guild.", 0, -1, 2, TI_SWORD },
-    { "Armorer", "Armorer's Way: armor and shields, and the armorers' guild.", 0, -1, 3, TI_ARMOUR },
-    { "Bowyer", "The Square of Bowyers and Gunsmiths: bows, crossbows and guns, and their guild.", 0, -1, -2, TI_BOW },
-    { "Blacksmith", "The Street of the Blacksmiths: weapons, and the blacksmiths' guild.", 0, -1, 0, TI_SMITH },
-    { "Soldiers' Road", "Shops and push-carts crowded with soldiers and camp followers, and the street's leaders.", 0, -1, -1, TI_SOLDIERS },
-    { "Jeweller", "", 0, -1, 7, TI_FOREIGN },
-    { "Artificer", "Tinkers' Square: hammers, maces, flails and polearms, and the artisans' guild.", 0, -1, 6, TI_TOOLS },
-    { "Clothmaker", "Clothmakers' Street: clothing and soft armor (padded, leather, studded leather, cuir bouilli), and the clothmakers' guild.", 0, -1, 8, TI_CLOTH },   /* (shown with the cardopts fix: by day its shopfronts are switched off in 483.07) */
-    { "Alchemist", "Astrologists' Lane: formulae to buy or trade, a better Philosopher's Stone, lessons in Alchemy.", 3, -1, -1, TI_ALCHEMIST },
-    { "Herbalist", "", 3, -1, -1, TI_PHARMACY },
-    { "Pharmacist", "Stalls with herbs and rare materials: alchemical ingredients.", 0, -1, -1, TI_PHARMACY },
-    { "Physician", "Wounds treated for a fee, lessons in Healing, alchemical ingredients bought and sold.", 3, -1, -1, TI_PHYSICIAN },
-    { "Fugger bank", "Heavy coin changed into bank notes that weigh nothing, and back, for a fee.", 1, -1, -1, TI_FUGGER },
-    { "Medici bank", "The Medici representative: bank notes, as at the Fugger bank.", 1, -1, -1, TI_MEDICI },
-    { "Hanseatic League", "The offices of the league of northern merchant towns: quests for pay. Asked politely, they judge the party by its standing with the Hanse; asked boldly, by its reputation here and its fame. Collecting a reward politely also raises that standing.", 1, -1, -1, TI_HANSE },
-    { "Pawnshop", "The Fuggers' Leihhaus: a wide choice of everyday goods, and money for almost anything you sell.", 0, 9, -1, TI_PAWN },
-    { "Cathedral", "Mass (a little Divine Favor for everyone); a donation of a third of the purse (the leader's Divine Favor); the patron saint's story; an errand for the canon (a relic); sanctuary.", 2, 4, -1, TI_CATHEDRAL },
-    { "Church", "Mass at set hours (Divine Favor for everyone, more with Religion and Latin); confession (the leader's Divine Favor, a few hours); a tithe of a tenth of the purse (everyone's Divine Favor filled); sanctuary when the town is against you.", 2, -1, -1, TI_CHURCH },
-    { "Monastery", "The monks' library (Religion, Latin) and prayers for Divine Favor.", 2, 7, -1, TI_MONASTERY },
-    { "University", "New saints and alchemical formulae to learn, rare alchemical materials, a better Philosopher's Stone. The staff expect Latin and a sharp mind.", 3, 8, -1, TI_UNIVERSITY },
-    { "Hospice", "Nuns tend the sick: alms, a day's work beside them (Healing), wounds tended for a fee, or free of charge if they accept you. Open by day only.", 3, -1, -1, TI_PHYSICIAN },
-    { "Inn", "Meals and a bed, news and rumors, the stables, a store room; stay to study or train.", 4, -1, -1, TI_INN },
-    { "Town square", "Notices, gossip and news.", 4, 1, -1, TI_SQUARE },
-    { "Town hall", "The city council: an audience with the lord, prisoners in the dungeons.", 1, 1, -1, TI_TOWNHALL },
-    { "Prison", "The city's prison.", 4, 1, -1, TI_PRISON },
-    { "Barracks", "The city guard's headquarters: people to join the party, weapons training.", 4, 1, -1, TI_BARRACKS },
-    { "Fortress", "The lord's fortress: an audience with the lord, prisoners in the dungeons.", 1, 2, -1, TI_FORTRESS },
-    { "Docks", "Boats to other towns, for a fee (each leaves on its own day).", 4, 11, -1, TI_DOCKS },
-    { "Slums", "A dangerous slum: rumors, and a room for next to nothing.", 4, 6, -1, TI_SLUMS },
-    { "Grove", "A quiet corner where the party can wait: an hour, three hours, or until nightfall.", 4, -1, -1, TI_GROVE },
-    { "City wall", "An alley to a stretch of the wall: a way out when you cannot use the gates.", 4, -1, -1, TI_WALL },
-    { "City gate", "Leave the city by one of its gates.", 4, -1, -1, TI_GATE },
+    { "商人", "市集摊位：日常商品的买卖。", 0, -1, 1, TI_MARKET },
+    { "外国商人", "来自远方商人的凉亭：可买卖的商品。", 0, -1, -1, TI_FOREIGN },
+    { "锻剑师", "锻剑师巷：武器与锻剑师公会。", 0, -1, 2, TI_SWORD },
+    { "锻甲师", "锻甲师路：盔甲与盾牌，以及锻甲师公会。", 0, -1, 3, TI_ARMOUR },
+    { "弓箭匠", "弓箭匠与枪匠广场：弓、弩与枪及其公会。", 0, -1, -2, TI_BOW },
+    { "锻铁匠", "锻铁匠街：武器与锻铁匠公会。", 0, -1, 0, TI_SMITH },
+    { "士兵之路", "商店与推车挤满了士兵与随营人员，还有这条街的领头人。", 0, -1, -1, TI_SOLDIERS },
+    { "珠宝匠", "", 0, -1, 7, TI_FOREIGN },
+    { "工艺师", "铁匠广场：锤子、狼牙棒、连枷与长柄武器，以及工匠公会。", 0, -1, 6, TI_TOOLS },
+    { "布料商", "布料商街：服装与软质护甲（棉垫、皮革、钉皮、煮皮），以及布料商公会。", 0, -1, 8, TI_CLOTH },   /* (shown with the cardopts fix: by day its shopfronts are switched off in 483.07) */
+    { "炼金术士", "占星师巷：可购买或交易的配方、更好的哲人石、炼金术课程。", 3, -1, -1, TI_ALCHEMIST },
+    { "草药师", "", 3, -1, -1, TI_PHARMACY },
+    { "药剂师", "摆满草药与稀有材料的摊位：炼金术原料。", 0, -1, -1, TI_PHARMACY },
+    { "医生", "付费治疗伤口、学习治愈术、买卖炼金术原料。", 3, -1, -1, TI_PHYSICIAN },
+    { "富格尔银行", "重币兑换成毫无重量的银行票据，反之亦然，需支付手续费。", 1, -1, -1, TI_FUGGER },
+    { "美第奇银行", "美第奇代表：银行票据，与富格尔银行相同。", 1, -1, -1, TI_MEDICI },
+    { "汉萨同盟", "北方商镇联盟的办公机构：接受报酬的任务。礼貌询问时，他们会根据队伍在汉萨中的地位来评判；大胆询问时，则依据其在此地的声誉与名气。礼貌领取奖励也能提升这一地位。", 1, -1, -1, TI_HANSE },
+    { "当铺", "富格尔家族的借贷所：种类繁多的日常用品，以及几乎任何出售物品都能换取的现金。", 0, 9, -1, TI_PAWN },
+    { "大教堂", "弥撒（为所有人带来些许神恩）；捐献钱包的三分之一（领袖的神恩）；守护圣人的故事；为教士跑腿（一件圣物）；庇护所。", 2, 4, -1, TI_CATHEDRAL },
+    { "教堂", "定时弥撒（为所有人带来神恩，宗教与拉丁文越多越佳）；告解（领袖的神恩，数小时）；缴纳十分之一的钱包税（所有人的神恩已满）；当城镇与你为敌时的庇护所。", 2, -1, -1, TI_CHURCH },
+    { "修道院", "僧侣图书馆（宗教、拉丁文）及祈求神恩的祷告。", 2, 7, -1, TI_MONASTERY },
+    { "大学", "新的圣人与待学的炼金术配方、稀有炼金材料、更好的哲人石。工作人员期待掌握拉丁文并具备敏锐头脑。", 3, 8, -1, TI_UNIVERSITY },
+    { "临终关怀所", "修女照料病患：施舍、陪伴工作一天（治愈术）、付费或免费治疗伤口（若她们接纳你）。仅白天开放。", 3, -1, -1, TI_PHYSICIAN },
+    { "旅店", "提供餐饮与床位、新闻与传闻、马厩、储藏室；也可留宿学习或训练。", 4, -1, -1, TI_INN },
+    { "城市广场", "通知、闲话与新闻。", 4, 1, -1, TI_SQUARE },
+    { "市政厅", "市议会：觐见领主，地牢中的囚犯。", 1, 1, -1, TI_TOWNHALL },
+    { "监狱", "城市的监狱。", 4, 1, -1, TI_PRISON },
+    { "兵营", "城市守卫的总部：招募队伍成员，武器训练。", 4, 1, -1, TI_BARRACKS },
+    { "要塞", "领主的要塞：觐见领主，地牢中的囚犯。", 1, 2, -1, TI_FORTRESS },
+    { "码头", "前往其他城镇的船只，需付费（每艘船在指定日期启航）。", 4, 11, -1, TI_DOCKS },
+    { "贫民窟", "危险的贫民窟：流言蜚语，以及一间价格低廉的房间。", 4, 6, -1, TI_SLUMS },
+    { "树林", "队伍可以等待的安静角落：一小时、三小时，或直到夜幕降临。", 4, -1, -1, TI_GROVE },
+    { "城墙", "通往城墙某段的小巷：无法使用城门时的出路。", 4, -1, -1, TI_WALL },
+    { "城门", "从其中一座城门离开城市。", 4, -1, -1, TI_GATE },
 };
-static const char *GROUPS[5] = { "Merchants", "Quest givers", "Religion", "Learning and healing", "Around town" };
+static const char *GROUPS[5] = { "商人", "任务发布者", "宗教", "学习与治疗", "城镇周边" };
 /* the order within the list (the sections' own); every place has its tile in every town, the
    ones the town lacks greyed, so the tiles stay where they are from town to town */
 static const int ORDER[] = {
@@ -236,46 +236,46 @@ struct Rule { int hub; const char *key; int to; };
 static const Rule RULES[] = {
     { H_MAIN, "$citysquare", 100 + H_SQUARE }, { H_MAIN, "$fortress", D_FORTRESS }, { H_MAIN, "$marketplace", 100 + H_MARKET },
     { H_MAIN, "spires", 100 + H_CHURCHES }, { H_MAIN, "craft", 100 + H_CRAFTS }, { H_MAIN, "$inn", D_INN }, { H_MAIN, "docks", D_DOCKS },
-    { H_MAIN, "side street", 100 + H_SIDE }, { H_MAIN, "grove", D_GROVE }, { H_MAIN, "gate", D_LEAVE },
+    { H_MAIN, "弄堂", 100 + H_SIDE }, { H_MAIN, "grove", D_GROVE }, { H_MAIN, "gate", D_LEAVE },
     { H_MARKET, "everyday", D_MERCHANT }, { H_MARKET, "foreign", D_FOREIGN }, { H_MARKET, "pharmacist", D_PHARMACIST },
-    { H_MARKET, "fugger bank", D_FUGGER }, { H_MARKET, "medici", D_MEDICI }, { H_MARKET, "hanseatic", D_HANSE },
-    { H_MARKET, "leihhaus", D_PAWN }, { H_MARKET, "main street", 100 + H_MAIN }, { H_MARKET, "side street", 100 + H_SIDE },
+    { H_MARKET, "富格尔银行", D_FUGGER }, { H_MARKET, "medici", D_MEDICI }, { H_MARKET, "hanseatic", D_HANSE },
+    { H_MARKET, "leihhaus", D_PAWN }, { H_MARKET, "主街", 100 + H_MAIN }, { H_MARKET, "弄堂", 100 + H_SIDE },
     { H_CHURCHES, "$cathedral", D_CATHEDRAL }, { H_CHURCHES, "$citychurch", D_CHURCH }, { H_CHURCHES, "$hospital", D_HOSPITAL },
     { H_CHURCHES, "$monastery", D_MONASTERY }, { H_CHURCHES, "$university", D_UNIVERSITY }, { H_CHURCHES, "$citysquare", 100 + H_SQUARE },
-    { H_CHURCHES, "$fortress", D_FORTRESS }, { H_CHURCHES, "main street", 100 + H_MAIN }, { H_CHURCHES, "side street", 100 + H_SIDE },
-    { H_CRAFTS, "arms and armor", 100 + H_ARMS }, { H_CRAFTS, "less violent", 100 + H_CIVIL }, { H_CRAFTS, "$inn", D_INN },
+    { H_CHURCHES, "$fortress", D_FORTRESS }, { H_CHURCHES, "主街", 100 + H_MAIN }, { H_CHURCHES, "弄堂", 100 + H_SIDE },
+    { H_CRAFTS, "武器与盔甲", 100 + H_ARMS }, { H_CRAFTS, "较为温和", 100 + H_CIVIL }, { H_CRAFTS, "$inn", D_INN },
     { H_CRAFTS, "physician", D_PHYSICIAN }, { H_CRAFTS, "grove", D_GROVE }, { H_CRAFTS, "$slum", D_SLUM },
-    { H_CRAFTS, "main street", 100 + H_MAIN }, { H_CRAFTS, "side street", 100 + H_SIDE }, { H_CRAFTS, "city wall", D_WALL },
+    { H_CRAFTS, "主街", 100 + H_MAIN }, { H_CRAFTS, "弄堂", 100 + H_SIDE }, { H_CRAFTS, "城墙", D_WALL },
     { H_CRAFTS, "gate", D_LEAVE },
     { H_ARMS, "soldier", D_SOLDIERS }, { H_ARMS, "blacksmith", D_BLACKSMITH }, { H_ARMS, "swordsmith", D_SWORD },
-    { H_ARMS, "armorer", D_ARMOR }, { H_ARMS, "bowyer", D_BOW }, { H_ARMS, "other crafts", 100 + H_CIVIL },
-    { H_ARMS, "side street", 100 + H_SIDE }, { H_ARMS, "main street", 100 + H_MAIN },
+    { H_ARMS, "armorer", D_ARMOR }, { H_ARMS, "bowyer", D_BOW }, { H_ARMS, "其他手工艺", 100 + H_CIVIL },
+    { H_ARMS, "弄堂", 100 + H_SIDE }, { H_ARMS, "主街", 100 + H_MAIN },
     { H_CIVIL, "physician", D_PHYSICIAN }, { H_CIVIL, "astrologist", D_ALCHEMIST }, { H_CIVIL, "herbalist", D_HERBAL },
     { H_CIVIL, "jeweler", D_JEWEL }, { H_CIVIL, "tinker", D_TINKER }, { H_CIVIL, "clothmaker", D_CLOTH },
-    { H_CIVIL, "-making", 100 + H_ARMS }, { H_CIVIL, "side street", 100 + H_SIDE }, { H_CIVIL, "main street", 100 + H_MAIN },
-    { H_SIDE, "main street", 100 + H_MAIN }, { H_SIDE, "$inn", D_INN }, { H_SIDE, "$cityslums", D_SLUM },
-    { H_SIDE, "grove", D_GROVE }, { H_SIDE, "city wall", D_WALL },
+    { H_CIVIL, "-making", 100 + H_ARMS }, { H_CIVIL, "弄堂", 100 + H_SIDE }, { H_CIVIL, "主街", 100 + H_MAIN },
+    { H_SIDE, "主街", 100 + H_MAIN }, { H_SIDE, "$inn", D_INN }, { H_SIDE, "$cityslums", D_SLUM },
+    { H_SIDE, "grove", D_GROVE }, { H_SIDE, "城墙", D_WALL },
     /* (by night, $SIDES01 and $MAINS02 put it otherwise) */
-    { H_SIDE, "city marketplace", 100 + H_MARKET }, { H_SIDE, "central city square", 100 + H_SQUARE }, { H_SIDE, "spires", 100 + H_CHURCHES },
-    { H_SIDE, "crafts district", 100 + H_CRAFTS }, { H_SIDE, "docks", D_DOCKS }, { H_SIDE, "central fortress", D_FORTRESS },
-    { H_MAIN, "crafts district", 100 + H_CRAFTS }, { H_MAIN, "side streets and alleys", 100 + H_SIDE },
+    { H_SIDE, "城市集市", 100 + H_MARKET }, { H_SIDE, "城市中心广场", 100 + H_SQUARE }, { H_SIDE, "spires", 100 + H_CHURCHES },
+    { H_SIDE, "手工艺区", 100 + H_CRAFTS }, { H_SIDE, "docks", D_DOCKS }, { H_SIDE, "中心要塞", D_FORTRESS },
+    { H_MAIN, "手工艺区", 100 + H_CRAFTS }, { H_MAIN, "弄堂与小巷", 100 + H_SIDE },
     /* (other wordings of the same ways, in other text blocks of the same cards: by night, or a hub's
        other card; every hub card's every block is checked against this table - a line none of these
        phrases matches, the walk cannot take: "not found in this city") */
-    { H_CIVIL, "alchemical symbols", D_ALCHEMIST }, { H_MAIN, "great churches", 100 + H_CHURCHES }, { H_MARKET, "$pawnshop", D_PAWN },
+    { H_CIVIL, "炼金术符号", D_ALCHEMIST }, { H_MAIN, "伟大教堂", 100 + H_CHURCHES }, { H_MARKET, "$pawnshop", D_PAWN },
     { H_SIDE, "$citysquare", 100 + H_SQUARE }, { H_SIDE, "$fortress", D_FORTRESS }, { H_SIDE, "$marketplace", 100 + H_MARKET },
-    { H_SIDE, "great churches", 100 + H_CHURCHES }, { H_SIDE, "common districts", 100 + H_CRAFTS }, { H_SIDE, "merchant and craft districts", 100 + H_CRAFTS },
-    { H_SIDE, "gates leading out", D_LEAVE },
-    { H_SQUARE, "posted notices", D_SQUARE },
+    { H_SIDE, "伟大教堂", 100 + H_CHURCHES }, { H_SIDE, "普通街区", 100 + H_CRAFTS }, { H_SIDE, "商业与手工艺街区", 100 + H_CRAFTS },
+    { H_SIDE, "通往城外的城门", D_LEAVE },
+    { H_SQUARE, "张贴的告示", D_SQUARE },
     { H_SQUARE, "$councilhall", D_TOWNHALL }, { H_SQUARE, "prison", D_PRISON }, { H_SQUARE, "$citybarracks", D_BARRACKS },
     { H_SQUARE, "$university", D_UNIVERSITY }, { H_SQUARE, "spires", 100 + H_CHURCHES }, { H_SQUARE, "$marketplace", 100 + H_MARKET },
-    { H_SQUARE, "main street", 100 + H_MAIN }, { H_SQUARE, "side street", 100 + H_SIDE },
+    { H_SQUARE, "主街", 100 + H_MAIN }, { H_SQUARE, "弄堂", 100 + H_SIDE },
     /* lines that lead nowhere Go to goes (-2: known, not a way): a quest's own house, the night
        market's ways upstairs (stopped there with what to do), placeholders the game hides */
-    { H_MARKET, "upstairs", -2 }, { H_MARKET, "avoiding them", -2 }, { H_MARKET, "attack the guards", -2 },
-    { H_ARMS, "specific", -2 }, { H_SIDE, "specific", -2 }, { H_SIDE, "other locations you remember", -2 },
-    { H_SIDE, "connecting to important districts", -2 }, { H_SIDE, "$poorhouse", -2 }, { H_SIDE, "to be determined", -2 },
-    { H_ARMS, "not used", -2 }, { H_CIVIL, "not used", -2 },
+    { H_MARKET, "upstairs", -2 }, { H_MARKET, "避开它们", -2 }, { H_MARKET, "攻击守卫", -2 },
+    { H_ARMS, "specific", -2 }, { H_SIDE, "specific", -2 }, { H_SIDE, "你记得的其他地点", -2 },
+    { H_SIDE, "连接到重要区域", -2 }, { H_SIDE, "$poorhouse", -2 }, { H_SIDE, "待定", -2 },
+    { H_ARMS, "未使用", -2 }, { H_CIVIL, "未使用", -2 },
 };
 /* a hub that is itself a place to go to (the square: its notices and gossip) */
 static const int HUB_PLACE[H_N] = { -1, -1, -1, -1, -1, -1, -1, D_SQUARE };
@@ -416,7 +416,7 @@ static void stop(const char *why)
     LOG("stop: %s\n", why ? why : "");
     bool failed = why && strcmp(why, "stopped.") && goal >= 0;
     if (failed && !logon) { fprintf(stderr, "Go to %s failed (%s). The walk:\n%s", DEST[goal].label, why, trail.c_str()); fflush(stderr); }
-    if (goal >= 0 && why) { char m[160]; snprintf(m, sizeof m, "Go to %s: %s", DEST[goal].label, why); ui_notice(m); }
+    if (goal >= 0 && why) { char m[160]; snprintf(m, sizeof m, "前往 %s：%s", DEST[goal].label, why); ui_notice(m); }
     goal = -1;
 }
 
@@ -448,8 +448,8 @@ extern "C" int citynav_available(void) { return in_city() && !outside_walls(); }
 
 static bool leave_option(const std::string &t)
 {
-    if (t.find("main street") == std::string::npos) return false;
-    static const char *verbs[] = { "leave", "return", "go out", "move away", "stroll away", "back down", "way to", "exit" };
+    if (t.find("主街") == std::string::npos) return false;
+    static const char *verbs[] = { "leave", "return", "出门", "远离", "悠闲地走开", "返回楼下", "去往", "exit" };
     for (const char *v : verbs) if (t.find(v) != std::string::npos) return true;
     return false;
 }
@@ -457,14 +457,14 @@ static bool leave_option(const std::string &t)
 static int choose_leave(const std::vector<std::string> &line)
 {
     for (size_t i = 0; i < line.size(); i++) if (leave_option(line[i])) return (int)i;
-    for (size_t i = 0; i < line.size(); i++) if (line[i].find("return to") != std::string::npos && line[i].find("side") == std::string::npos) return (int)i;
+    for (size_t i = 0; i < line.size(); i++) if (line[i].find("返回到") != std::string::npos && line[i].find("side") == std::string::npos) return (int)i;
     for (size_t i = 0; i < line.size(); i++)
         if ((line[i].find("leave") != std::string::npos || line[i].find("depart") != std::string::npos) && line[i].find("side") == std::string::npos
             && line[i].find("alley") == std::string::npos) return (int)i;
     for (size_t i = 0; i < line.size(); i++)                 /* the only way out may be a side street (the slums) or a step back */
-        if (line[i].find("leave") != std::string::npos || line[i].find("fall back") != std::string::npos || line[i].find("reconsider") != std::string::npos) return (int)i;
+        if (line[i].find("leave") != std::string::npos || line[i].find("后退") != std::string::npos || line[i].find("reconsider") != std::string::npos) return (int)i;
     /* a polite way out of a place's second list (every place card's every list is checked: ucityplaces) */
-    static const char *const BACK[] = { "think better of it", "apologizes for disturbing", "not to get involved", "come back in the morning", "go on." };
+    static const char *const BACK[] = { "改变主意", "为打扰致歉", "不要卷入其中", "明早再来", "继续。" };
     for (const char *b : BACK) for (size_t i = 0; i < line.size(); i++) if (line[i].find(b) != std::string::npos) return (int)i;
     return -1;
 }
@@ -492,8 +492,8 @@ static bool walk_out_option(const std::string &t)
 {
     if (t.find("sneak") != std::string::npos || t.find("hide") != std::string::npos || t.find("bribe") != std::string::npos || t.find("saint") != std::string::npos
         || t.find("alchem") != std::string::npos || t.find("fight") != std::string::npos || t.find("attack") != std::string::npos) return false;
-    return t.find("walk out") != std::string::npos || t.find("leave the city") != std::string::npos || t.find("leave town") != std::string::npos
-        || t.find("out of the city") != std::string::npos || t.find("ride out") != std::string::npos;
+    return t.find("走出去") != std::string::npos || t.find("离开城市") != std::string::npos || t.find("离开小镇") != std::string::npos
+        || t.find("离开城外") != std::string::npos || t.find("骑马离开") != std::string::npos;
 }
 static void leaving_tick(void)
 {
@@ -515,7 +515,7 @@ static void leaving_tick(void)
         if (o >= 0 && o < (int)opts.size() && walk_out_option(opts[o])) { LOG("leaving: %s\n", opts[o].c_str()); click_line(i); leaving = 0; return; }
     }
     leaving = 0;
-    ui_notice("The gate: choose how to get out, and the journey begins in the overland view.");
+    ui_notice("大门：选择如何离开，旅程将在陆地视图中开始。");
 }
 static int leaving_flag(int v) { int o = leaving; if (v >= 0) leaving = v; return o; }
 extern "C" void citynav_leave_town(void)
@@ -533,8 +533,8 @@ extern "C" void citynav_tick(void)
     if (!cards_loaded) load_cards();
     u32 now = plat_ticks_ms();
     if (now - last_act < 250) return;                      /* let the game take the last click */
-    if (!in_city()) { stop(game_mode() == GM_CARD ? "left the city." : "interrupted."); return; }
-    if (steps_taken > 20) { stop("too many steps; stopped."); return; }
+    if (!in_city()) { stop(game_mode() == GM_CARD ? "已离开城市。" : "interrupted."); return; }
+    if (steps_taken > 20) { stop("步骤太多；已停止。"); return; }
     std::string card = card_now();
     int blk = (s16)g_rw(GV_shown_block);
     char kb[48]; snprintf(kb, sizeof kb, "%s/%d/%d", card.c_str(), blk, assist_in_card_menu());
@@ -543,7 +543,7 @@ extern "C" void citynav_tick(void)
     if (!assist_in_card_menu()) {                        /* the card's text: read on (hubs, and the place the walk starts from) */
         if (now - phase_t < 300) return;
         if (hub == H_NONE) {
-            if (visited || conts >= 16) { stop(steps_taken ? "something happened on the way." : "leave this place first."); return; }   /* (the Quickstart's inn card has six pages; a slow game lets clicks pass unread) */
+            if (visited || conts >= 16) { stop(steps_taken ? "路上发生了些事。" : "先离开这个地方。"); return; }   /* (the Quickstart's inn card has six pages; a slow game lets clicks pass unread) */
             conts++;
         }
         LOG("%s: read on\n", kb);
@@ -551,13 +551,13 @@ extern "C" void citynav_tick(void)
         return;
     }
     if (now - phase_t < 120) return;                       /* the option list fading in (at once while walking) */
-    if (kb == last_key) { if (++same_count > 3) { stop("the way is blocked."); return; } } else { last_key = kb; same_count = 0; }
+    if (kb == last_key) { if (++same_count > 3) { stop("路被堵住了。"); return; } } else { last_key = kb; same_count = 0; }
     /* the card's text as the game loaded it (a mod's card, a restored one, the game's own: what is on
        show), else as MSGFILES has it */
     std::vector<std::string> blocks = card_blocks(card);
     if (blk < 0 || blk >= (int)blocks.size()) {
         LOG("%s: its option block %d not among the card's %d\n", kb, blk, (int)blocks.size());
-        stop("cannot find the way from this card."); return;
+        stop("在这张卡片上找不到出路。"); return;
     }
     std::vector<std::string> opts = block_options(blocks[blk]);
     int n = (s8)g_rb(GV_card_layout);
@@ -567,14 +567,14 @@ extern "C" void citynav_tick(void)
     for (int i = 0; i < n; i++) { int o = (s8)g_rb((u16)(GV_card_layout_opt + i)); line[i] = o >= 0 && o < (int)opts.size() ? opts[o] : ""; }
     { LOG("%s hub %d visited %x, line %d of %d:\n", kb, hub, visited, (int)g_rb(GV_card_layout_opt), (int)blocks.size()); for (int i = 0; i < n; i++) LOG("  %d: %s -> %d\n", i, line[i].c_str(), hub >= 0 ? rule_for(hub, line[i]) : -1); }
     if (card == "$INSID00" && blk == 0) {                   /* the offices above the marketplace by night: the one wanted, else out by the window */
-        static const struct { int d; const char *key; } OFF[] = { { D_MERCHANT, "leading merchant" }, { D_FUGGER, "fugger" }, { D_MEDICI, "medici" }, { D_HANSE, "hanseatic" } };
+        static const struct { int d; const char *key; } OFF[] = { { D_MERCHANT, "领头商人" }, { D_FUGGER, "fugger" }, { D_MEDICI, "medici" }, { D_HANSE, "hanseatic" } };
         for (auto &o : OFF) if (o.d == goal) for (int i = 0; i < n; i++) if (line[i].find(o.key) != std::string::npos) { click_line(i); goal = -1; return; }
         for (int i = 0; i < n; i++) if (line[i].find("window") != std::string::npos) { leaves++; click_line(i); return; }
     }
     if (hub == H_NONE) {                                   /* a shop or other place of the city: out the way the player would leave */
-        if (visited || leaves >= 3) { stop("something happened on the way."); return; }
+        if (visited || leaves >= 3) { stop("路上发生了些事。"); return; }
         int pick = choose_leave(line);
-        if (pick < 0) { stop(leaves ? "something happened on the way." : "leave this place first."); return; }
+        if (pick < 0) { stop(leaves ? "路上发生了些事。" : "先离开这个地方。"); return; }
         leaves++; click_line(pick);
         return;
     }
@@ -584,8 +584,8 @@ extern "C" void citynav_tick(void)
     for (const Rule &r : RULES) if (r.hub == H_MARKET && r.to == goal) market_goal = true;
     if (hub == H_MARKET && (night_closed(goal) || (card == "$MARKE01" && market_goal))) {    /* the marketplace by night ($MARKE01): its stalls shut, the offices upstairs to be reached past the guards */
         bool office = goal == D_MERCHANT || goal == D_FUGGER || goal == D_MEDICI || goal == D_HANSE;
-        stop(office ? "the marketplace by night: choose how to get past the guards to the offices upstairs (press G again there for the office)."
-                    : "the marketplace by night: its stalls are shut until 5:00.");
+        stop(office ? "夜晚的集市：选择如何越过守卫，前往楼上的办公室（在那里再次按G即可进入办公室）。"
+                    : "夜晚的集市：摊位要到5点才开门。");
         return;
     }
     visited |= 1u << hub;
@@ -606,7 +606,7 @@ extern "C" void citynav_tick(void)
             if (d < bd) { bd = d; best = i; }
         }
     }
-    if (best < 0 || bd >= 1000) { stop("not found in this city."); return; }
+    if (best < 0 || bd >= 1000) { stop("在这座城市里找不到。"); return; }
     click_line(best);
 }
 
@@ -616,7 +616,7 @@ extern "C" void citynav_go(int dest)
     assist_watch_cards();
     trail.clear(); LOG("go to %s from %s (place %d)\n", DEST[dest].label, card_now().c_str(), (s16)g_rw(G_CUR_LOC));
     goal = dest; steps_taken = 0; visited = 0; conts = leaves = replans = 0; arrived_last = 0; same_count = 0; last_key.clear(); phase_key.clear(); last_act = 0;
-    char m[120]; snprintf(m, sizeof m, "Going to: %s. Press any key or click to stop.", DEST[dest].label); ui_notice(m);
+    char m[120]; snprintf(m, sizeof m, "前往：%s。按任意键或点击以停止。", DEST[dest].label); ui_notice(m);
 }
 
 /* while Go to walks the party through the streets, the cards it passes are not shown (each was up
@@ -646,7 +646,7 @@ extern "C" void citynav_draw_cover(void)
     if (orn_on()) { orn_parchment_edges(dl, ImVec2(x0 + 2 * k, y0 + 2 * k), ImVec2(x1 - 2 * k, y1 - 2 * k), 6 * k); orn_frame(dl, ImVec2(x0, y0), ImVec2(x1, y1), 1.9f * k); }
     ImVec2 c(x0 + w * 0.5f, y0 + h * 0.42f);
     ui_draw_town_icon(dl, c, 46 * k, DEST[g].icon);
-    char t[96]; snprintf(t, sizeof t, g == D_LEAVE ? "Walking to the city gate" : "Walking to: %s", DEST[g].label);
+    char t[96]; snprintf(t, sizeof t, g == D_LEAVE ? "步行前往城门" : "步行前往：%s", DEST[g].label);
     ImFont *f = ImGui::GetFont(); float fs = 9.0f * k;
     ImVec2 ts = f->CalcTextSizeA(fs, FLT_MAX, 0, t);
     dl->AddText(f, fs, ImVec2(c.x - ts.x * 0.5f, c.y + 30 * k), IM_COL32(51, 31, 15, 255), t);
@@ -659,7 +659,7 @@ extern "C" void citynav_draw_cover(void)
         float oy = (i & 1 ? -2.2f : 2.2f) * k;
         dl->AddEllipseFilled(ImVec2(x, py + oy), ImVec2(2.4f * k, 1.3f * k), IM_COL32(80, 50, 26, (int)(220 * a)), 0, 12);
     }
-    const char *sub = "Any key or click stops the walk.";
+    const char *sub = "按任意键或点击即可停止步行。";
     float ss = 5.5f * k; ImVec2 s2 = f->CalcTextSizeA(ss, FLT_MAX, 0, sub);
     dl->AddText(f, ss, ImVec2(c.x - s2.x * 0.5f, py + 10 * k), IM_COL32(110, 84, 56, 255), sub);
 }
@@ -801,7 +801,7 @@ static std::vector<CardTask> option_tasks_now(void)
     if (blk < 0 || blk >= (int)blocks.size()) return out;
     std::vector<std::string> opts = block_options(blocks[blk]);
     int hub = hub_of(card);
-    static const char *OFFICE[4] = { "leading merchant", "medici", "fugger", "hanseatic" };   /* (papers_office: 0 the leading merchant, 1 the Medici, 2 the Fugger, 3 the Hanse) */
+    static const char *OFFICE[4] = { "领头商人", "medici", "fugger", "hanseatic" };   /* (papers_office: 0 the leading merchant, 1 the Medici, 2 the Fugger, 3 the Hanse) */
     auto leads = [&](int to, const Want &x) {                 /* a hub's line `to` leads to the task's place (directly, or by its next hub) */
         if (x.dest >= 0 && to == x.dest) return true;
         if (to < 100) return false;
@@ -812,11 +812,11 @@ static std::vector<CardTask> option_tasks_now(void)
         const std::string &t = opts[o];
         for (const Want &x : w) {
             bool yes = false;
-            if (x.office >= 0 && hub == H_MARKET) yes = t.find("upstairs") != std::string::npos || t.find("avoiding them") != std::string::npos;   /* ($Marke01: the saint takes them up too) */
+            if (x.office >= 0 && hub == H_MARKET) yes = t.find("upstairs") != std::string::npos || t.find("避开它们") != std::string::npos;   /* ($Marke01: the saint takes them up too) */
             else if (x.office >= 0 && !strncmp(card.c_str(), "$INSID", 6)) yes = t.find(OFFICE[x.office]) != std::string::npos;
             else if (hub != H_NONE) { int to = rule_for(hub, t); yes = to >= 0 && leads(to, x); }
             else if (x.dest >= 0 && HOUSE_CARD[x.dest] && !strncmp(card.c_str(), HOUSE_CARD[x.dest], 6))
-                yes = t.find(x.dest == D_TOWNHALL || x.dest == D_FORTRESS ? "request an audience" : "reward") != std::string::npos;
+                yes = t.find(x.dest == D_TOWNHALL || x.dest == D_FORTRESS ? "请求觐见" : "reward") != std::string::npos;
             if (yes) { CardTask c = x.t; c.opt = o; out.push_back(c); }
         }
     }
@@ -860,7 +860,7 @@ static void place_pane(float w, float h, float scale)
     ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 6 * scale);
     ImGui::BeginChild("detail", ImVec2(w, h), ImGuiChildFlags_Borders | ImGuiChildFlags_AlwaysUseWindowPadding);
     ImGui::PushTextWrapPos(0);
-    if (pane_d < 0) ImGui::TextDisabled("Point at a place to read about it here: what it offers, its quests, its teachers.");
+    if (pane_d < 0) ImGui::TextDisabled("指向某个地点，即可在此处查看其介绍：提供的服务、任务、导师等。");
     else {
         if (ui_font_bold) ImGui::PushFont(ui_font_bold);
         ImGui::TextUnformatted(DEST[pane_d].label);
@@ -871,7 +871,7 @@ static void place_pane(float w, float h, float scale)
             if (!x.head.empty()) ImGui::TextColored(ImVec4(0.55f, 0.24f, 0.13f, 1), "%s", x.head.c_str());
             ui_rich_text(x.text.c_str());
         }
-        if (!pane_absent) { ImGui::Spacing(); ImGui::TextDisabled("Click the tile and the party walks there."); }
+        if (!pane_absent) { ImGui::Spacing(); ImGui::TextDisabled("点击该格子，队伍便会前往那里。"); }
     }
     ImGui::PopTextWrapPos();
     ImGui::EndChild();
@@ -899,7 +899,7 @@ extern "C" int citynav_window(void)
     bool keep = true;
     int cur = (s16)g_rw(G_CUR_LOC);
     bool city = cur >= 0 && cur < (int)gamedata.cities.size();
-    std::string title = city ? "Go to: " + gamedata.cities[cur].name : std::string("Go to");
+    std::string title = city ? "前往：" + gamedata.cities[cur].name : std::string("前往");
     title += "###citynav";
     int picked = -1;
     float scale = fminf(1.0f, fmaxf(0.7f, io.DisplaySize.y / 900.0f));
@@ -910,9 +910,9 @@ extern "C" int citynav_window(void)
         ImGui::SetWindowFontScale(scale);
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scale, 6 * scale));
         ImGui::PushTextWrapPos(0);
-        ImGui::TextDisabled("Pick a place and the party walks there through the streets. Press any key or click to stop them.");
+        ImGui::TextDisabled("选择一个地点，队伍便会穿过街道前往。按任意键或点击即可停止。");
         { int hour = (s16)g_rw(GV_cur_hour);    /* (the game's night: is_daylight, 5:00 to 18:59) */
-          if (hour >= 19 || hour < 5) ImGui::TextColored(ImVec4(0.45f, 0.18f, 0.10f, 1), "Night (%d:00): the marketplace's stalls and offices are closed, and the watch is out.", hour); }
+          if (hour >= 19 || hour < 5) ImGui::TextColored(ImVec4(0.45f, 0.18f, 0.10f, 1), "夜间（%d:00）：集市的摊位和商铺均已关闭，守卫已上岗。", hour); }
         ImGui::PopTextWrapPos();
         static std::map<int, std::vector<DestTask>> tasks; static int tasks_frame = -100;
         static TchSource teach[12]; static int nteach;            /* the teachers the town offers (ui/teachersui.h) */
@@ -940,21 +940,21 @@ extern "C" int citynav_window(void)
         auto make_tile = [&](int d) {
             Tile T{ d, {}, {}, -1, -1, false, true };
             if (!present(d)) { T.here = false; return T; }          /* (a place the town lacks: its name greyed, no more) */
-            if (night_closed(d)) { T.lines.push_back({ "Closed until 5:00", REDD }); T.tip.push_back({ "", "Closed at night: the marketplace's stalls and offices open at 5:00. Going there takes the party to the marketplace all the same." }); }
+            if (night_closed(d)) { T.lines.push_back({ "直至5:00才开放", REDD }); T.tip.push_back({ "", "夜间关闭：集市的摊位和商铺将于5:00重新开放。前往此处时，队伍仍会直接抵达集市。" }); }
             {   /* a refusal that lasts a while */
                 struct Ban { int d, kind, type0; const char *line, *tip; };
                 static const Ban BANS[] = {
-                    { D_ALCHEMIST, 0x44, -1, "Turned away until %d %s", "The alchemists turned the party away; they will see you again from %d %s, %d:00." },
-                    { D_MONASTERY, 0x34, -1, "Library shut until %d %s", "The monks' library (where saints are learned) is shut to the party until %d %s, %d:00." },
-                    { D_MONASTERY, 0x30, -1, "Prayers again from %d %s", "The party prayed with the monks; they may again from %d %s, %d:00." },
-                    { D_UNIVERSITY, 0x4e, 0, "Library shut until %d %s", "The university's library (where saints are learned) is shut to the party until %d %s, %d:00." },
+                    { D_ALCHEMIST, 0x44, -1, "直至%d %s才可进入", "炼金术士拒绝了队伍；他们将于%d %s，%d:00再次接待您。" },
+                    { D_MONASTERY, 0x34, -1, "图书馆直至%d %s关闭", "僧侣的图书馆（学习圣人知识的地方）对队伍关闭，直至%d %s，%d:00。" },
+                    { D_MONASTERY, 0x30, -1, "从%d %s起再次祈祷", "队伍曾与僧侣一同祈祷；他们将于%d %s，%d:00再次开启祈祷。" },
+                    { D_UNIVERSITY, 0x4e, 0, "图书馆直至%d %s关闭", "大学的图书馆（学习圣人知识的地方）对队伍关闭，直至%d %s，%d:00。" },
                 };
                 for (const Ban &B : BANS) {
                     int e[4];
                     if (B.d != d || !town_event_end(cur, B.kind, B.type0, e)) continue;
                     const char *mo = gm_month_short((e[2] % 12 + 12) % 12);
                     char b[96], t[200]; snprintf(b, sizeof b, B.line, e[1], mo); snprintf(t, sizeof t, B.tip, e[1], mo, e[0]);
-                    T.lines.push_back({ b, REDD }); T.tip.push_back({ "Not now", t });
+                    T.lines.push_back({ b, REDD }); T.tip.push_back({ "现在不行", t });
                 }
             }
             /* a task giver: whether it has a task now, or until when none (mods/offices.h) */
@@ -965,26 +965,26 @@ extern "C" int citynav_window(void)
             if (giver >= 0 && work_on && office_status(cur, giver, d == D_TOWNHALL, &os)) {
                 char b[64]; ImU32 c = BROWN;
                 switch (os.state) {
-                case OFS_ASK: snprintf(b, sizeof b, "Quest chance %d%%", os.chance); c = GREEN;
-                    if (giver == 0 || giver == 4 || giver == 5) T.tip.push_back({ "Quests", "A merchant may offer a quest after you have bought or sold something." }); break;
-                case OFS_SHUT: snprintf(b, sizeof b, "No quests until %d %s", os.day, gm_month_short((os.month % 12 + 12) % 12)); break;
-                case OFS_ON_TASK: snprintf(b, sizeof b, "On a quest for them"); c = BLUE; break;
-                case OFS_REWARD: snprintf(b, sizeof b, "Your reward is waiting"); c = GOLDD; break;
-                case OFS_BARRED: snprintf(b, sizeof b, "No quests: reputation too low"); c = REDD; break;
+                case OFS_ASK: snprintf(b, sizeof b, "任务几率%d%%", os.chance); c = GREEN;
+                    if (giver == 0 || giver == 4 || giver == 5) T.tip.push_back({ "任务", "商人可能在您买卖物品后提供一项任务。" }); break;
+                case OFS_SHUT: snprintf(b, sizeof b, "直至%d %s无任务", os.day, gm_month_short((os.month % 12 + 12) % 12)); break;
+                case OFS_ON_TASK: snprintf(b, sizeof b, "正在为他们执行任务"); c = BLUE; break;
+                case OFS_REWARD: snprintf(b, sizeof b, "您的奖励正在等待"); c = GOLDD; break;
+                case OFS_BARRED: snprintf(b, sizeof b, "无任务：声望过低"); c = REDD; break;
                 default: b[0] = 0; break;
                 }
                 if (b[0]) T.lines.push_back({ b, c });
                 std::string n = os.note;
-                if (os.state == OFS_SHUT) { char u[64]; snprintf(u, sizeof u, " Until %d %s, %d:00.", os.day, gm_month_short((os.month % 12 + 12) % 12), os.hour); n += u; }
-                if (!n.empty()) T.tip.push_back({ "Quests", n });
+                if (os.state == OFS_SHUT) { char u[64]; snprintf(u, sizeof u, "直至%d %s，%d:00。", os.day, gm_month_short((os.month % 12 + 12) % 12), os.hour); n += u; }
+                if (!n.empty()) T.tip.push_back({ "任务", n });
             }
             /* the party's own tasks that lead here */
             auto tk = tasks.find(d);
             if (tk != tasks.end() && !tk->second.empty()) {
                 T.task_cat = tk->second[0].cat;
                 for (const DestTask &x : tk->second) {
-                    T.lines.push_back({ "Your quest: " + (x.title.empty() ? std::string("see the world map (M)") : x.title), BLUE });
-                    T.tip.push_back({ "Your quest", x.text });
+                    T.lines.push_back({ "您的任务：" + (x.title.empty() ? std::string("查看世界地图（M）") : x.title), BLUE });
+                    T.tip.push_back({ "您的任务", x.text });
                 }
             }
             /* a teacher to be had here (ui/teachersui.h) */
@@ -995,9 +995,9 @@ extern "C" int citynav_window(void)
             if (T.teach >= 0) {
                 const TchSource &S = teach[T.teach];
                 T.teach_off = S.off != 0;
-                char b[48]; snprintf(b, sizeof b, fix_is_on("teachcap") ? " to %d" : " (skill %d)", S.strength);
-                T.lines.push_back({ "Teaches " + ui_teacher_skills(S) + b, T.teach_off ? GREY : IM_COL32(32, 62, 120, 255) });   /* (greyed, with a faint lectern: not now) */
-                T.tip.push_back({ "Teacher", ui_teacher_text(S) });
+                char b[48]; snprintf(b, sizeof b, fix_is_on("teachcap") ? "至%d" : "（技能%d）", S.strength);
+                T.lines.push_back({ "教授" + ui_teacher_skills(S) + b, T.teach_off ? GREY : IM_COL32(32, 62, 120, 255) });   /* (greyed, with a faint lectern: not now) */
+                T.tip.push_back({ "老师", ui_teacher_text(S) });
             }
             /* a shop: the quality of its wares */
             if (city && DEST[d].shop != -1) {
@@ -1005,9 +1005,9 @@ extern "C" int citynav_window(void)
                 int r = DEST[d].shop >= 0 ? c.shopq[DEST[d].shop] : c.shopq[5] ? c.shopq[5] : c.shopq[4];
                 if (r > 0) {
                     int q = shop_wares_q(r);
-                    char b[96]; snprintf(b, sizeof b, q >= 30 ? "Wares %dq, better than most" : "Wares %dq", q);
+                    char b[96]; snprintf(b, sizeof b, q >= 30 ? "商品%dq，优于大多数" : "商品%dq", q);
                     T.lines.push_back({ b, q >= 30 ? GREEN : BROWN });
-                    snprintf(b, sizeof b, "Wares of %dq (most shops sell about 25q).", q);
+                    snprintf(b, sizeof b, "商品%dq（大多数商店出售约25q）。", q);
                     T.tip.insert(T.tip.begin(), { "", b });
                 }
             }
@@ -1019,15 +1019,15 @@ extern "C" int citynav_window(void)
                     size_t cl = l.find(':'); if (cl != std::string::npos) l.erase(cl);
                     if (!l.empty()) l[0] = (char)toupper((unsigned char)l[0]);
                     T.lines.push_back({ l, BROWN });
-                    T.tip.push_back({ "What you learned", "The physician: " + f + "." });
+                    T.tip.push_back({ "您所学到的内容", "医生：" + f + "." });
                 }
             }
             /* the Philosopher's Stone the alchemist or the university sells (always the same: town_stone_offer) */
             if (d == D_ALCHEMIST || d == D_UNIVERSITY) {
                 int q = town_stone_offer(cur, d == D_UNIVERSITY), have = (s16)g_rw(GV_philosophers_stone);
-                char b[80]; snprintf(b, sizeof b, q > have ? "Philosopher's Stone %dq" : "Stone %dq, no better", q);
+                char b[80]; snprintf(b, sizeof b, q > have ? "哲学家之石%dq" : "石头%dq，品质并不更好", q);
                 T.lines.push_back({ b, q > have ? GREEN : GREY });
-                snprintf(b, sizeof b, have ? "A Philosopher's Stone of quality %d; the party's is %d." : "A Philosopher's Stone of quality %d; the party has none.", q, have);
+                snprintf(b, sizeof b, have ? "一块质量%d的哲学家之石；队伍拥有的是%d。" : "一块品质为%d的贤者之石；队伍中没有。", q, have);
                 T.tip.push_back({ "", b });
             }
             return T;
@@ -1083,7 +1083,7 @@ extern "C" int citynav_window(void)
                         ly += slh;
                     }
                     if (hov) { hov_now = d; hov_now_parts = T.tip; }
-                    else if (hov_absent) { hov_now = d; hov_now_absent = true; hov_now_parts = { { "", std::string("Not in ") + (city ? gamedata.cities[cur].name : std::string("this town")) + "." } }; }
+                    else if (hov_absent) { hov_now = d; hov_now_absent = true; hov_now_parts = { { "", std::string("不在") + (city ? gamedata.cities[cur].name : std::string("这座城镇")) + "." } }; }
                     ImGui::PopID();
                 }
             }
@@ -1103,8 +1103,8 @@ extern "C" int citynav_window(void)
                 ImGui::TextDisabled("%s", text);
             };
             bool first = true;
-            if (any_teach) { mark(0, "A teacher to hire (faint: not available now)"); first = false; }
-            if (any_task) { if (!first) ImGui::SameLine(0, 24 * scale); mark(1, "A quest of yours leads here"); }
+            if (any_teach) { mark(0, "可雇佣的教师（微弱：目前不可用）"); first = false; }
+            if (any_task) { if (!first) ImGui::SameLine(0, 24 * scale); mark(1, "你的某个任务通向此处"); }
         }
         ImGui::EndChild();
         float tiles_h = ImGui::GetItemRectSize().y;

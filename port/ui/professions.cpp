@@ -272,43 +272,43 @@ const char *cg_prof_needs(int p)
     /* (in words, from cg_prof_rule; "first" is the first profession, straight after the childhood;
        "once" anywhere before, "just now" the one just done) */
     static const char *N[37] = {
-        /* Recruit */ "Never a Recruit before, and younger than 30.",
-        /* Soldier */ "Once a Recruit, Soldier, Veteran, Captain, Knight, Schulz or Bandit.",
-        /* Veteran */ "Once a Soldier, Veteran, Captain or Knight.",
-        /* Captain */ "{Intelligence:20} {Perception:20} {Charisma:20}; once a Veteran, Captain, Knight, Courtier, Manorial Lord, Bishop or Schulz.",
-        /* Noble Heir */ "A childhood in the Nobility, or once a Noble Heir or Courtier.",
-        /* Knight */ "{Virtue:16}; and a first profession after a childhood in the Nobility, or once a Knight or Manorial Lord, or just now a Noble Heir, Courtier, Captain, Bishop or Abbot/Abbess.",
-        /* Courtier */ "A first profession after a childhood in the Nobility or a Wealthy Urban Family; or once a Courtier or Manorial Lord; or just now a Knight, Captain, Priest, Bishop, Abbot/Abbess or Schulz.",
-        /* Manorial Lord */ "Just now a Manorial Lord, or the last two professions both a Noble Heir, Courtier, Bishop or Abbot/Abbess.",
-        /* Priest */ "A man with {Intelligence:20} {Perception:20} {Charisma:20}; once a Manorial Lord, Priest, Bishop or Abbot, or just now a Noble Heir, Courtier, Monk, Schulz, Clerk or Professor, or the last two both an Oblate, Novice Monk, Friar or Student.",
-        /* Bishop */ "A man with {Intelligence:25} {Perception:25} {Charisma:25}; just now a Bishop or Abbot, or the last two both a Courtier, Manorial Lord or Priest.",
-        /* Friar */ "A man; just now a Priest, Friar, Hermit, Novice Monk, Monk or Abbot.",
+        /* Recruit */ "从未招募过，且年龄未满 30 岁。",
+        /* Soldier */ "曾经是新兵、士兵、老兵、队长、骑士、Schulz 或强盗。",
+        /* Veteran */ "曾经是士兵、老兵、队长或骑士。",
+        /* Captain */ "{智力：20} {感知：20} {魅力：20}；曾经是老兵、队长、骑士、宫廷侍臣、庄园主、主教或Schulz。",
+        /* Noble Heir */ "在贵族家庭长大，或曾经是贵族继承人或宫廷侍臣。",
+        /* Knight */ "{美德：16}；童年在贵族家庭，或曾经是骑士、庄园主，或刚刚成为贵族继承人、宫廷侍臣、队长、主教或修道院院长/女院长。",
+        /* Courtier */ "童年在贵族家庭或富裕城市家庭，或曾经是宫廷侍臣、庄园主；或者刚刚成为骑士、队长、神父、主教、修道院院长/女院长或Schulz。",
+        /* Manorial Lord */ "刚才是一位领主，或者最后两种职业都是贵族继承人、宫廷侍从、主教或修道院院长/女院长。",
+        /* Priest */ "一位拥有{智力:20} {感知:20} {魅力:20}的男子；曾是领主、神父、主教或修道院院长，或者刚才还是贵族继承人、宫廷侍从、僧侣、学徒、书记员或教授，又或者最后两种职业都是献身者、见习僧侣、修士或学生。",
+        /* Bishop */ "一位拥有{智力:25} {感知:25} {魅力:25}的男子；刚才还是主教或修道院院长，或者最后两种职业都是宫廷侍从、领主或神父。",
+        /* Friar */ "一位男子；刚才还是神父、修士、隐士、见习僧侣、僧侣或修道院院长。",
         /* Hermit */ "{Virtue:15}.",
-        /* Oblate */ "A first profession for any but a commoners' child; otherwise {Intelligence:12}, and never a Novice, Monk/Nun, Abbot/Abbess, Priest, Bishop, Friar, Clerk, Physician, Professor or Alchemist.",
-        /* Novice */ "A first profession; or never a Noble Heir, Courtier, Manorial Lord, Priest, Bishop, Friar, Novice, Monk/Nun, Abbot/Abbess, Clerk, Physician, Professor or Alchemist.",
-        /* Monk/Nun */ "{Intelligence:15} {Perception:15} {Charisma:15}, {Religion:5}; once a Noble Heir, Courtier, Manorial Lord, Priest, Bishop, Friar, Novice, Monk/Nun, Abbot/Abbess, Student, Clerk, Physician, Professor or Alchemist.",
-        /* Abbot */ "{Intelligence:20} {Perception:20} {Charisma:20}, {Religion:15}; just now a Noble Heir, Courtier, Manorial Lord, Priest, Bishop or Abbot/Abbess, or the last two both a Monk/Nun or Professor.",
-        /* Peddler */ "Not just after being a Noble Heir, Courtier, Captain, Knight, Priest, Travelling Merchant, Professor, Alchemist or Journeyman, and never a Manorial Lord, Bishop, Abbot/Abbess, Merchant-Proprietor, Schulz, Master Alchemist or Master Craftsman.",
-        /* Local Trader */ "A first profession for any but a commoners' child; otherwise {Speak Common:5}, {Intelligence:12}, and once a Captain, Noble Heir, Courtier, Priest, Bishop, Monk/Nun, Abbot/Abbess, Peddler, Local Trader, Travelling Merchant, Clerk, Physician, Professor, Alchemist, Journeyman, Master Craftsman or Swindler.",
-        /* Travelling Merchant */ "A first profession after a childhood in the Nobility or a Wealthy Urban Family; otherwise {Speak Common:10}, {Intelligence:15}, and once a Noble Heir, Manorial Lord, Local Trader, Travelling Merchant, Merchant-Proprietor, Professor, Master Alchemist or Master Craftsman.",
-        /* Merchant-Proprietor */ "{Speak Common:10}, {Intelligence:20}; just now a Manorial Lord, Bishop, Travelling Merchant or Merchant-Proprietor.",
-        /* Schulz */ "Once a Peasant, and once a Veteran, Captain, Knight, Noble Heir, Manorial Lord, Priest, Bishop, Abbot/Abbess, Merchant-Proprietor, Schulz, Professor, Master Alchemist or Master Craftsman.",
-        /* Student */ "A first profession; or {Read & Write:6}, {Intelligence:12}, and just now a Recruit, Soldier, Veteran, Noble Heir, Friar, Hermit, Oblate, Novice, Monk/Nun, Peddler, Local Trader, Travelling Merchant, Student, Apprentice, Journeyman, Swindler or Thief.",
-        /* Clerk */ "A first profession after a childhood in a Wealthy Urban Family; otherwise {Read & Write:15}, {Intelligence:12}, and once a Captain, Noble Heir, Knight, Courtier, Priest, Bishop, Abbot/Abbess, Merchant-Proprietor, Schulz, Student, Clerk, Professor, Alchemist or Master Alchemist, or the last two both an Oblate, Monk/Nun or Travelling Merchant.",
-        /* Physician */ "{Healing:15}; once a Student, Clerk, Physician, Professor, Alchemist or Master Alchemist.",
-        /* Professor */ "{Read & Write:20}; once a Bishop, Abbot/Abbess, Clerk, Physician, Professor, Alchemist or Master Alchemist.",
-        /* Alchemist */ "{Intelligence:30}; once a Priest, Bishop, Abbot/Abbess, Student, Clerk, Professor, Alchemist or Master Alchemist, or the last two both an Oblate, Monk/Nun, Friar or Physician.",
-        /* Master Alchemist */ "{Intelligence:35}; once an Alchemist.",
-        /* Apprentice */ "A first profession for any but a child of the Nobility; later never an Apprentice, Journeyman, Master Craftsman, Manorial Lord, Bishop, Abbot/Abbess, Merchant-Proprietor or Master Alchemist, and not just after being a Captain, Noble Heir, Knight, Courtier, Priest, Schulz, Clerk, Travelling Merchant, Physician, Professor or Alchemist.",
-        /* Journeyman */ "A first profession after a childhood in a Town Trades or Country Crafts Family; or once an Apprentice, Journeyman, Master Craftsman, Physician, Alchemist or Master Alchemist.",
-        /* Master Craftsman */ "{Intelligence:12}; once a Journeyman, Merchant-Proprietor or Master Alchemist.",
-        /* Laborer */ "A first profession for any but a child of the Nobility; later never a Manorial Lord, Bishop, Abbot/Abbess, Merchant-Proprietor, Master Alchemist or Master Craftsman, and not just after being a Captain, Noble Heir, Knight, Courtier, Priest, Schulz, Travelling Merchant, Professor or Alchemist.",
-        /* Vagabond */ "A first profession for any but a child of the Nobility; later never a Manorial Lord, Bishop, Abbot/Abbess, Merchant-Proprietor, Journeyman, Master Alchemist or Master Craftsman, and not just after being a Captain, Noble Heir, Knight, Courtier, Priest, Schulz, Travelling Merchant, Professor or Alchemist.",
-        /* Swindler */ "A first profession after a childhood in the Nobility, a Wealthy Urban or a Town Trades Family; otherwise {Intelligence:25}, {Streetwise:15}, and once a Soldier, Veteran, Captain, Noble Heir, Priest, Friar, Monk/Nun, Peddler, Local Trader, Travelling Merchant, Student, Clerk, Professor, Alchemist, Journeyman, Laborer, Vagabond or Thief.",
-        /* Thief */ "A first profession; or {Streetwise:10} and once a Soldier, Veteran, Priest, Friar, Peddler, Local Trader, Travelling Merchant, Student, Clerk, Professor, Alchemist, Journeyman, Laborer, Vagabond, Thief, Hunter or Bandit.",
-        /* Peasant */ "A first profession; or never a Manorial Lord, Bishop, Abbot/Abbess, Merchant-Proprietor, Master Alchemist or Master Craftsman, and not just after being a Captain, Noble Heir, Knight, Courtier, Priest, Travelling Merchant, Professor, Alchemist or Journeyman.",
-        /* Hunter */ "A first profession after a childhood in the Nobility, a Country Crafts Family or Rural Commoners; otherwise {Woodwise:15} and once a Recruit, Soldier, Veteran, Captain, Knight, Friar, Hermit, Peddler, Travelling Merchant, Schulz, Peasant, Hunter or Bandit.",
-        /* Bandit */ "A first profession; or once a Recruit, Soldier, Veteran, Captain, Knight, Thief, Hunter or Bandit, or just now a Friar, Hermit, Peddler, Schulz, Laborer, Vagabond, Swindler or Peasant.",
+        /* Oblate */ "除平民之子外，任何人的第一职业；否则{智力:12}，且绝不是见习僧侣、僧侣/修女、修道院院长/女院长、神父、主教、修士、书记员、医师、教授或炼金术师。",
+        /* Novice */ "第一职业；或者从来不是贵族继承人、宫廷侍从、领主、神父、主教、修士、见习僧侣、僧侣/修女、修道院院长/女院长、书记员、医师、教授或炼金术师。",
+        /* Monk/Nun */ "{智力:15} {感知:15} {魅力:15}，{宗教:5}；曾是贵族继承人、宫廷侍从、领主、神父、主教、修士、见习僧侣、僧侣/修女、修道院院长/女院长、学生、书记员、医师、教授或炼金术师。",
+        /* Abbot */ "{智力:20} {感知:20} {魅力:20}，{宗教:15}；刚才还是贵族继承人、宫廷侍从、领主、神父、主教或修道院院长/女院长，或者最后两种职业都是僧侣/修女或教授。",
+        /* Peddler */ "不仅是在成为贵族继承人、宫廷侍从、队长、骑士、神父、旅行商人、教授、炼金术师或熟练工匠之后，而且从来不是领主、主教、修道院院长/女院长、商人兼业主、学徒、首席炼金术师或首席工匠。",
+        /* Local Trader */ "除平民之子外，任何人的第一职业；否则{说通用语:5}，{智力:12}，且曾是队长、贵族继承人、宫廷侍从、神父、主教、僧侣/修女、修道院院长/女院长、小贩、本地商人、旅行商人、书记员、医师、教授、炼金术师、熟练工匠、首席工匠或骗子。",
+        /* Travelling Merchant */ "在贵族家庭或富裕城市家庭中长大的孩子，其第一职业；否则{说通用语:10}，{智力:15}，且曾是贵族继承人、领主、本地商人、旅行商人、商人兼业主、教授、首席炼金术师或首席工匠。",
+        /* Merchant-Proprietor */ "{说通用语:10}，{智力:20}；刚才还是领主、主教、旅行商人或商人兼业主。",
+        /* Schulz */ "曾经是农民，也曾是老兵、队长、骑士、贵族继承人、领主、神父、主教、修道院院长/女院长、商人兼业主、学徒、教授、首席炼金术师或首席工匠。",
+        /* Student */ "第一职业；或者{读写能力:6}，{智力:12}，且刚才还是新兵、士兵、老兵、贵族继承人、修士、隐士、献身者、见习僧侣、僧侣/修女、小贩、本地商人、旅行商人、学生、学徒、熟练工匠、骗子或窃贼。",
+        /* Clerk */ "在富裕城市家庭中长大的孩子，其第一职业；否则{读写能力:15}，{智力:12}，且曾是队长、贵族继承人、骑士、宫廷侍从、神父、主教、修道院院长/女院长、商人兼业主、学徒、书记员、教授、炼金术师或首席炼金术师，或者最后两种职业都是献身者、僧侣/修女或旅行商人。",
+        /* Physician */ "{治疗:15}；曾是学生、书记员、医师、教授、炼金术师或首席炼金术师。",
+        /* Professor */ "{读写能力:20}；曾是主教、修道院院长/女院长、书记员、医师、教授、炼金术师或首席炼金术师。",
+        /* Alchemist */ "{智力:30}；曾是神父、主教、修道院院长/女院长、学生、书记员、教授、炼金术师或首席炼金术师，或者最后两种职业都是献身者、僧侣/修女、修士或医师。",
+        /* Master Alchemist */ "{智力:35}；曾是炼金术师。",
+        /* Apprentice */ "除贵族之子外，任何人的第一职业；此后绝不再做学徒、熟练工匠、领主、主教、修道院院长/女院长、商人兼业主或首席炼金术师，也不仅是在成为队长、贵族继承人、骑士、宫廷侍从、神父、学徒、书记员、旅行商人、医师、教授或炼金术师之后。",
+        /* Journeyman */ "在城镇商人家族或乡村手工业家庭中长大的孩子，其第一职业；或者曾是学徒、熟练工匠、医师、炼金术师或首席炼金术师。",
+        /* Master Craftsman */ "{智力:12}；曾是熟练工匠、商人兼业主或首席炼金术师。",
+        /* Laborer */ "除贵族之子外，任何人的第一职业；此后绝不再做领主、主教、修道院院长/女院长、商人兼业主、首席炼金术师或首席工匠，也不仅是在成为队长、贵族继承人、骑士、宫廷侍从、神父、学徒、旅行商人、教授或炼金术师之后。",
+        /* Vagabond */ "除贵族之子外，任何人的第一职业；此后绝不再做领主、主教、修道院院长/女院长、商人兼业主、熟练工匠、首席炼金术师或首席工匠，也不仅是在成为队长、贵族继承人、骑士、宫廷侍从、神父、学徒、旅行商人、教授或炼金术师之后。",
+        /* Swindler */ "在贵族家庭、富裕城市家庭或城镇商人家族中长大的孩子，其第一职业；否则{智力:25}，{街头智慧:15}，且曾是士兵、老兵、队长、贵族继承人、神父、修士、僧侣/修女、小贩、本地商人、旅行商人、学生、书记员、教授、炼金术师、熟练工匠、劳工、流浪者或窃贼。",
+        /* Thief */ "第一职业；或者{街头智慧:10}，且曾是士兵、老兵、神父、修士、小贩、本地商人、旅行商人、学生、书记员、教授、炼金术师、熟练工匠、劳工、流浪者、窃贼、猎人或强盗。",
+        /* Peasant */ "第一职业；或者绝不再做领主、主教、修道院院长/女院长、商人兼业主、首席炼金术师或首席工匠，也不仅是在成为队长、贵族继承人、骑士、宫廷侍从、神父、旅行商人、教授、炼金术师或熟练工匠之后。",
+        /* Hunter */ "在贵族家庭、乡村手工业家庭或农村平民中长大的孩子，其第一职业；否则{木头智慧:15}，且曾是新兵、士兵、老兵、队长、骑士、修士、隐士、小贩、旅行商人、学徒、农民、猎人或强盗。",
+        /* Bandit */ "第一职业；或者曾是新兵、士兵、老兵、队长、骑士、窃贼、猎人或强盗，或者刚才还是修士、隐士、小贩、学徒、劳工、流浪者、骗子或农民。",
     };
     return p >= 0 && p < 37 ? N[p] : "";
 }
@@ -337,17 +337,17 @@ std::string cg_prof_why(int p, const CgCtx &c)
     for (int k = 0; k < 19; k++) hi.skill[k] = 99;
     std::string r;
     CgCtx m = hi; m.female = 0;
-    if (c.female && !cg_prof_rule(p, hi) && cg_prof_rule(p, m)) { r = "Only for a man"; hi.female = 0; }
+    if (c.female && !cg_prof_rule(p, hi) && cg_prof_rule(p, m)) { r = "仅限男性"; hi.female = 0; }
     CgCtx past = c; past.female = hi.female;
     if (!cg_prof_rule(p, hi)) {                               /* the past is not right: some past would be */
         int q = -1;
         for (int k = 0; k < 37 && q < 0; k++) { CgCtx t = hi; t.taken[k] = 1; t.last = t.prev = k; if (cg_prof_rule(p, t)) q = k; }
-        r += r.empty() ? "Not with this character's past" : ", and not with this past";
+        r += r.empty() ? "不适用于该角色的过往" : "，也不适用于这段过往";
         if (q < 0) return r + ".";
         past.taken[q] = 1; past.last = past.prev = q;
     }
     std::string s = short_of(p, c, past);
-    if (!s.empty()) r += (r.empty() ? "Short of " : "; also short of ") + s;
+    if (!s.empty()) r += (r.empty() ? "除了" : "；还缺少") + s;
     return r + ".";
 }
 
@@ -355,9 +355,9 @@ std::string cg_prof_why(int p, const CgCtx &c)
 static std::string short_of(int p, const CgCtx &c, const CgCtx &past)
 {
     static const struct { bool skill; int k; const char *name; } S[] = {
-        { false, 1, "Strength" }, { false, 3, "Perception" }, { false, 4, "Intelligence" }, { false, 5, "Charisma" },
-        { true, 8, "Religion" }, { true, 9, "Virtue" }, { true, 10, "Speak Common" }, { true, 12, "Read & Write" },
-        { true, 13, "Healing" }, { true, 16, "Streetwise" }, { true, 18, "Woodwise" } };
+        { false, 1, "力量" }, { false, 3, "感知" }, { false, 4, "智力" }, { false, 5, "魅力" },
+        { true, 8, "宗教" }, { true, 9, "美德" }, { true, 10, "通用语言" }, { true, 12, "读写能力" },
+        { true, 13, "治疗" }, { true, 16, "精通街头" }, { true, 18, "精通林地" } };
     const int NS = (int)(sizeof S / sizeof S[0]);
     auto val = [&](const CgCtx &x, int i) -> signed char { return S[i].skill ? x.skill[S[i].k] : x.attr[S[i].k]; };
     auto set = [&](CgCtx &x, int i, int v) { if (S[i].skill) x.skill[S[i].k] = (signed char)v; else x.attr[S[i].k] = (signed char)v; };
@@ -370,7 +370,7 @@ static std::string short_of(int p, const CgCtx &c, const CgCtx &past)
         if (cg_prof_rule(p, t)) continue;                     /* (enough of this one already) */
         int need = val(c, i) + 1;
         while (need < 99) { set(t, i, need); if (cg_prof_rule(p, t)) break; need++; }
-        char b[64]; snprintf(b, sizeof b, "%s%s %d (has %d)", r.empty() ? "" : ", ", S[i].name, need, (int)val(c, i));
+        char b[64]; snprintf(b, sizeof b, "%s%s %d（已有%d）", r.empty() ? "" : ", ", S[i].name, need, (int)val(c, i));
         r += b;
     }
     return r;

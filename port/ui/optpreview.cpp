@@ -40,16 +40,16 @@ struct S {                                     /* the scene's box: x, y in 0..10
 void card_helpers(const S &s, bool on)
 {
     s.rect(0, 0, 100, 60, IM_COL32(240, 228, 198, 255));
-    s.text(5, 5, 4.8f, INK, "The gate is barred. You...");
+    s.text(5, 5, 4.8f, INK, "大门被封锁了。你……");
     s.rect(4, 17, 96, 27, IM_COL32(214, 170, 60, 110), 1);
-    s.text(6, 18, 4.8f, IM_COL32(140, 30, 18, 255), "1."); s.text(12, 18, 4.6f, INK, "...climb the wall");
-    s.text(6, 31, 4.8f, IM_COL32(140, 30, 18, 255), "2."); s.text(12, 31, 4.6f, INK, "...pray to a saint");
+    s.text(6, 18, 4.8f, IM_COL32(140, 30, 18, 255), "1."); s.text(12, 18, 4.6f, INK, "……攀墙而过");
+    s.text(6, 31, 4.8f, IM_COL32(140, 30, 18, 255), "2."); s.text(12, 31, 4.6f, INK, "……向圣人祈祷");
     s.text(6, 44, 4.8f, IM_COL32(140, 30, 18, 255), "3."); s.text(12, 44, 4.6f, INK, "...leave");
     if (!on) return;
     s.rect(70, 18.3f, 94, 25.7f, IM_COL32(250, 242, 222, 255), 1); s.frame(70, 18.3f, 94, 25.7f, IM_COL32(150, 110, 60, 255), 0.8f, 1);
-    s.text(72, 18.8f, 4.2f, IM_COL32(40, 96, 34, 255), "61% Ursula");
+    s.text(72, 18.8f, 4.2f, IM_COL32(40, 96, 34, 255), "61% 乌苏拉");
     s.rect(64, 31.3f, 94, 38.7f, IM_COL32(250, 242, 222, 255), 1); s.frame(64, 31.3f, 94, 38.7f, IM_COL32(150, 110, 60, 255), 0.8f, 1);
-    s.text(66, 31.8f, 4.2f, IM_COL32(70, 70, 120, 255), "St. Odilia: Jorg");
+    s.text(66, 31.8f, 4.2f, IM_COL32(70, 70, 120, 255), "圣奥迪莉娅：约格");
 }
 void click_hint(const S &s, bool on)
 {
@@ -57,7 +57,7 @@ void click_hint(const S &s, bool on)
     s.figure(22, 56, OURS);
     s.figure(72, 50, FOE);
     s.pointer(68, 30);
-    if (on) { s.rect(38, 22, 66, 32, IM_COL32(244, 232, 200, 240), 1); s.text(40, 22.6f, 5.2f, INK, "Shoot"); }
+    if (on) { s.rect(38, 22, 66, 32, IM_COL32(244, 232, 200, 240), 1); s.text(40, 22.6f, 5.2f, INK, "射击"); }
 }
 void battle_info(const S &s, bool on)
 {
@@ -67,9 +67,9 @@ void battle_info(const S &s, bool on)
     if (on) {
         s.rect(13.5f, 22.5f, 30.5f, 25.5f, IM_COL32(10, 6, 2, 200)); s.rect(14, 23, 22, 25, IM_COL32(215, 95, 70, 235));   /* the wounded enemy's bar */
         s.rect(40, 4, 98, 52, IM_COL32(244, 232, 200, 245), 2);
-        s.text(43, 6, 5.5f, INK, "Bandit");
-        s.text(43, 20, 4.4f, IM_COL32(110, 70, 40, 255), "badly hurt");
-        s.text(43, 31, 4.4f, IM_COL32(110, 70, 40, 255), "melee 32");
+        s.text(43, 6, 5.5f, INK, "匪徒");
+        s.text(43, 20, 4.4f, IM_COL32(110, 70, 40, 255), "重伤");
+        s.text(43, 31, 4.4f, IM_COL32(110, 70, 40, 255), "近战 32");
         s.text(43, 42, 4.4f, IM_COL32(110, 70, 40, 255), "falchion");
     }
 }
@@ -82,7 +82,7 @@ void map_scene(const S &s, bool names, bool marks)
         float x = i ? 70 : 30, y = i ? 40 : 28;
         s.rect(x - 3, y - 3, x + 3, y + 3, CREAM); s.frame(x - 3, y - 3, x + 3, y + 3, INK);
         s.dl->AddTriangleFilled(s.p(x - 3.5f, y - 3), s.p(x + 3.5f, y - 3), s.p(x, y - 7), IM_COL32(160, 60, 40, 255));
-        if (names) s.text(x - 12, y + 4, 5, CREAM, i ? "Hannover" : "Bremen");
+        if (names) s.text(x - 12, y + 4, 5, CREAM, i ? "汉诺威" : "不来梅");
         if (marks && i) { s.dl->AddCircleFilled(s.p(x + 7, y - 7), 3.2f * s.k, IM_COL32(176, 40, 30, 255), 14); s.dl->AddCircle(s.p(x + 7, y - 7), 3.2f * s.k, GOLD, 14, 1.2f); }
     }
 }
@@ -99,13 +99,13 @@ void skill_gain(const S &s)
 {
     s.ground();
     s.figure(46, 56, OURS);
-    s.text(38, 8, 5.4f, IM_COL32(240, 200, 70, 255), "{Edged} +2");
+    s.text(38, 8, 5.4f, IM_COL32(240, 200, 70, 255), "{刃} +2");
     s.rect(44, 57, 60, 58.6f, IM_COL32(10, 6, 2, 200)); s.rect(44.3f, 57.3f, 54, 58.3f, IM_COL32(230, 160, 50, 255));   /* (the reload bar) */
 }
 void battle_log(const S &s)
 {
     s.rect(0, 0, 100, 60, IM_COL32(236, 222, 190, 255));
-    static const char *L[5] = { "Jorg hits the bandit", "The bandit parries", "Anna shoots: a wound", "The bandit falls", "Jorg: {Edged:+1 (now 31)}" };
+    static const char *L[5] = { "约格击中了强盗", "强盗格挡了攻击", "安娜射击：造成伤口", "强盗倒下了", "约格：{刃:+1（现为31）}" };
     for (int i = 0; i < 5; i++) s.text(5, 4 + i * 11, 4.4f, i == 3 ? IM_COL32(150, 40, 25, 255) : INK, L[i]);
 }
 void shoot_switch(const S &s)
@@ -114,7 +114,7 @@ void shoot_switch(const S &s)
     for (int k = 0; k < 2; k++) {
         float y = 6 + k * 27;
         s.rect(6, y, 94, y + 22, IM_COL32(60, 44, 30, 255), 2); s.frame(6, y, 94, y + 22, GOLD, 0.8f, 2);
-        s.text(12, y + 5, 5.0f, CREAM, k ? "Anna" : "Jorg");
+        s.text(12, y + 5, 5.0f, CREAM, k ? "安娜" : "约格");
         float cx = 78, cy = y + 11;
         if (k) {   /* a bow */
             s.dl->AddBezierQuadratic(s.p(cx - 3, cy - 8), s.p(cx + 7, cy), s.p(cx - 3, cy + 8), GOLD, 1.6f * s.k);
@@ -129,7 +129,7 @@ void order_bar(const S &s)
 {
     s.ground();
     s.rect(0, 40, 100, 60, PANEL);
-    static const char *B[4] = { "Parry", "Berserk", "Missile", "Halt" };
+    static const char *B[4] = { "格挡", "狂暴", "投射物", "停止" };
     for (int k = 0; k < 4; k++) { float x = 3 + k * 24.5f; s.rect(x, 44, x + 22, 56, IM_COL32(112, 40, 22, 235), 1.5f); s.text(x + 2, 46, 3.6f, CREAM, B[k]); }
     s.figure(30, 36, OURS); s.figure(70, 30, FOE);
 }
@@ -163,10 +163,10 @@ int ui_option_pics(const char *key, const char **caps)
 {
     struct E { const char *key; int n; const char *cap[4]; };
     static const E T[] = {
-        { "battle.helpers", 4, { "Pointing at an enemy", "The line of a shot", "Skill gains, reloading", "The battle log" } },
-        { "battle.controls", 4, { "One click to attack", "Shoot or fight", "Order buttons", "Z: fast-forward" } },
-        { "assist.level_map", 1, { "Tab: the level map; a click walks there" } },
-        { "assist.card_helpers", 1, { "Chances, and who would try" } },
+        { "battle.helpers", 4, { "指向敌人", "射击的轨迹", "技能提升，重新装填", "战斗日志" } },
+        { "battle.controls", 4, { "一键攻击", "射击还是战斗", "操作按钮", "Z：快进" } },
+        { "assist.level_map", 1, { "Tab：关卡地图；点击即可前往" } },
+        { "assist.card_helpers", 1, { "几率，以及谁会尝试" } },
     };
     for (const E &e : T) if (!strcmp(e.key, key)) { for (int i = 0; i < e.n; i++) caps[i] = e.cap[i]; return e.n; }
     return 0;

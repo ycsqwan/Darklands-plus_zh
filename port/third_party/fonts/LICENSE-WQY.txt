@@ -1,0 +1,64 @@
+WenQuanYi Bitmap Song — 12px subset, embedded in Darklands+
+==============================================================
+
+Source font : WenQuanYi Bitmap Song 12px
+              (WenQuanYi-Bitmap-Song-TTF.Batch / "WenQuanYi Bitmap Song 12px.ttf")
+Version     : 0.8 (FirstEmperor), Release 6
+Copyright   : (c) 2004-2007, The WenQuanYi Project Board of Trustees and Qianqian Fang
+Homepage    : http://wqy.sourceforge.net/en/
+Upstream    : https://github.com/brahyerr/wqy-bitmap  (redistribution)
+License     : GPL v2.0 with font embedding exception
+              (full text below)
+
+What was changed for Darklands+
+-------------------------------
+The full font was subsetted to only the characters Darklands+ actually renders:
+  * every Han character (U+4E00..U+9FFF) used by the game's Chinese text
+  * Basic Latin (U+0020..U+007E), Latin-1 Supplement upper half (U+00A0..U+00FF)
+  * CJK punctuation U+3000..U+303F, fullwidth U+FF00..U+FFEF, and a few
+    symbols used by the port's own UI
+The subset is stored in port/third_party/fonts/wqy-12px-cjk.ttf (707 KB) and is
+compiled into darklands.exe as a C array (FONT_CJK[] / FONT_CJK_SIZE).
+
+The font is rendered through ImGui's font atlas at 34 px with OversampleH = 1
+to preserve the crisp bitmap-pixel look of the original 12x12 grid.
+
+Note: the subset does NOT contain the lowercase Latin accented letters
+(U+00E0..U+00FF minus the upper half); those are borrowed at run time from the
+system's own CJK font via ImGui's MergeMode fallback, so no Microsoft-owned
+font data is redistributed.
+
+----------------------------------------------------------------------
+GPL v2.0 license with font embedding exception:
+
+As a special exception, if you create a document which uses this
+font, and embed this font or unaltered portions of this font into
+the document, this font does not by itself cause the resulting
+document to be covered by the GNU General Public License. This
+exception does not however invalidate any other reasons why the
+document might be covered by the GNU General Public License. If you
+modify this font, you may extend this exception to your version of
+the font, but you are not obligated to do so. If you do not wish to
+do so, delete this exception statement from your version.
+----------------------------------------------------------------------
+
+The full GNU General Public License v2.0 text is available at
+http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt and is not
+reproduced here.
+
+Upstream release notes (reproduced from the WenQuanYi Bitmap README):
+
+    Developer: The WenQuanYi Project Contributors
+    Font Name: WenQuanYi Bitmap Song
+    Version : 0.8 (FirstEmperor)
+    Release : 6
+    Copyright: (c) 2004-2007, The WenQuanYi Project Board of Trustees
+               and Qianqian Fang
+    License : GPL v2.0 (with font embedding exception)
+
+    The Wen Quan Yi bitmap font includes complete CJK Unified
+    Ideograph (U4E00 - U9FA5) glyphs at four different sizes
+    (9pt-12X12 pixel, 10pt-13X13 pixel, 11pt-15X15 pixel,
+    12pt-16x16 pixel) and two weights (medium and bold). ... The
+    12pt bitmap glyphs between U4E00-U9FA5 were derived from the
+    Chinese national standard GB19966-2005.

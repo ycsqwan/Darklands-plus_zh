@@ -72,16 +72,16 @@ enum { TAB_THINGS, TAB_SKILLS, TAB_SAINTS, TAB_FORMULAE };
 /* what the saints help with: words of their effect */
 struct Use { const char *name; const char *words[12]; };
 const Use USES[] = {
-    { "Any", { nullptr } },
-    { "Healing", { "heal", "cure", "restor", "wound", "disease", "poison", "endurance", nullptr } },
-    { "Strength", { "strength", nullptr } },
-    { "Fighting", { "weapon", "attack", "combat", "battle", "fight", "defen", "damage", "edged", "impact", "flail", "polearm", nullptr } },
-    { "Missiles", { "thrown", "bow", "missile", "arrow", nullptr } },
-    { "Protection", { "protect", "fire", "safe", "shield", "armo", nullptr } },
-    { "Travel", { "travel", "journey", "water", "ship", "sea", "riding", "horse", "woodwise", nullptr } },
-    { "Mind", { "intellig", "perception", "latin", "read", "alchemy", "artifice", "knowledge", nullptr } },
-    { "Charm", { "charisma", "speak", "reputation", "virtue", "streetwise", nullptr } },
-    { "Stealth", { "stealth", "agility", "hid", nullptr } },
+    { "任何", { nullptr } },
+    { "治疗", { "heal", "cure", "restor", "wound", "disease", "poison", "endurance", nullptr } },
+    { "力量", { "strength", nullptr } },
+    { "格斗", { "weapon", "attack", "combat", "battle", "fight", "defen", "damage", "edged", "impact", "flail", "polearm", nullptr } },
+    { "弹幕", { "thrown", "bow", "missile", "arrow", nullptr } },
+    { "防护", { "protect", "fire", "safe", "shield", "armo", nullptr } },
+    { "旅行", { "travel", "journey", "water", "ship", "sea", "riding", "horse", "woodwise", nullptr } },
+    { "心智", { "intellig", "perception", "latin", "read", "alchemy", "artifice", "knowledge", nullptr } },
+    { "魅力", { "charisma", "speak", "reputation", "virtue", "streetwise", nullptr } },
+    { "潜行", { "stealth", "agility", "hid", nullptr } },
 };
 const int NUSES = (int)(sizeof USES / sizeof USES[0]);
 
@@ -107,8 +107,8 @@ std::vector<Eff> EFF;
 std::string hours_left(long h)
 {
     char b[32];
-    if (h < 48) snprintf(b, sizeof b, "%ld hour%s", h, h == 1 ? "" : "s");
-    else snprintf(b, sizeof b, "%ld days", (h + 12) / 24);
+    if (h < 48) snprintf(b, sizeof b, "%ld 小时%s", h, h == 1 ? "" : "s");
+    else snprintf(b, sizeof b, "%ld 天", (h + 12) / 24);
     return b;
 }
 /* a saint's (or its price's) change to member m's attribute (kind 0x48) or skill (0x49) k: the sum,
@@ -151,7 +151,7 @@ std::vector<std::string> doll_layers(const SheetModel &s)
 
 bool shows_quality(const ItemDef *d, int q) { return d && ns_shows_quality((int)(d - &gamedata.items[0]), q); }
 
-const char *LOAD[4] = { "Light load", "Normal load", "Heavy load", "Overloaded" };
+const char *LOAD[4] = { "轻负重", "正常负重", "重负重", "超载" };
 /* what each band does, from the game's code (equip_weight s031 18e7:140a: the equipped things'
    weights; s014 18bf: attack_rate adds 30 to a melee blow's time between half and all of
    Endurance + Strength, 100 beyond half again - nothing between; the dodge keeps the whole
@@ -161,10 +161,10 @@ extern "C" int sheetview_pointed_item(void);
 extern "C" const char *ui_load_effect(int band)
 {
     switch (band) {
-    case 0: return "Light load (up to half of {Endurance} + {Strength}): no hindrance at all. Only what is equipped counts (weapons, armor, shield); items merely carried weigh nothing.";
-    case 1: return "Normal load (up to {Endurance} + {Strength}): blows hand to hand come about a fifth slower, and past 5/8 of it the {Agility} used to dodge falls to two thirds.";
-    case 2: return "Heavy load (up to half as much again): the {Agility} used to dodge falls to two thirds, and to a third past 1 1/4 times {Endurance} + {Strength}. Blows are no slower than with a normal load (an oversight in the original game).";
-    default: return "Overloaded (more than 1 1/2 times {Endurance} + {Strength}): blows hand to hand come about two thirds slower, and the {Agility} used to dodge falls to a third, then to nothing past about twice {Endurance} + {Strength}.";
+    case 0: return "轻负重（不超过 {Endurance} + {Strength} 的一半）：完全无负担。仅计算装备物品（武器、盔甲、盾牌）；随身携带的物品不计重量。";
+    case 1: return "正常负重（不超过 {Endurance} + {Strength}）：近身格斗速度约慢五分之一，超过五分之八后，用于闪避的 {Agility} 降至三分之二。";
+    case 2: return "重负重（最多增加一半）：用于闪避的 {Agility} 降至三分之二，超过 {Endurance} + {Strength} 的一倍半后则降至三分之一。近身格斗速度与正常负重时相同（原版游戏中存在疏漏）。";
+    default: return "超载（超过 {Endurance} + {Strength} 的一倍半）：近身格斗速度约慢三分之二，用于闪避的 {Agility} 先降至三分之一，超过 {Endurance} + {Strength} 的两倍左右后则完全失效。";
     }
 }
 
@@ -187,8 +187,8 @@ bool saint_fits(int s, int use)
 /* what a saint's help does (mods/saintinfo.c, the code's own account) names attribute or skill key
    (0..6 the attributes, 7..25 the skills, 26 the town's opinion): the shields' filter on the Saints page.
    The account says the skills shortly ("Edged", "Latin") and "every weapon skill" for the seven. */
-static const char *const SAINT_SKILL_WORD[19] = { "Edged", "Impact", "Flails", "Polearms", "Thrown", "Bows", "Missile Devices", "Alchemy",
-    "Religion", "Virtue", "Speak Common", "Latin", "Read & Write", "Healing", "Artifice", "Stealth", "Streetwise", "Riding", "Woodwise" };
+static const char *const SAINT_SKILL_WORD[19] = { "锋利武器", "冲击", "棍棒类武器", "长柄武器", "投掷", "弓箭", "投射装置", "炼金术",
+    "宗教", "美德", "通用语言", "拉丁文", "读写能力", "治疗", "工艺", "潜行", "精通街头", "骑术", "精通林地" };
 enum { SK_KEYS = 27, KEY_REP = 26 };
 static bool saint_touches(int s, int key) { return saint_effect(s, key) > 0; }
 static int saint_key_count(int key)
@@ -213,10 +213,10 @@ static void header(NsDraw &P, const SheetModel &s)
 {
     ImFont *f = P.f, *fo = P.fo;
     P.text(f, NsDraw::FS_HEAD, 63.5f, 2.2f, NsDraw::INK, ns_gtext(s.fullname), -1, 290);
-    if (P.button(296, 2.5f, 318, 10.2f, "Close", IM_COL32(112, 40, 22, 235), NsDraw::FS_SMALL, PB_Y)) ns_push(SV_CLOSE, 0, 0, 0);
-    char sub[96]; snprintf(sub, sizeof sub, "%s, {Age:%d}", s.female ? "Woman" : "Man", s.age);   /* (the age as its hourglass: ui/richtext.h) */
+    if (P.button(296, 2.5f, 318, 10.2f, "关闭", IM_COL32(112, 40, 22, 235), NsDraw::FS_SMALL, PB_Y)) ns_push(SV_CLOSE, 0, 0, 0);
+    char sub[96]; snprintf(sub, sizeof sub, "%s，{年龄：%d}", s.female ? "女性" : "男性", s.age);   /* (the age as its hourglass: ui/richtext.h) */
     float aw = P.width(fo, NsDraw::FS_SMALL, sub);
-    for (const Eff &e : EFF) if (e.m == s.who && e.kind == 0x43) { snprintf(sub + strlen(sub), sizeof sub - strlen(sub), "; leaves the party in %s", hours_left(e.left).c_str()); break; }
+    for (const Eff &e : EFF) if (e.m == s.who && e.kind == 0x43) { snprintf(sub + strlen(sub), sizeof sub - strlen(sub), "；将在 %s 离开队伍", hours_left(e.left).c_str()); break; }
     P.text(fo, NsDraw::FS_SMALL, 63.5f, 12.4f, NsDraw::INK_SOFT, sub);
     if (P.over(63.5f, 11.6f, 63.5f + aw, 18.8f)) {                /* the age: what the years will take (mods/aging.c) */
         char t[700]; aging_forecast(s.who, t, sizeof t);
@@ -225,15 +225,15 @@ static void header(NsDraw &P, const SheetModel &s)
     float lx = 63.5f + P.width(fo, NsDraw::FS_SMALL, sub) + 3;
     if (s.who == s.leader) {
         P.rect(lx, 11.6f, lx + 17, 18.8f, IM_COL32(214, 172, 60, 255), 1.2f);
-        P.text(fo, NsDraw::FS_SMALL, lx + 2, 12.4f, NsDraw::INK, "Leader");
-    } else if (P.button(lx, 11.6f, lx + 26, 18.8f, "Make leader", IM_COL32(120, 84, 40, 235), 4.4f)) ns_push(SV_LEADER, s.who, 0, 0);
+        P.text(fo, NsDraw::FS_SMALL, lx + 2, 12.4f, NsDraw::INK, "领导者");
+    } else if (P.button(lx, 11.6f, lx + 26, 18.8f, "成为领导者", IM_COL32(120, 84, 40, 235), 4.4f)) ns_push(SV_LEADER, s.who, 0, 0);
     if (P.over(lx, 11.6f, lx + (s.who == s.leader ? 17 : 26), 18.8f))
         ns_tip(config_get_int("assist.best_leader", 1) && !config_get_int("original", 0)
-            ? "Darklands+ (\"The best member speaks for the party\", F12 > Settings > Cards and towns): on cards, each test is made by the member best at it, and shops set prices by the best bargainer, whoever leads. "
-              "The leader is still the one meant by \"the leader\" on a card (a mine's traps, a church's favor, an item handed over), "
-              "and in battles and dungeons (when not paused) deals with doors, chests, locks and traps and leads the group's movement."
-            : "The leader speaks and acts for the party on the cards and bargains in the shops.");
-    static const char *TABS[4] = { "Items", "Skills", "Saints", "Formulae" };
+            ? "Darklands+（“最优秀的成员为队伍代言”，F12 > 设置 > 卡牌与城镇）：在卡牌上，每项测试由该领域最擅长的成员完成；商店则由最会讨价还价的人定价，无论谁带队。"
+              "队长依然是卡牌上所指的“队长”（如矿山的陷阱、教堂的恩惠、交出的物品等）。"
+              "在战斗和地下城中（非暂停状态），队长负责处理门、箱子、锁和陷阱，并指挥队伍行动。"
+            : "队长在卡牌上代表队伍发言并行动，在商店里进行讨价还价。");
+    static const char *TABS[4] = { "物品", "技能", "圣人", "配方" };
     if (sheet_model.tab_step) {                             /* (Tab, Shift+Tab, Right, Left: mods/sheetview.c) */
         V.tab = ((V.tab + sheet_model.tab_step) % 4 + 4) % 4; V.drop_row = -1; V.what = 0;
         sheet_model.tab_step = 0;
@@ -255,22 +255,22 @@ static std::string load_effects(const SheetModel &s)
 {
     int L = s.load, cap = s.attr[0] + s.attr[1], capm = s.attr_max[0] + s.attr_max[1], agl = s.attr[2], m = 5 * capm / 4;
     auto part = [](int l, int c, int a, bool one) -> std::pair<int, const char *> {
-        if (l <= c / 2) return { a, "in full" };
-        if (l <= c) return { 2 * a / 3, "two thirds" };
-        if (l <= 3 * c / 2) return { a / 3, "a third" };
-        return { one ? 1 : 0, one ? "as 1" : "not at all" };
+        if (l <= c / 2) return { a, "全部" };
+        if (l <= c) return { 2 * a / 3, "三分之二" };
+        if (l <= 3 * c / 2) return { a / 3, "三分之一" };
+        return { one ? 1 : 0, one ? "按1份" : "完全不携带" };
     };
     auto card = part(L, cap, agl, true), def = part(L, m, agl, false);
-    const char *swing = (L > capm / 2 && L <= capm) ? "a little slower (the attack rate falls)" : L > 3 * capm / 2 ? "much slower (the attack rate falls a lot)" : "at the usual pace";
+    const char *swing = (L > capm / 2 && L <= capm) ? "稍微慢一些（攻击速度下降）" : L > 3 * capm / 2 ? "慢很多（攻击速度大幅下降）" : "按正常节奏";
     char b[900];
     snprintf(b, sizeof b,
-             "Load %d: the weight of what %s has equipped (weapons, armor, shield). Items carried but not equipped weigh nothing.\n"
-             "Compared with {Endurance} + {Strength} (%d now): light up to %d, normal up to %d, heavy up to %d, overloaded above that.\n\n"
+             "负重%d：指%s所装备物品的重量（武器、护甲、盾牌）。已携带但未装备的物品不计重量。\\n"
+             "与{耐力}+{力量}相比（目前%d）：轻型最高%d，普通型最高%d，重型最高%d，超载则超过此限。\\n\\n"
              "Now:\n"
-             "- Tests on cards that ask for {Agility} (climbing a wall, running, a trap): {Agility:%d} counts %s (%d).\n"
-             "- Fending off blows in melee: {Agility} counts %s (%d).\n"
-             "- Swinging in melee: %s.\n\n"
-             "Travel, walking in a battle, missiles and {Endurance} are not affected by the load.",
+             "- 卡牌上需要{敏捷}的测试（攀墙、奔跑、陷阱）：{敏捷:%d}计入%s（%d）。\\n"
+             "- 近战格挡：{敏捷}计入%s（%d）。\\n"
+             "- 近战挥击：%s。\\n\\n"
+             "旅行、战斗中的步行、投射物以及{耐力}均不受负重影响。",
              L, ns_gtext(s.names[s.who]).c_str(), cap, cap / 2, cap, 3 * cap / 2, agl, card.second, card.first, def.second, def.first, swing);
     return b;
 }
@@ -292,7 +292,7 @@ static void doll(NsDraw &P, const SheetModel &s)
     ImU32 c = band >= 3 ? NsDraw::RED : band == 2 ? IM_COL32(150, 80, 20, 255) : NsDraw::INK;
     P.text(P.fo, NsDraw::FS_SMALL, 63.5f, 192.3f, c, LOAD[band]);
     if (P.over(62, 191, 198, 197.5f)) ns_tip(ui_load_effect(band), 26);
-    char v[24]; snprintf(v, sizeof v, "%d of %d", s.load, s.capacity);
+    char v[24]; snprintf(v, sizeof v, "%d的%d", s.load, s.capacity);
     P.text(P.fo, NsDraw::FS_SMALL, 0, 192.3f, NsDraw::INK_SOFT, v, 197);
     float f = s.capacity > 0 ? fminf(1.5f, (float)s.load / s.capacity) / 1.5f : 0;
     P.rect(100, 194.6f, 160, 196.4f, IM_COL32(214, 196, 160, 255), 0.6f);
@@ -312,7 +312,7 @@ static float raised_line(NsDraw &P, const SheetModel &s, bool attr, int idx, flo
 {
     long left; int t = raised_by(s.who, attr ? 0x48 : 0x49, idx, &left);
     if (!t) return 0;
-    char b[96]; snprintf(b, sizeof b, "%s by %d for %s more (a saint's %s).", t > 0 ? "Raised" : "Lowered", t > 0 ? t : -t, hours_left(left).c_str(), t > 0 ? "help" : "price");
+    char b[96]; snprintf(b, sizeof b, "%s按%d为%s再加（某位圣人的%s）。", t > 0 ? "提高" : "降低", t > 0 ? t : -t, hours_left(left).c_str(), t > 0 ? "help" : "price");
     return P.para(P.fo, NsDraw::FS_SMALL, x, y, w, t > 0 ? RAISED : NsDraw::RED, b) + 0.6f;
 }
 static int party_best(const SheetModel &s, bool attr, int idx)
@@ -337,7 +337,7 @@ static float party_line(NsDraw &P, const SheetModel &s, bool attr, int idx, floa
     if (n < 2) return 0;
     const float gs = NsDraw::FS_SMALL;
     float x = x0, lh = gs * 1.25f;
-    P.text(P.fo, gs, x, y, NsDraw::INK_SOFT, "The party:"); x += P.width(P.fo, gs, "The party:") + 1.5f;
+    P.text(P.fo, gs, x, y, NsDraw::INK_SOFT, "队伍："); x += P.width(P.fo, gs, "队伍：") + 1.5f;
     for (int m = 0; m < 5; m++) {
         if (!s.present[m]) continue;
         int v = attr ? s.pattr[m][idx] : s.pskill[m][idx], mx = attr ? s.pattr_max[m][idx] : v;
@@ -368,13 +368,13 @@ static void strip(NsDraw &P, const SheetModel &s, float SX0, float SX1, float SY
         std::string l1 = std::string(d ? kind_name_one(d->kind) : "");
         if (shows_quality(d, it.qual)) l1 += ns_quality_words(it.id, it.qual);
         bool wearable = d && (d->kind == K_WEAPON || d->kind == K_MISSILE || d->kind == K_ARMOR || d->kind == K_SHIELD);   /* (only equipped things count toward the load: equip_weight) */
-        if (wearable) l1 += ", weight " + std::to_string(it.weight) + (it.equipped ? "" : " when equipped");
-        if (it.count > 1) l1 += std::string(wearable ? " each" : "") + ", " + std::to_string(it.count) + " of them";
-        if (it.equipped == 2) l1 += "; this member's mount";
-        else if (it.equipped) l1 += "; equipped";
-        else if (it.holder < 0) l1 += it.count > 1 ? " in the party's pack" : "; in the party's pack";
-        if (it.kept) l1 += "; kept (not sold or dropped)";
-        else if (it.sell) l1 += "; marked to sell (Sell spare gear sells it)";
+        if (wearable) l1 += "，重量" + std::to_string(it.weight) + (it.equipped ? "" : "装备时");
+        if (it.count > 1) l1 += std::string(wearable ? " each" : "") + ", " + std::to_string(it.count) + "其中";
+        if (it.equipped == 2) l1 += "；该成员的坐骑";
+        else if (it.equipped) l1 += "；已装备";
+        else if (it.holder < 0) l1 += it.count > 1 ? "在队伍的背包中" : "；在队伍的背包中";
+        if (it.kept) l1 += "；保留（不售也不丢）";
+        else if (it.sell) l1 += "；标记出售（出售多余装备即可卖出）";
         y += P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y, SW, soft, l1) + 0.5f;
         std::string l2 = ns_item_line(it.id, it.qual);
         if (!l2.empty()) y += P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y, SW, soft, l2) + 0.5f;
@@ -383,32 +383,32 @@ static void strip(NsDraw &P, const SheetModel &s, float SX0, float SX1, float SY
         if (d && d->kind == K_INGREDIENT) y += ns_ingredient_row(P, SX0 + 2.5f, y + 0.5f, SX0 + 2.5f + SW, it.id) + 1.0f;
         { ImU32 ec; std::string enc = ns_item_encounters(it.id, &ec); if (!enc.empty()) y += P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y, SW, ec, enc) + 0.5f; }
         if (it.type == 108) {                                       /* a horse or mule: how riding works (mods/pack.c: party_get(5), the chases) */
-            std::string r = "Each member rides the best horse or mule they carry; the party travels mounted only when every member has one.";
-            if (s.shared) r += " A member without one is given the best spare one when the game needs it (setting out on the road, a chase).";
+            std::string r = "每位成员都骑着自己携带的最好马或骡子；只有当每位成员都有坐骑时，队伍才会骑乘出行。";
+            if (s.shared) r += "对于没有坐骑的成员，游戏需要时（上路、追击）会为其提供最好的备用坐骑。";
             y += P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y, SW, soft, r) + 0.5f;
             if (s.npar > 1) y += P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y, SW, NsDraw::INK_DIM,
-                                        it.holder < 0 ? "For a member to ride it, drag it onto them, or press their number (1 to 5)."
-                                                      : "For another member to ride it, drag it onto them, or press their number (1 to 5).") + 0.5f;
+                                        it.holder < 0 ? "要让某位成员骑乘，将其拖到该成员身上，或按下其编号（1至5）。"
+                                                      : "要让另一位成员骑乘，将其拖到该成员身上，或按下其编号（1至5）。") + 0.5f;
         }
         else if (it.holder >= 0 && !it.equipped && s.npar > 1)          /* (how to hand it over: the pack's spares are anyone's already) */
-            y += P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y, SW, NsDraw::INK_DIM, it.count > 1 ? "To give the lot, drag it onto a member at the left, or press their number (1 to 5); Shift: just one." : "To give it, drag it onto a member at the left, or press their number (1 to 5).") + 0.5f;
+            y += P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y, SW, NsDraw::INK_DIM, it.count > 1 ? "要将所有坐骑分配给队员，可将其拖到左侧的某位成员身上，或按下其编号（1至5）；按住Shift键则只需一人。" : "要分配坐骑，可将其拖到左侧的某位成员身上，或按下其编号（1至5）。") + 0.5f;
         if (d && d->type >= 0 && d->type <= 33 && (d->kind == K_WEAPON || d->kind == K_MISSILE)) {
             int sk = rb(G_FAR20A5, (u16)(0x75ac + d->type)), minsk = rb(G_FAR20A5, (u16)(0x7726 + d->type)), minst = rb(G_FAR20A5, (u16)(0x7765 + d->type));
             int have = sk < 7 ? s.skill[sk] : 0;
-            std::string fit = (have < minsk ? "needs " + std::to_string(minsk - have) + " more skill" : std::string("")) +
-                              (s.attr[1] < minst ? std::string(have < minsk ? ", " : "") + "too weak by " + std::to_string(minst - s.attr[1]) : "");
-            P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y, SW, fit.empty() ? NsDraw::GREEN : NsDraw::RED, fit.empty() ? ns_gtext(s.names[s.who]) + " can use it well" : ns_gtext(s.names[s.who]) + ": " + fit);
+            std::string fit = (have < minsk ? "needs " + std::to_string(minsk - have) + "更多技能" : std::string("")) +
+                              (s.attr[1] < minst ? std::string(have < minsk ? ", " : "") + "太弱了" + std::to_string(minst - s.attr[1]) : "");
+            P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y, SW, fit.empty() ? NsDraw::GREEN : NsDraw::RED, fit.empty() ? ns_gtext(s.names[s.who]) + "可以很好地使用它" : ns_gtext(s.names[s.who]) + ": " + fit);
         } else if (d && d->type >= 95 && d->type <= 97) {     /* a shield: the defence it gives this member (mods/gamemodel.h) */
             int sb = gm_shield_defence(d->type, it.qual, 0), sh = gm_shield_defence(d->type, it.qual, 1), ag = gm_member_fight_agility(s.who), a = s.attr[2];
             char b[240];
-            snprintf(b, sizeof b, "%s's defense with it: against a blow, %d + their melee rating; against a shot or throw, %d + twice the {Agility:%d} = %d%s", ns_gtext(s.names[s.who]).c_str(), sb, sh, ag, sh + 2 * ag,
-                     ag < a ? " (the load lowers Agility)" : "");
+            snprintf(b, sizeof b, "%s用它防御：面对打击时，%d加上其近战等级；面对射击或投掷时，%d加上两倍的{敏捷:%d}，即%d%s。", ns_gtext(s.names[s.who]).c_str(), sb, sh, ag, sh + 2 * ag,
+                     ag < a ? "（负重会降低敏捷）" : "");
             P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y, SW, ink, b);
         } else if (l2.empty() && it.drinkable && it.id >= 95 && 3 * (it.id - 95) < (int)gamedata.formulas.size())
             P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y, SW, soft, game_text(gamedata.formulas[3 * (it.id - 95)].text.c_str(), gamedata.formulas[3 * (it.id - 95)].text.size()));
     } else if (V.what == 2 && V.which >= 0 && V.which < 19) {
         std::string help = ui_skill_help(V.which);
-        if (V.which < 7) { std::string w = rules_weapons_of_skill(V.which); help = (V.which >= 4 ? "Aim with " : "Attack and defense hand to hand with ") + (w.empty() ? std::string("these weapons") : w) + "."; }
+        if (V.which < 7) { std::string w = rules_weapons_of_skill(V.which); help = (V.which >= 4 ? "用…瞄准" : "用这些武器进行近身攻击与防御") + (w.empty() ? std::string("these weapons") : w) + "."; }
         y += P.para(f, NsDraw::FS_NAME, SX0 + 2.5f, y, SW, ink, gm_skill_name(V.which)) + 0.5f;
         y += P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y, SW, soft, help) + 0.8f;
         y += raised_line(P, s, false, V.which, SX0 + 2.5f, y, SW);
@@ -419,18 +419,18 @@ static void strip(NsDraw &P, const SheetModel &s, float SX0, float SX1, float SY
         y += raised_line(P, s, true, V.which, SX0 + 2.5f, y, SW);
         party_line(P, s, true, V.which, SX0 + 2.5f, y, SX1 - 2);
     } else if (V.tab == TAB_THINGS && s.shared)
-        P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y + 1, SW, dim, "Point at an item to see it here; F11 shows what you can do.");
+        P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y + 1, SW, dim, "将鼠标指向某件物品即可在此查看；按F11可显示你能进行的操作。");
     else if (V.tab == TAB_THINGS)
-        P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y + 1, SW, dim, "Point at an item to see it here. Drag an item onto a member at the left to give it to them (Shift: just one of a stack). Click another member at the left to see their sheet; Esc or Close goes back.");
+        P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y + 1, SW, dim, "点击某项属性或技能，即可查看其效果及全队的相关数值。金色圆点：表示该队伍在该项上表现最佳；蓝色：表示曾由圣人短暂提升过。");
     else {
-        y += P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y + 1, SW, dim, s.npar > 1 ? "Point at an attribute or a skill to see what it does and the whole party's values. Gold dot: the party's best at it; blue: raised by a saint for a while."
-                                                                                : "Point at an attribute or a skill to see what it does. Blue: raised by a saint for a while.") + 1.8f;
+        y += P.para(fo, NsDraw::FS_SMALL, SX0 + 2.5f, y + 1, SW, dim, s.npar > 1 ? "点击某项属性或技能，即可查看其效果。蓝色：表示曾由圣人短暂提升过。"
+                                                                                : "当前生效：") + 1.8f;
         std::vector<std::string> at;                     /* the blessings and potions at work on this member, as many as there is room for */
         for (const Eff &e : EFF) if (e.m == s.who && e.kind != 0x43) at.push_back(e.what + " (" + hours_left(e.left) + ")");
         if (!at.empty()) {
-            std::string t = "In effect now: ";
+            std::string t = "；以及";
             size_t k = 0;
-            auto tail = [&](size_t left) { return left ? "; and " + std::to_string(left) + " more (see \"Blessings and potions\" in the margin)." : std::string("."); };
+            auto tail = [&](size_t left) { return left ? "; and " + std::to_string(left) + "更多（请参阅页边的“祝福与药剂”）。" : std::string("."); };
             for (; k < at.size(); k++) {
                 std::string next = t + (k ? "; " : "") + at[k];
                 if (k && P.para_height(fo, NsDraw::FS_SMALL, SW, next + tail(at.size() - k - 1)) > SY1 - y - 1) break;
@@ -455,7 +455,7 @@ static void gear_tip(const SvItem &it)
                 (d->type >= 67 && d->type <= 84) || (d->type >= 95 && d->type <= 97))) return;
     ns_tip_begin(30);
     ImGui::TextUnformatted(ns_item_name(it.id).c_str());
-    if (d->value) ImGui::TextDisabled("Worth about %s", money_with_total(d->value).c_str());
+    if (d->value) ImGui::TextDisabled("价值约 %s", money_with_total(d->value).c_str());
     ui_item_details(d, it.id, it.qual);
     ns_tip_end();
 }
@@ -496,7 +496,7 @@ static void things(NsDraw &P, const SheetModel &s, int &new_what, int &new_which
     if (sc > maxs) sc = maxs;
     if (sc < 0) sc = 0;
     P.rect(RX0, LY0 - 0.5f, RX1, LY1 + 0.5f, IM_COL32(250, 242, 222, 255), 1.5f);
-    if (!s.nitems) P.text(fo, NsDraw::FS_BODY, RX0 + 3, LY0 + 2, dim, "Carries nothing.");
+    if (!s.nitems) P.text(fo, NsDraw::FS_BODY, RX0 + 3, LY0 + 2, dim, "什么都没携带。");
     /* a press on a row may become a drag */
     if (ns_in.pressed) {
         ns_in.pressed = 0;
@@ -530,7 +530,7 @@ static void things(NsDraw &P, const SheetModel &s, int &new_what, int &new_which
             int sec = -1 - i;
             std::string hds = ns_item_section_name(sec);
             if (i == -10) {                                   /* the shared pack's own heading, once, above its sections: a band across, a pack and the words in the middle */
-                const char *pk = "The party's pack";
+                const char *pk = "队伍的背包";
                 float fs = NsDraw::FS_HEAD * 0.85f, tw = P.width(f, fs, pk), ih = 6.6f, iw = ih * 0.9f * P.k / P.kx, gapw = 2.0f;
                 float cx = (RX0 + RX1) * 0.5f, x0 = cx - (iw + gapw + tw) * 0.5f;
                 P.rect(RX0 + 1, y + 0.6f, RX1 - 1, y + ROWH - 0.6f, IM_COL32(222, 198, 150, 255));       /* (the band) */
@@ -587,35 +587,35 @@ static void things(NsDraw &P, const SheetModel &s, int &new_what, int &new_which
         bool gear = d && (d->kind == K_WEAPON || d->kind == K_MISSILE || d->kind == K_ARMOR || d->kind == K_SHIELD);
         bool pack = it.holder < 0;                         /* a row of the shared pack: the actions by kind and quality */
         float x = RX1 - 58;
-        if (it.drinkable && !it.equipped) { if (P.button(x, y + 1, x + 18, y + ROWH - 1, "Drink", IM_COL32(52, 70, 120, 235), 4.4f)) { if (pack) ns_push(SV_PDRINK, it.id, it.qual, 0); else ns_push(SV_DRINK, it.idx, 0, 0); } }
-        else if (it.equipped == 1) { if (P.button(x, y + 1, x + 18, y + ROWH - 1, "Unequip", IM_COL32(120, 84, 40, 235), 4.4f)) ns_push(SV_PUTAWAY, it.idx, 0, 0); }
-        else if (it.equipped == 2) P.text(fo, NsDraw::FS_SMALL, x + 2, y + 2.4f, soft, "rides it");   /* (the shared pack: their own mount) */
+        if (it.drinkable && !it.equipped) { if (P.button(x, y + 1, x + 18, y + ROWH - 1, "装备卸下", IM_COL32(52, 70, 120, 235), 4.4f)) { if (pack) ns_push(SV_PDRINK, it.id, it.qual, 0); else ns_push(SV_DRINK, it.idx, 0, 0); } }
+        else if (it.equipped == 1) { if (P.button(x, y + 1, x + 18, y + ROWH - 1, "装备穿戴", IM_COL32(120, 84, 40, 235), 4.4f)) ns_push(SV_PUTAWAY, it.idx, 0, 0); }
+        else if (it.equipped == 2) P.text(fo, NsDraw::FS_SMALL, x + 2, y + 2.4f, soft, "骑乘它");   /* (the shared pack: their own mount) */
         else if (pack && it.type == 108) {                 /* a spare mount: this member rides it (a better one than theirs) */
             int rq = -1; for (int k = 0; k < s.nitems; k++) if (s.item[k].equipped == 2 && s.item[k].holder == s.who) rq = s.item[k].qual;
-            if (it.qual > rq && P.button(x, y + 1, x + 18, y + ROWH - 1, "Ride", IM_COL32(40, 92, 34, 235), 4.4f)) ns_push(SV_PTAKE, it.id, it.qual, s.who);
+            if (it.qual > rq && P.button(x, y + 1, x + 18, y + ROWH - 1, "骑术", IM_COL32(40, 92, 34, 235), 4.4f)) ns_push(SV_PTAKE, it.id, it.qual, s.who);
         }
-        else if (gear) { if (P.button(x, y + 1, x + 18, y + ROWH - 1, "Equip", IM_COL32(40, 92, 34, 235), 4.4f)) { if (pack) ns_push(SV_PREADY, it.id, it.qual, 0); else ns_push(SV_READY, it.idx, 0, 0); } }
+        else if (gear) { if (P.button(x, y + 1, x + 18, y + ROWH - 1, "保留", IM_COL32(40, 92, 34, 235), 4.4f)) { if (pack) ns_push(SV_PREADY, it.id, it.qual, 0); else ns_push(SV_READY, it.idx, 0, 0); } }
         x += 19;
         /* Keep / Kept, and for what Sell spare gear would not sell by itself (potions, tools...) a third state, Sell:
            a click goes Keep, Kept, Sell, Keep */
         {   int mark = it.kept ? 1 : it.sell ? 2 : 0, next = mark == 0 ? 1 : mark == 1 && !gear ? 2 : 0;
-            const char *lab = mark == 1 ? "Kept" : mark == 2 ? "Sell" : "Keep";
+            const char *lab = mark == 1 ? "保留" : mark == 2 ? "出售" : "保留";
             ImU32 bc = mark == 1 ? IM_COL32(150, 40, 24, 245) : mark == 2 ? IM_COL32(150, 112, 30, 245) : IM_COL32(120, 84, 40, 235);
             if (P.button(x, y + 1, x + 18, y + ROWH - 1, lab, bc, 4.4f)) ns_push(SV_KEEP, it.id, it.qual, next);
             if (P.over(x, y + 1, x + 18, y + ROWH - 1))
-                ns_tip(mark == 1 ? (gear ? "Kept from selling and dropping (Sell spare gear skips it). Click to stop keeping it."
-                                         : "Kept from selling and dropping (Sell spare gear skips it). Click to mark it to sell instead.")
-                     : mark == 2 ? "Marked to sell: Sell spare gear in a shop sells it with the spare weapons and armor. Click to clear the mark."
-                     : "Keep it: Darklands+ will not sell it (one by one or with Sell spare gear) or drop it until you click again.");
+                ns_tip(mark == 1 ? (gear ? "保留不售也不掉落（出售多余装备时会跳过此物品）。点击可标记为改为出售。"
+                                         : "标记为出售：在商店中出售多余装备时，会连同备用武器与护甲一并出售。点击可取消标记。")
+                     : mark == 2 ? "保留：Darklands+不会出售（无论是单独出售还是通过“出售多余装备”）或掉落，直到您再次点击为止。"
+                     : "掉落");
         }
         x += 19;
-        if (it.kept) P.button(x, y + 1, x + 18, y + ROWH - 1, "Drop", IM_COL32(170, 150, 130, 200), 4.4f);   /* (greyed: kept) */
+        if (it.kept) P.button(x, y + 1, x + 18, y + ROWH - 1, "确定？", IM_COL32(170, 150, 130, 200), 4.4f);   /* (greyed: kept) */
         else if (busy) {
-            if (P.button(x, y + 1, x + 18, y + ROWH - 1, P.shift || it.count == 1 ? "Sure?" : "Drop 1?", IM_COL32(150, 30, 18, 255), 4.4f)) {
+            if (P.button(x, y + 1, x + 18, y + ROWH - 1, P.shift || it.count == 1 ? "确实要掉落1件吗？" : "为了", IM_COL32(150, 30, 18, 255), 4.4f)) {
                 if (pack) ns_push(SV_PDROP, it.id, it.qual, P.shift ? 255 : 1); else ns_push(SV_DROP, it.idx, P.shift ? 255 : 1, 0);
                 V.drop_row = -1;
             }
-        } else if (P.button(x, y + 1, x + 18, y + ROWH - 1, "Drop", IM_COL32(120, 44, 24, 235), 4.4f)) { V.drop_row = i; V.act_seq = s.seq; }
+        } else if (P.button(x, y + 1, x + 18, y + ROWH - 1, "确定？", IM_COL32(120, 44, 24, 235), 4.4f)) { V.drop_row = i; V.act_seq = s.seq; }
     }
     if (n > NROWS) {
         float th = (LY1 - LY0) * NROWS / n, ty = LY0 + (LY1 - LY0 - th) * sc / (float)(n - NROWS);
@@ -638,10 +638,10 @@ static void things(NsDraw &P, const SheetModel &s, int &new_what, int &new_which
         bool ok = to >= 0 && (packrow ? mount : to != s.who);
         if (ok) P.dl->AddRect(NsDraw::w(1.2f, 40.0f * to + 1.2f), NsDraw::w(58.8f, 40.0f * to + 38.8f), IM_COL32(120, 220, 110, 255), 2 * P.k, 0, fmaxf(2.0f, 0.9f * P.k));
         float gx = ns_in.x + 5, gy = ns_in.y + 9;                  /* (below the pointer, not under it) */
-        std::string l = ok ? (packrow ? "For " + ns_gtext(s.names[to]) + " to ride"
-                                      : "Give to " + ns_gtext(s.names[to]) + (P.shift || it.count == 1 ? "" : " (all " + std::to_string(it.count) + ")"))
-                           : packrow && !mount ? ns_item_name(it.id) + ": the party's pack is everyone's already"
-                           : ns_item_name(it.id) + (to == s.who ? "" : ": drop it on a member at the left");
+        std::string l = ok ? (packrow ? "以便骑行" + ns_gtext(s.names[to]) + "赠予"
+                                      : "：队伍的背包早已属于所有人" + ns_gtext(s.names[to]) + (P.shift || it.count == 1 ? "" : " (all " + std::to_string(it.count) + ")"))
+                           : packrow && !mount ? ns_item_name(it.id) + "：将其丢给左侧的队员"
+                           : ns_item_name(it.id) + (to == s.who ? "" : "知识");
         float lw = P.width(P.fo, NsDraw::FS_SMALL, l);
         if (gx + 12 + lw > 318) gx = 318 - 12 - lw;
         P.rect(gx, gy - 4, gx + 12 + lw + 2, gy + 4.5f, ok ? IM_COL32(222, 244, 214, 240) : IM_COL32(250, 242, 222, 235), 1.5f);
@@ -657,8 +657,8 @@ static void skills(NsDraw &P, const SheetModel &s, int &new_what, int &new_which
     const float ROWH = 7.9f;
     P.rect(200, 21, 318, 150, IM_COL32(250, 242, 222, 255), 1.5f);
     struct Group { const char *name; int first, n; bool attr; };
-    const Group COL1[2] = { { "Attributes", 0, 7, true }, { "Knowledge", 7, 6, false } };
-    const Group COL2[2] = { { "Weapons", 0, 7, false }, { "Abilities", 13, 6, false } };
+    const Group COL1[2] = { { "属性", 0, 7, true }, { "能力", 7, 6, false } };
+    const Group COL2[2] = { { "武器", 0, 7, false }, { "：美德已低于该圣人的要求", 13, 6, false } };
     for (int c = 0; c < 2; c++) {
         float x0 = c ? 259.5f : 201, x1 = c ? 317 : 257.5f, y = 21.6f;
         for (const Group &g : c ? COL2 : COL1) {
@@ -714,7 +714,7 @@ static float head_tag(NsDraw &P, int m, float x1, float ry, float rh, bool who, 
     float sz = rh - 1.2f, x0 = x1 - sz;
     if (g) P.dl->AddImage((ImTextureID)(intptr_t)g->tex, NsDraw::w(x0, ry + 0.6f), NsDraw::w(x1, ry + 0.6f + sz), u0, u1, dim ? IM_COL32(255, 255, 255, 90) : IM_COL32(255, 255, 255, 255));
     if (who) P.dl->AddLine(NsDraw::w(x0 + 0.5f, ry + rh - 0.3f), NsDraw::w(x1 - 0.5f, ry + rh - 0.3f), NsDraw::RED, 0.8f * P.k);
-    if (P.over(x0, ry, x1, ry + rh)) ns_tip((ns_gtext(sheet_model.names[m]) + (dim ? ": Virtue too low for this saint" : "")).c_str());
+    if (P.over(x0, ry, x1, ry + rh)) ns_tip((ns_gtext(sheet_model.names[m]) + (dim ? "只有其最大值的一半" : "")).c_str());
     return sz;
 }
 
@@ -737,168 +737,247 @@ struct SaintChip {
     bool raw = false;                                         /* words the parse did not know (usaintchips) */
     float mag = 0; int tier = 0;                              /* how much (chip_mag); 1..3 against the other saints */
 };
-static std::string span_of(const std::string &t)            /* "6 to 11" -> "6–11"; "half its maximum" -> "half" */
+/* a value written "6 至 11" becomes "6\x0111": the two ends of a range, as chip_mag reads them */
+/* a value written "6 至 11" becomes "6\x0111": the two ends of a range, as chip_mag reads them */
+static std::string span_of(const std::string &t)
 {
-    std::string r = t;
-    size_t p = r.find(" to "); if (p != std::string::npos) r.replace(p, 4, "\x01");   /* (a dash drawn: chip_text) */
-    if (r == "half its maximum") r = "half";
-    return r;
+    std::string s;
+    for (char c : t) if (c != ' ' && c != '\t') s += c;
+    static const char *const sep[] = { "至", "到", "~", "－", "—", "–" };
+    for (const char *x : sep) {
+        size_t p = s.find(x);
+        if (p != std::string::npos) return s.substr(0, p) + "\x01" + s.substr(p + strlen(x));
+    }
+    for (size_t i = 1; i + 1 < s.size(); i++)                       /* 6-11 */
+        if (s[i] == '-' && s[i - 1] >= '0' && s[i - 1] <= '9' && s[i + 1] >= '0' && s[i + 1] <= '9')
+            return s.substr(0, i) + "\x01" + s.substr(i + 1);
+    return s;
 }
-static int saint_key_of(const std::string &name)             /* an attribute (0..6) or a skill (7..25) by the account's word; -1 */
+
+/* the attribute or skill a Chinese name in a saint's help stands for */
+static const struct { const char *word; int key; } SAINT_KEYS[] = {
+    { "通用语", 17 }, { "拉丁语", 18 }, { "读写能力", 19 }, { "读写", 19 },
+    { "炼金术", 14 }, { "炼金", 14 }, { "木系知识", 25 }, { "木艺", 25 },
+    { "街头智慧", 23 }, { "巧思", 21 }, { "工艺", 21 },
+    { "投射装置", 13 }, { "投射", 13 }, { "弓箭", 12 }, { "弓", 12 },
+    { "长柄武器", 10 }, { "长柄", 10 }, { "投掷", 11 }, { "连枷", 9 }, { "刃器", 7 }, { "冲击", 8 },
+    { "潜行", 22 }, { "骑术", 24 }, { "宗教", 15 }, { "美德", 16 }, { "治疗", 20 },
+    { "耐力", 0 }, { "体力", 0 }, { "力量", 1 }, { "敏捷", 2 }, { "感知", 3 }, { "智力", 4 },
+    { "魅力", 5 }, { "神恩", 6 }, { "虔诚", 6 }, { "声望", KEY_REP },
+    { 0, 0 }
+};
+
+static int saint_key_of(const std::string &name)
 {
-    for (int a = 0; a < 7; a++) if (name == gm_attr_name(a)) return a;
-    for (int k = 0; k < 19; k++) if (name == SAINT_SKILL_WORD[k]) return 7 + k;
+    if (name.empty()) return -1;
+    for (int i = 0; SAINT_KEYS[i].word; i++)
+        if (name.find(SAINT_KEYS[i].word) != std::string::npos) return SAINT_KEYS[i].key;
     return -1;
 }
-static const struct { const char *has, *say; bool bad; } SAINT_WORDS[] = {
-    { "travels", "faster travel", false }, { "ire protection", "fire ward", false }, { "armor", "better armor", false },
-    { "better in quality", "better weapons", false }, { "cross water", "walks on water", false }, { "ambush", "no ambush", false },
-    { "long sword", "a long sword", false }, { "Costs a point", "costs Strength, Virtue", true }, { "musical instrument", "with music: the town's opinion", false },
-    { "nearest town", "carried to a town", false }, { "groschen", "a little money", false }, { "Teaches", "teaches a saint", false },
-    { "Virtue is raised", "Virtue 20 at least, a quarter of the money", false }, { "No help of its own", "encounters only", false }, { "Fugger", "the bankers' favor", false },
-    { "death from wounds", "no death from wounds", false }, { "loses a tenth", "may cost money", true }, { "loses 3 to 8", "may cost Endurance", true },
-    { "Costs", "costs something", true }
-};
-static void saint_chips_parse(const std::string &does, std::vector<SaintChip> &out)
+
+static bool saint_digit(const std::string &s)
 {
-    out.clear();
-    /* the sentences, and in them the parts (", " and "; ") */
-    std::vector<std::string> sent;
-    for (size_t a = 0; a < does.size(); ) {
-        size_t e = does.find(". ", a);
-        while (e != std::string::npos && e >= 2 && does.compare(e - 2, 2, "St") == 0) e = does.find(". ", e + 2);   /* ("St. Cosmas": no end) */
-        std::string t = does.substr(a, e == std::string::npos ? std::string::npos : e - a);
-        while (!t.empty() && (t.back() == '.' || t.back() == ' ')) t.pop_back();
-        if (!t.empty()) sent.push_back(t);
-        if (e == std::string::npos) break;
-        a = e + 2;
+    for (char c : s) if (c >= '0' && c <= '9') return true;
+    return false;
+}
+
+static void saint_trim(std::string &s)
+{
+    while (!s.empty() && (s.front() == ' ' || s.front() == '\t')) s.erase(0, 1);
+    while (!s.empty() && (s.back() == ' ' || s.back() == '\t')) s.pop_back();
+}
+
+static size_t saint_utf8_len(unsigned char c)
+{
+    return c >= 0xF0 ? 4 : c >= 0xE0 ? 3 : c >= 0xC0 ? 2 : 1;
+}
+
+/* a saint's help, one sentence at a time */
+static void saint_clauses(const std::string &t, std::vector<std::string> &out)
+{
+    static const char *const sep[] = { "，", "；", "。", "：", "（", "）" };
+    std::string cur;
+    for (size_t i = 0; i < t.size();) {
+        unsigned char c = (unsigned char)t[i];
+        size_t adv = saint_utf8_len(c);
+        bool cut = false;
+        if (c < 0x80) {
+            if (c == '\n' || c == ',' || c == ';' || c == '.' || c == '(' || c == ')') cut = true;
+        } else {
+            for (const char *x : sep)
+                if (t.compare(i, strlen(x), x) == 0) { cut = true; adv = strlen(x); break; }
+        }
+        if (cut) { saint_trim(cur); if (!cur.empty()) out.push_back(cur); cur.clear(); i += adv; }
+        else { cur.append(t, i, adv); i += adv; }
     }
-    static const std::regex heal("(all|half the|[0-9]+%|[0-9]+ to [0-9]+)( of)?( lost)? (Endurance|Strength)( and (Endurance|Strength))?");
-    static const std::regex amount("^(.*?)\\s*(\\+[0-9]+( to [0-9]+)?|lowered by ([0-9]+ to [0-9]+|half its maximum))(.*)$");
-    static const std::regex rep("by ([0-9]+ to [0-9]+)");
-    for (const std::string &st : sent) {
-        std::string low = lower(st);
-        bool used = false;
-        if (low.find("heals") != std::string::npos || low.find("healed") != std::string::npos) {
-            for (std::sregex_iterator it(st.begin(), st.end(), heal), end; it != end; ++it) {
-                std::string v = (*it)[1].str(); if (v == "half the") v = "half";
-                SaintChip c{ CH_HEAL, (*it)[4].str() == "Endurance" ? ATTR_END : ATTR_STR, span_of(v), false, st };
-                out.push_back(c);
-                if ((*it)[6].matched) { c.key = (*it)[6].str() == "Endurance" ? ATTR_END : ATTR_STR; out.push_back(c); }
-                used = true;
+    saint_trim(cur);
+    if (!cur.empty()) out.push_back(cur);
+}
+
+/* "刃器、冲击与长柄武器" is three names */
+static void saint_names(const std::string &t, std::vector<std::string> &out)
+{
+    static const char *const sep[] = { "以及", "、", "与", "和", "及" };
+    std::string cur;
+    for (size_t i = 0; i < t.size();) {
+        unsigned char c = (unsigned char)t[i];
+        size_t adv = saint_utf8_len(c);
+        bool cut = false;
+        if (c >= 0x80) {
+            for (const char *x : sep)
+                if (t.compare(i, strlen(x), x) == 0) { cut = true; adv = strlen(x); break; }
+        }
+        if (cut) { saint_trim(cur); if (!cur.empty()) out.push_back(cur); cur.clear(); i += adv; }
+        else { cur.append(t, i, adv); i += adv; }
+    }
+    saint_trim(cur);
+    if (!cur.empty()) out.push_back(cur);
+}
+
+/* the numbers of a clause, with the range separator kept: "6至11" */
+static std::string saint_numbers(const std::string &c)
+{
+    std::string r;
+    for (size_t i = 0; i < c.size();) {
+        unsigned char ch = (unsigned char)c[i];
+        size_t adv = saint_utf8_len(ch);
+        if (ch >= '0' && ch <= '9') r += (char)ch;
+        else if (c.compare(i, strlen("至"), "至") == 0) { r += "至"; adv = strlen("至"); }
+        else if (c.compare(i, strlen("到"), "到") == 0) { r += "到"; adv = strlen("到"); }
+        i += adv;
+    }
+    return r;
+}
+
+/* what a saint's help does, as a list of chips: which stat, how much */
+static void saint_chips_parse(const std::string &t, std::vector<SaintChip> &out)
+{
+    std::vector<std::string> cl;
+    saint_clauses(t, cl);
+    for (const std::string &raw : cl) {
+        std::string c = raw;
+        saint_trim(c);
+        if (c.empty()) continue;
+        if (c.size() > 1 && c[0] == '@') {                          /* markup the mod resolves itself */
+            size_t sp = c.find(' ');
+            if (sp == std::string::npos) continue;
+            c = c.substr(sp + 1);
+            saint_trim(c);
+            if (c.empty()) continue;
+        }
+        bool down = c.find("降低") != std::string::npos || c.find("减少") != std::string::npos;
+
+        if (c.find("治愈") != std::string::npos || c.find("恢复") != std::string::npos) {  /* healing says how much of which stat */
+            std::string v;
+            size_t pc = c.find('%');
+            if (pc != std::string::npos) {
+                size_t b = pc;
+                while (b > 0 && c[b - 1] >= '0' && c[b - 1] <= '9') b--;
+                v = "%" + c.substr(b, pc - b);
+            } else if (c.find("所有") != std::string::npos) {
+                v = "all";
+            } else if (c.find("一半") != std::string::npos || c.find("半数") != std::string::npos) {
+                v = "half";
+            } else {
+                v = span_of(saint_numbers(c));
             }
+            bool any = false;
+            for (int k = 0; k <= 6; k++) {
+                const char *kn = ui_key_name(k);
+                if (kn && *kn && c.find(kn) != std::string::npos) { out.push_back({ CH_HEAL, k, v, false, raw }); any = true; }
+            }
+            if (!any) out.push_back({ CH_HEAL, 0, v, false, raw });
+            continue;
         }
-        static const std::regex floor_("(Endurance|Strength)( and (Endurance|Strength))? below [0-9]+ (is|are) raised to ([0-9]+)");
-        { std::smatch m; if (std::regex_search(st, m, floor_)) {                /* healed up to a floor: "to 9" */
-            out.push_back({ CH_HEAL, m[1].str() == "Endurance" ? ATTR_END : ATTR_STR, "to " + m[5].str(), false, st });
-            if (m[3].matched) out.push_back({ CH_HEAL, m[3].str() == "Endurance" ? ATTR_END : ATTR_STR, "to " + m[5].str(), false, st });
-            used = true; } }
-        static const std::regex cost("^Costs ([0-9]+ to [0-9]+) (Endurance|Strength)");
-        { std::smatch m; if (std::regex_search(st, m, cost)) { out.push_back({ CH_RAISE, m[2].str() == "Endurance" ? ATTR_END : ATTR_STR, "-" + span_of(m[1].str()), true, st }); used = true; } }
-        if (low.find("reputation") != std::string::npos) {
-            std::smatch m; std::string v = std::regex_search(st, m, rep) ? span_of(m[1].str()) : "";
-            bool down = low.find("lower") != std::string::npos;
-            out.push_back({ CH_REP, KEY_REP, (down ? "-" : "+") + v, down, st });
-            used = true;
+
+        size_t pm = std::string::npos;                              /* "魅力+6至11", "力量-3" */
+        for (size_t i = c.size(); i-- > 0;) if (c[i] == '+' || c[i] == '-') { pm = i; break; }
+        if (pm != std::string::npos && pm + 1 < c.size() && saint_digit(c.substr(pm + 1))) {
+            std::string names = c.substr(0, pm), range = c.substr(pm + 1);
+            std::string val = std::string(down || c[pm] == '-' ? "-" : "+") + span_of(range);
+            if (names.find("武器技能") != std::string::npos || names.find("每种武器") != std::string::npos
+                || names.find("每项武器") != std::string::npos || names.find("武器的技能") != std::string::npos) {
+                if (names.find("手中") != std::string::npos) out.push_back({ CH_INHAND, -1, val, down, raw });
+                else out.push_back({ CH_WEAPONS, -1, val, down, raw });
+                continue;
+            }
+            if (names.find("属性") != std::string::npos) {
+                for (int k = 0; k <= 6; k++) out.push_back({ CH_RAISE, k, val, down, raw });
+                continue;
+            }
+            std::vector<std::string> ns;
+            saint_names(names, ns);
+            bool any = false;
+            for (const std::string &n : ns) {
+                int k = saint_key_of(n);
+                if (k >= 0) { out.push_back({ CH_RAISE, k, val, down, raw }); any = true; }
+            }
+            if (any) continue;
         }
-        /* the rises and falls: names (", " and " and ") before "+a to b" or "lowered by" */
-        std::vector<std::string> pending; std::string pend_part;
-        size_t a = 0;
-        while (a <= st.size()) {
-            size_t e = st.find_first_of(",;", a);
-            std::string part = st.substr(a, e == std::string::npos ? std::string::npos : e - a);
-            while (!part.empty() && part[0] == ' ') part.erase(0, 1);
-            if (part.rfind("and ", 0) == 0) part.erase(0, 4);
-            if (part.rfind("Every member's ", 0) == 0) part.erase(0, 15);
-            std::smatch m;
-            std::string lp = lower(part);
-            if (std::regex_match(part, m, amount) && lp.find("heals") == std::string::npos && lp.find("healed") == std::string::npos) {   /* (the skill Healing is a name) */
-                std::string names = m[1].str(), v = m[2].str();
-                if (names.size() > 5 && names.compare(names.size() - 5, 5, " each") == 0) names.erase(names.size() - 5);   /* ("Streetwise and Woodwise each +1 to 4") */
-                bool down = v.rfind("lowered", 0) == 0;
-                std::string val = down ? "-" + span_of(m[4].str()) : "+" + span_of(v.substr(1));
-                std::string pl = pend_part + (pend_part.empty() ? "" : ", ") + part;
-                /* the names: "A and B", "every weapon skill", "the skills of the weapons in hand"; the armor (one chip
-                   whatever its words: "worn body and leg armor", "it gives the one prayed for armor") */
-                std::vector<std::string> ns = pending;
-                if (lower(names).find("armor") != std::string::npos) { out.push_back({ CH_WORDS, -1, "armor " + val, down, pl }); names.clear(); }
-                for (size_t b = 0; b < names.size(); ) {
-                    size_t f = names.find(" and ", b);
-                    std::string n = names.substr(b, f == std::string::npos ? std::string::npos : f - b);
-                    if (n.rfind("A woman: ", 0) == 0 || n.rfind("a woman: ", 0) == 0) n = n.substr(9);
-                    if (n.rfind("in a town, ", 0) == 0) n = n.substr(11);
-                    if (!n.empty()) ns.push_back(n);
-                    if (f == std::string::npos) break;
-                    b = f + 5;
-                }
-                for (const std::string &n : ns) {
-                    std::string ln = lower(n);
-                    if (ln.find("weapons in hand") != std::string::npos) out.push_back({ CH_INHAND, -1, val, down, pl });
-                    else if (ln.find("weapon skill") != std::string::npos) out.push_back({ CH_WEAPONS, -1, val, down, pl });
-                    else if (ln.find("skill") != std::string::npos || ln.find("attribute") != std::string::npos) out.push_back({ CH_WORDS, -1, n + " " + val, down, pl });
-                    else { int k = saint_key_of(n); if (k >= 0) out.push_back({ CH_RAISE, k, val, down, pl }); else out.push_back({ CH_WORDS, -1, n + " " + val, down, pl, true }); }
-                }
-                pending.clear(); pend_part.clear(); used = true;
-            } else if (saint_key_of(part) >= 0) { pending.push_back(part); pend_part += (pend_part.empty() ? "" : ", ") + part; }
-            if (e == std::string::npos) break;
-            a = e + 1;
+
+        if (c.find("声望") != std::string::npos && saint_digit(c)) {  /* reputation is spoken of in words */
+            out.push_back({ CH_REP, KEY_REP, std::string(down ? "-" : "+") + span_of(saint_numbers(c)), down, raw });
+            continue;
         }
-        if (!used) {                                           /* the rest: a few words */
-            const char *say = nullptr; bool bad = false;
-            for (const auto &w : SAINT_WORDS) if (low.find(lower(w.has)) != std::string::npos) { say = w.say; bad = w.bad; break; }
-            out.push_back({ CH_WORDS, -1, say ? say : st.substr(0, 18) + "...", bad, st, !say });
+
+        if (down && saint_digit(c)) {                               /* "感知降低5至9", no plus sign */
+            std::string names = c.substr(0, c.find("降低") != std::string::npos ? c.find("降低") : c.find("减少"));
+            std::string val = "-" + span_of(saint_numbers(c));
+            std::vector<std::string> ns;
+            saint_names(names, ns);
+            bool any = false;
+            for (const std::string &n : ns) {
+                int k = saint_key_of(n);
+                if (k >= 0) { out.push_back({ CH_RAISE, k, val, true, raw }); any = true; }
+            }
+            if (any) continue;
         }
+
+        SaintChip w{};                                              /* a word the parse does not know */
+        w.kind = CH_WORDS; w.key = -1; w.val = c; w.bad = false; w.part = raw; w.raw = true;
+        out.push_back(w);
     }
 }
-/* what a saint's help does (saint_info_does), for the panel at the right, the prayer screen and the tooltips: each
-   effect on its line, the attributes and skills as their shields; names sharing one value side by side (a bracket
-   under them) with the value once, lines of the same value joined ("{Charisma} +6 to 11" and "{Riding} and {Speak
-   Common} +6 to 11": "{Charisma}{Riding}{Speak Common} +6 to 11"); the conditions in words */
+
+/* one line of a saint's help, in words */
+static std::string chip_line(const SaintChip &c)
+{
+    std::string v = c.val, range;
+    size_t p = v.find('\x01');
+    if (p != std::string::npos) range = v.substr(0, p) + " 至 " + v.substr(p + 1);
+    else range = v;
+    switch (c.kind) {
+    case CH_WEAPONS: return "所有武器技能 " + range;
+    case CH_INHAND:  return "手中武器技能 " + range;
+    case CH_REP:     return "声望 " + range;
+    case CH_HEAL: {
+        const char *kn = ui_key_name(c.key);
+        return std::string("治愈 ") + (kn && *kn ? kn : "") + " " + range;
+    }
+    case CH_RAISE: {
+        const char *kn = ui_key_name(c.key);
+        return std::string(kn && *kn ? kn : "") + " " + range;
+    }
+    default:         return c.part;
+    }
+}
+
+/* what saint s's help does, an effect a line */
 std::string saint_effects_text(int s)
 {
-    std::string does = saint_info_does(s);
-    std::vector<std::string> lines;
-    for (size_t a = 0; a < does.size(); ) {                     /* the sentences ("St. Cosmas": no end) */
-        size_t e = does.find(". ", a);
-        while (e != std::string::npos && e >= 2 && does.compare(e - 2, 2, "St") == 0) e = does.find(". ", e + 2);
-        std::string st = does.substr(a, e == std::string::npos ? std::string::npos : e - a);
-        while (!st.empty() && (st.back() == '.' || st.back() == ' ')) st.pop_back();
-        /* the clauses (", " and "; "), names alone held for the clause that gives their value */
-        std::string pend;
-        for (size_t b = 0; b <= st.size(); ) {
-            size_t f = st.find_first_of(",;", b);
-            std::string part = st.substr(b, f == std::string::npos ? std::string::npos : f - b);
-            while (!part.empty() && part[0] == ' ') part.erase(0, 1);
-            std::string bare = part.rfind("and ", 0) == 0 ? part.substr(4) : part;
-            if (saint_key_of(bare) >= 0 && f != std::string::npos) pend += (pend.empty() ? "" : ", ") + part;
-            else if (!part.empty()) { lines.push_back((pend.empty() ? "" : pend + ", ") + part); pend.clear(); }
-            if (f == std::string::npos) break;
-            b = f + 1;
-        }
-        if (!pend.empty()) lines.push_back(pend);
-        if (e == std::string::npos) break;
-        a = e + 2;
+    std::vector<SaintChip> cs;
+    saint_chips_parse(saint_info_does(s), cs);
+    std::string out;
+    for (const SaintChip &c : cs) {
+        std::string line = chip_line(c);
+        saint_trim(line);
+        if (line.empty()) continue;
+        if (!out.empty()) out += "\n";
+        out += line;
     }
-    static const std::regex sep("\\}(, and |, | and )\\{"), pure("^((?:\\{[^{}:]+\\})+) (\\+[0-9]+(?: to [0-9]+)?)$");
-    std::vector<std::string> out; std::vector<std::string> val;
-    for (std::string &l : lines) {
-        std::string r = std::regex_replace(rich_auto(l.c_str()), sep, "}{");
-        if (!r.empty()) r[0] = (char)toupper((unsigned char)r[0]);
-        std::smatch m;
-        if (std::regex_match(r, m, pure)) {                       /* a value given before: these names join that line */
-            bool joined = false;
-            for (size_t i = 0; i < out.size(); i++) if (val[i] == m[2].str()) { out[i] = out[i].substr(0, out[i].size() - val[i].size() - 1) + m[1].str() + " " + val[i]; joined = true; break; }
-            if (joined) continue;
-            out.push_back(r); val.push_back(m[2].str());
-        } else { out.push_back(r); val.push_back(""); }
-    }
-    std::string t;
-    for (const std::string &l : out) t += (t.empty() ? "" : "\n") + l;
-    return t;
+    return out;
 }
-/* how much a chip gives, to set one saint's against another's: a rise its middle ("+6 to 11": 8.5), healing
-   as a part of what is lost (all 100, half 50, 30%: 30, points three times their middle, a floor "to 9" 20),
-   the town's opinion its middle (10 without a number); a cost or a fall below 0; words 0 */
+
 static float chip_mag(const SaintChip &c)
 {
     if (c.kind == CH_WORDS) return 0;
@@ -1070,7 +1149,7 @@ static void saints(NsDraw &P, const SheetModel &s)
     /* the choices: known / all, what they help with */
     float x = 63;
     for (int a = 0; a < 2; a++) {
-        const char *l = a ? "All saints" : "Known in the party";
+        const char *l = a ? "所有圣人" : "队伍中已知的";
         float w = P.width(fo, 4.4f, l) + 4;
         bool sel = V.saints_all == (a == 1);
         P.rect(x, 22, x + w, 28.5f, sel ? IM_COL32(112, 40, 22, 240) : IM_COL32(222, 204, 168, 255), 1.2f);
@@ -1079,7 +1158,7 @@ static void saints(NsDraw &P, const SheetModel &s)
         x += w + 1;
     }
     x += 2;
-    P.text(fo, 4.4f, x, 22.8f, soft, "Helps with:"); x += P.width(fo, 4.4f, "Helps with:") + 1.5f;
+    P.text(fo, 4.4f, x, 22.8f, soft, "有助于："); x += P.width(fo, 4.4f, "有助于：") + 1.5f;
     float y = 22;
     for (int u = 0; u < NUSES; u++) {
         float w = P.width(fo, 4.4f, USES[u].name) + 4;
@@ -1092,7 +1171,7 @@ static void saints(NsDraw &P, const SheetModel &s)
     }
     {   /* or by a shield: the saints whose help touches that attribute or skill, or the town's opinion */
         y += 7.6f; x = 63;
-        P.text(fo, 4.4f, x, y + 0.8f, soft, "Or what it raises:"); x += P.width(fo, 4.4f, "Or what it raises:") + 1.5f;
+        P.text(fo, 4.4f, x, y + 0.8f, soft, "或者它提升的："); x += P.width(fo, 4.4f, "或者它提升的：") + 1.5f;
         const float SW = 6.6f;
         for (int key = 0; key < SK_KEYS; key++) {
             int cnt = saint_key_count(key);
@@ -1106,8 +1185,8 @@ static void saints(NsDraw &P, const SheetModel &s)
             else if (key < 7) ui_attr_icon(P.dl, ic, 5.6f * P.k, key); else ui_skill_icon(P.dl, ic, 5.6f * P.k, key - 7);
             ui_icon_disc = 1;
             if (P.over(x - 0.3f, y - 0.2f, x + SW - 0.3f, y + 6.8f)) {
-                char t[200]; snprintf(t, sizeof t, "%s: the %d saint%s whose help %s it, the most first%s", key == KEY_REP ? "The town's opinion of the party (its reputation)" : key < 7 ? gm_attr_name(key) : gm_skill_name(key - 7),
-                                      cnt, cnt == 1 ? "" : "s", key == ATTR_END || key == ATTR_STR ? "raises or heals" : "raises", sel ? " (click again for all)" : "");
+                char t[200]; snprintf(t, sizeof t, "%s：那位 %d 圣人%s，其帮助 %s 最为首要%s", key == KEY_REP ? "城镇对队伍的看法（声望）" : key < 7 ? gm_attr_name(key) : gm_skill_name(key - 7),
+                                      cnt, cnt == 1 ? "" : "s", key == ATTR_END || key == ATTR_STR ? "提升或治愈" : "raises", sel ? "（再次点击以查看全部）" : "");
                 ns_tip(t, 22);
             }
             if (P.hit(x - 0.3f, y - 0.2f, x + SW - 0.3f, y + 6.8f)) { V.use_k = sel ? -1 : key; V.use = 0; V.scroll[TAB_SAINTS] = 0; }
@@ -1133,7 +1212,7 @@ static void saints(NsDraw &P, const SheetModel &s)
     if (sc > maxs) sc = maxs;
     if (sc < 0) sc = 0;
     P.rect(LX0, LY0 - 0.5f, LX1, LY0 + NROWS * ROWH + 0.5f, IM_COL32(250, 242, 222, 255), 1.5f);
-    if (!n) P.para(fo, NsDraw::FS_SMALL, LX0 + 3, LY0 + 2, LX1 - LX0 - 6, dim, V.saints_all ? "No saint helps with that." : "Nobody in the party knows a saint that helps with that. (All saints shows the others too.)");
+    if (!n) P.para(fo, NsDraw::FS_SMALL, LX0 + 3, LY0 + 2, LX1 - LX0 - 6, dim, V.saints_all ? "没有圣人能帮助此事。" : "队伍中无人知晓能帮助此事的圣人。（显示所有圣人时也会列出其他人。）");
     int hover = -1; std::string chip_tip;
     int cl = (s16)g_rw(G_CUR_LOC);
     const Library *here = cl >= 0 && cl < G_NLOC ? library_at(cl) : nullptr;   /* (the library of the place the party is in: what it teaches, tagged) */
@@ -1155,7 +1234,7 @@ static void saints(NsDraw &P, const SheetModel &s)
         }
         bool known = false; for (int m = 0; m < 5; m++) if (s.present[m] && s.saint[m][t]) known = true;
         if (here && !known) for (int k = 0; k < 4; k++) if (here->saint[k] == t) {
-            ix -= small_tag(P, ix, ry, NH, "taught here") + 0.8f; break;
+            ix -= small_tag(P, ix, ry, NH, "此处教授") + 0.8f; break;
         }
         bool any_can = false, knowers = false;                   /* nobody who knows it has the Virtue it asks: slate grey */
         for (int m = 0; m < 5; m++) if (s.present[m] && s.saint[m][t]) { knowers = true; if (!(t < s.nsaints && s.saint_vmin[t] > 0 && s.pskill[m][9] < s.saint_vmin[t])) any_can = true; }
@@ -1172,7 +1251,7 @@ static void saints(NsDraw &P, const SheetModel &s)
             float bx = nx1 + 1.5f, bw = P.shield_value(bx, ry + 0.9f + 3.3f, VIS, UI_KEY_SKILL + SKILL_VIRTUE, vtxt, VGS, soft);
             if (!met) ui_dim_since(P.dl, v0, 0.38f);
             if (P.over(bx, ry, bx + bw, ry + NH)) {
-                char b[240]; snprintf(b, sizeof b, "This saint asks a {Virtue} of %d of the one who prays%s.\nEach member's {Virtue}: %s.", vmin, met ? "" : ", more than anyone in the party has", who.c_str());
+                char b[240]; snprintf(b, sizeof b, "这位圣人向祈祷者索取%d点{美德}%s。\\n每位成员的{美德}：%s。", vmin, met ? "" : "，比队伍中任何人拥有的都多", who.c_str());
                 chip_tip = b;
             }
         }
@@ -1198,9 +1277,9 @@ static void saints(NsDraw &P, const SheetModel &s)
     std::string where;                                   /* nobody knows it: the libraries that teach it (of the places the party knows: ui/libraries.h) */
     if (who.empty()) {
         std::vector<LibraryHit> lh = libraries_teaching(t);
-        if (lh.empty()) where = "No library the party has been to teaches this saint.";
+        if (lh.empty()) where = "队伍去过的任何图书馆都不教授这位圣人。";
         else {
-            where = "Taught in the library of ";
+            where = "在……的图书馆教授";
             size_t k = std::min(lh.size(), (size_t)3);
             for (size_t i = 0; i < k; i++) {
                 int d = (int)(lh[i].days + 0.5);
@@ -1223,11 +1302,11 @@ static void saints(NsDraw &P, const SheetModel &s)
     P.dl->PushClipRect(NsDraw::w(DX0, DY0), NsDraw::w(DX1, DY1), true);
     float ty = DY0 + 2, tw = DX1 - tx - 2;
     ty += P.para(f, NsDraw::FS_HEAD, tx, ty, tw, ink, gamedata.saints[t].name) + 1.5f;
-    ty += P.para(fo, NsDraw::FS_SMALL, tx, ty, tw, who.empty() ? NsDraw::RED : soft, who.empty() ? "Nobody in the party knows this saint." : "Known by " + who + ".") + 1;
+    ty += P.para(fo, NsDraw::FS_SMALL, tx, ty, tw, who.empty() ? NsDraw::RED : soft, who.empty() ? "队伍中无人知晓这位圣人。" : "由…所知" + who + ".") + 1;
     if (t < s.nsaints && s.saint_vmin[t] > 0) {                /* the Virtue it asks; who lacks it (Virtue rises slowly: nothing restores it) */
         std::string low;
         for (int m = 0; m < 5; m++) if (s.present[m] && s.saint[m][t] && s.pskill[m][9] < s.saint_vmin[t]) low += (low.empty() ? "" : ", ") + ns_gtext(s.names[m]) + " (" + std::to_string(s.pskill[m][9]) + ")";
-        char b[200]; snprintf(b, sizeof b, low.empty() ? "Asks a {Virtue} of %d." : "Asks a {Virtue} of %d: too low for %s, who cannot call on this saint.", s.saint_vmin[t], low.c_str());
+        char b[200]; snprintf(b, sizeof b, low.empty() ? "索取%d点{美德}。" : "索取%d点{美德}：对于无法召唤此圣人的%s而言过低。", s.saint_vmin[t], low.c_str());
         ty += P.para(fo, 4.4f, tx, ty, tw, low.empty() ? soft : IM_COL32(90, 98, 112, 255), b) + 1;
     }
     if (!where.empty()) ty += P.para(fo, 4.4f, tx, ty, tw, soft, where) + 1.5f;
@@ -1239,21 +1318,21 @@ static void saints(NsDraw &P, const SheetModel &s)
             char b[96];
             bool asked = s.pray_saint == t && s.pray_best[m] >= 0;
             if (!asked) snprintf(b, sizeof b, "%s", ns_gtext(s.names[m]).c_str());
-            else if (s.pray_best[m] > 0) snprintf(b, sizeof b, "%s: %d%% with %d of %d favor", ns_gtext(s.names[m]).c_str(), s.pray_best[m], s.pray_df[m], s.df[m]);
-            else snprintf(b, sizeof b, "%s: no chance now", ns_gtext(s.names[m]).c_str());
+            else if (s.pray_best[m] > 0) snprintf(b, sizeof b, "%s：%d%%，拥有%d分之%d的青睐", ns_gtext(s.names[m]).c_str(), s.pray_best[m], s.pray_df[m], s.df[m]);
+            else snprintf(b, sizeof b, "%s：目前无机会", ns_gtext(s.names[m]).c_str());
             P.text(P.fo, NsDraw::FS_SMALL, hx, ty + 1.2f, asked && !s.pray_best[m] ? NsDraw::RED : ink, b, -1, DX1 - 16);
             if (P.over(hx, ty, DX1 - 16, ty + bh))
-                ns_tip(asked && s.pray_best[m] > 0 ? "The best chance of being heard, and the least Divine Favor that gives it: more is spent for nothing. The prayer screen sets the favor."
-                                                   : "Virtue too low for this saint, or too little Divine Favor: see above and the prayer screen.", 22);
-            if (s.able[m] && P.button(DX1 - 15, ty, DX1 - 2, ty + bh, "Pray", IM_COL32(40, 70, 130, 235))) ns_push(SV_PRAY, m, t, 0);
-            if (P.over(DX1 - 15, ty, DX1 - 2, ty + bh)) ns_tip("Call on this saint now: the prayer screen, where you choose how much Divine Favor to spend.", 20);
+                ns_tip(asked && s.pray_best[m] > 0 ? "被听到的最佳几率，以及赋予它的最低神圣青睐：花费更多反而徒劳。祈祷界面决定青睐度。"
+                                                   : "对于这位圣人而言，美德过低或神圣青睐不足：请参见上文及祈祷界面。", 22);
+            if (s.able[m] && P.button(DX1 - 15, ty, DX1 - 2, ty + bh, "祈祷", IM_COL32(40, 70, 130, 235))) ns_push(SV_PRAY, m, t, 0);
+            if (P.over(DX1 - 15, ty, DX1 - 2, ty + bh)) ns_tip("现在召唤这位圣人：通过祈祷界面，选择投入多少神圣青睐。", 20);
             ty += bh + 1.2f;
         }
         ty += 1;
     }
     ty += P.para(fo, NsDraw::FS_SMALL, tx, ty, tw, IM_COL32(26, 64, 132, 255), saint_effects_text(t)) + 1.5f;
     const char *un = saint_info_unlike(t);
-    if (*un) ty += P.para(fo, 4.4f, tx, ty, tw, IM_COL32(140, 50, 30, 255), "Differs from the description: " + rich_auto(un)) + 1.5f;
+    if (*un) ty += P.para(fo, 4.4f, tx, ty, tw, IM_COL32(140, 50, 30, 255), "与描述不符：" + rich_auto(un)) + 1.5f;
     ty += P.para(fo, 4.2f, tx, ty, tw, ns_tier_colour(saint_info_cards(t) >= 10 ? 20 : saint_info_cards(t) >= 3 ? 5 : saint_info_cards(t)), saint_encounters_line(t)) + 1.5f;
     float ly = fmaxf(ty, g ? DY0 + 1.5f + sh + 2 : ty);
     ly += P.para(fo, 4.4f, DX0 + 2.5f, ly, DX1 - DX0 - 5, soft, lore) + 1.5f;
@@ -1291,11 +1370,11 @@ static void ingredient_tip(const SheetModel &s, int id)
     int n = s.have[id];
     std::string by;
     for (int m = 0; m < 5; m++) if (s.present[m] && s.ingr[m][id - 72]) by += (by.empty() ? "" : ", ") + ns_gtext(s.names[m]) + " " + std::to_string(s.ingr[m][id - 72]);
-    if (!n) ImGui::TextDisabled("The party has none.");
-    else if (s.shared) ImGui::Text("The party has %d.", n);
-    else ImGui::Text("The party has %d (%s).", n, by.c_str());
+    if (!n) ImGui::TextDisabled("队伍没有。");
+    else if (s.shared) ImGui::Text("队伍拥有%d。", n);
+    else ImGui::Text("队伍拥有%d（%s）。", n, by.c_str());
     std::string w = journal_where_sold(id);
-    if (!w.empty()) ImGui::TextDisabled("Where to buy: %s", w.c_str());
+    if (!w.empty()) ImGui::TextDisabled("购买地点：%s", w.c_str());
     std::string uses;                                   /* the formulae the party knows that call for it */
     int nu = 0;
     for (int k = 0; k < (int)gamedata.formulas.size() && k < 66; k++) {
@@ -1304,7 +1383,7 @@ static void ingredient_tip(const SheetModel &s, int id)
         for (const FormulaIngr &g : gamedata.formulas[k].ingr) if (g.item == id) { if (nu < 4) uses += (uses.empty() ? "" : ", ") + gamedata.formula_names[k] + " (" + std::to_string(g.count) + ")"; nu++; }
     }
     if (nu > 4) uses += " and " + std::to_string(nu - 4) + " more";
-    if (!uses.empty()) ImGui::TextWrapped("Used in %s.", uses.c_str());
+    if (!uses.empty()) ImGui::TextWrapped("用于%s。", uses.c_str());
     ns_tip_end();
 }
 
@@ -1321,7 +1400,7 @@ static void formulae(NsDraw &P, const SheetModel &s)
     /* the choice: the formulae the party knows, or all of them (to judge one before buying it) */
     float x = LX0 + 1;
     for (int a = 0; a < 2; a++) {
-        const char *l = a ? "All formulae" : "Known in the party";
+        const char *l = a ? "所有配方" : "队伍中已知的";
         float w = P.width(fo, 4.4f, l) + 4;
         bool sel = V.formulae_all == (a == 1);
         P.rect(x, 22, x + w, 28.5f, sel ? IM_COL32(112, 40, 22, 240) : IM_COL32(222, 204, 168, 255), 1.2f);
@@ -1332,7 +1411,7 @@ static void formulae(NsDraw &P, const SheetModel &s)
     /* who knows each: their heads at the right of the row, as on the Saints page; when one member
        alone knows formulae, none (the heading says who) */
     bool tags = al.size() > 1;
-    if (al.size() == 1) { std::string w = "Known by " + ns_gtext(s.names[al[0]]); P.text(fo, 4.2f, 0, 24.2f, soft, w, LX1 - 2); }
+    if (al.size() == 1) { std::string w = "由…所知" + ns_gtext(s.names[al[0]]); P.text(fo, 4.2f, 0, 24.2f, soft, w, LX1 - 2); }
     std::vector<int> rows;
     for (int k = 0; k < nf; k++) if (V.formulae_all || known(k)) rows.push_back(k);
     int n = (int)rows.size();
@@ -1342,7 +1421,7 @@ static void formulae(NsDraw &P, const SheetModel &s)
     if (sc > maxs) sc = maxs;
     if (sc < 0) sc = 0;
     P.rect(LX0, LY0 - 0.5f, LX1, LY0 + NROWS * ROWH + 0.5f, IM_COL32(250, 242, 222, 255), 1.5f);
-    if (!n) P.para(fo, NsDraw::FS_SMALL, LX0 + 3, LY0 + 2, LX1 - LX0 - 6, dim, "Nobody in the party knows a formula. All formulae shows every one, its ingredients and where it is sold.");
+    if (!n) P.para(fo, NsDraw::FS_SMALL, LX0 + 3, LY0 + 2, LX1 - LX0 - 6, dim, "队伍中无人知晓任何配方。显示所有配方，包括其成分及销售地点。");
     int hover = -1;
     int cl = (s16)g_rw(G_CUR_LOC), sold[4] = { -1, -1, -1, -1 }, price[4];
     if (!(cl >= 0 && cl < (int)gamedata.cities.size() && alchemist_formulae(cl, sold, price))) sold[0] = sold[1] = sold[2] = sold[3] = -1;   /* (the town's alchemist: what it sells, tagged) */
@@ -1370,7 +1449,7 @@ static void formulae(NsDraw &P, const SheetModel &s)
             end -= P.width(fo, NsDraw::FS_SMALL, hs) + 1.5f;
         }
         if (!kn && (sold[0] == k || sold[1] == k || sold[2] == k || sold[3] == k)) {
-            end -= small_tag(P, end, ry, ROWH, "sold here") + 1;
+            end -= small_tag(P, end, ry, ROWH, "在此出售") + 1;
         }
         P.text(f, 5.4f, LX0 + 9, ry + 0.9f, kn && have ? ink : dim, gamedata.formula_names[k], -1, end);   /* (grey: none carried, or not known) */
     }
@@ -1384,7 +1463,7 @@ static void formulae(NsDraw &P, const SheetModel &s)
     /* the party's ingredients: all 23 always in the same places, those it has none of faded; what
        the formula shown calls for ringed, green when there is enough */
     const float SY0 = LY0 + NROWS * ROWH + 2.5f, GY0 = SY0 + 6, cellw = (LX1 - LX0 - 2) / 8.0f, cellh = (197 - GY0) / 3.0f;
-    P.text(fo, 4.3f, LX0 + 2, SY0, soft, "The party's ingredients");
+    P.text(fo, 4.3f, LX0 + 2, SY0, soft, "队伍的原料");
     int tip = -1;
     for (int i = 0; i < 23; i++) {
         int id = 72 + i, have = s.have[id], need = 0;
@@ -1413,16 +1492,16 @@ static void formulae(NsDraw &P, const SheetModel &s)
     float y = 24;
     P.icon(DX0 + 6, y + 4, 8, 95 + k / 3, -1, k % 3 + 1);
     y += P.para(f, NsDraw::FS_HEAD, DX0 + 12, y, DW - 9, ink, gamedata.formula_names[k]) + 1.5f;
-    static const char *RISK[3] = { "low risk", "some risk", "high risk" };
-    char mr[64]; snprintf(mr, sizeof mr, "Mystic number %d, %s.", fm.mystic, fm.risk >= 0 && fm.risk < 3 ? RISK[fm.risk] : "risk unknown");
+    static const char *RISK[3] = { "低风险", "存在一定风险", "高风险" };
+    char mr[64]; snprintf(mr, sizeof mr, "神秘数字%d，%s。", fm.mystic, fm.risk >= 0 && fm.risk < 3 ? RISK[fm.risk] : "风险未知");
     float mh = P.para(fo, NsDraw::FS_SMALL, DX0 + 2.5f, y, DW, soft, mr);
     if (P.over(DX0, y, DX1, y + mh))
-        ns_tip("The mystic number: the higher, the harder the formula is to brew (set against the alchemist's {Alchemy} and {Intelligence}). The risk: how badly a failed brew can go wrong.");
+        ns_tip("神秘数字：数值越高，配方越难调制（与炼金术师的{炼金术}和{智力}相对应）。风险：失败后可能造成的严重后果。");
     y += mh + 1;
     y += P.para(fo, NsDraw::FS_SMALL, DX0 + 2.5f, y, DW, IM_COL32(26, 64, 132, 255), game_text(fm.text.c_str(), fm.text.size())) + 0.5f;
     { ImU32 ec; std::string enc = ns_item_encounters(95 + k / 3, &ec); if (!enc.empty()) y += P.para(fo, NsDraw::FS_SMALL, DX0 + 2.5f, y, DW, ec, enc); }
     y += 1.5f;
-    P.text(fo, 4.3f, DX0 + 2.5f, y, soft, "Ingredients: the party has / needed"); y += 6;
+    P.text(fo, 4.3f, DX0 + 2.5f, y, soft, "成分：队伍现有/所需"); y += 6;
     for (const FormulaIngr &g : fm.ingr) {
         int have = g.item >= 0 && g.item < 200 ? s.have[g.item] : 0;
         P.icon(DX0 + 5, y + 3, 5.5f, g.item);
@@ -1433,30 +1512,30 @@ static void formulae(NsDraw &P, const SheetModel &s)
     }
     int b = batches_of(s, k);
     y += 0.5f;
-    if (b) { char bl[64]; snprintf(bl, sizeof bl, "Enough ingredients to make %d potion%s.", b, b == 1 ? "" : "s"); y += P.para(fo, NsDraw::FS_SMALL, DX0 + 2.5f, y, DW, NsDraw::GREEN, bl) + 1.5f; }
-    else y += P.para(fo, NsDraw::FS_SMALL, DX0 + 2.5f, y, DW, dim, kn ? "The party lacks an ingredient: brewing must wait." : "The party lacks an ingredient.") + 1.5f;
+    if (b) { char bl[64]; snprintf(bl, sizeof bl, "足够的材料来制作%d个药水%s。", b, b == 1 ? "" : "s"); y += P.para(fo, NsDraw::FS_SMALL, DX0 + 2.5f, y, DW, NsDraw::GREEN, bl) + 1.5f; }
+    else y += P.para(fo, NsDraw::FS_SMALL, DX0 + 2.5f, y, DW, dim, kn ? "队伍缺少某种成分：酿造需等待。" : "队伍缺少某种成分。") + 1.5f;
     if (kn) {
-        P.text(fo, 4.3f, DX0 + 2.5f, y, soft, "Chance of brewing one batch"); y += 6;
+        P.text(fo, 4.3f, DX0 + 2.5f, y, soft, "制作一批的几率"); y += 6;
         for (int m : al) {
             if (!s.formula[m][k]) continue;
             int pc = s.intel[m] + (s.alch[m] - fm.mystic) + 100 + (s16)g_rw(GV_philosophers_stone);  /* (the alchemy screen's, one batch, with the party's Philosopher's Stone) */
             pc = pc < 0 ? 0 : pc > 99 ? 99 : pc;
-            char v[64]; snprintf(v, sizeof v, "%s: %d%%", ns_gtext(s.names[m]).c_str(), pc);
+            char v[64]; snprintf(v, sizeof v, "%s：%d%%", ns_gtext(s.names[m]).c_str(), pc);
             P.text(fo, NsDraw::FS_SMALL, DX0 + 4, y, ink, v); y += 6;
         }
     } else {                                             /* nobody knows it: where an alchemist sells it (of the towns the party knows: ui/libraries.h) */
-        y += P.para(fo, NsDraw::FS_SMALL, DX0 + 2.5f, y, DW, NsDraw::RED, "Nobody in the party knows it.") + 1;
+        y += P.para(fo, NsDraw::FS_SMALL, DX0 + 2.5f, y, DW, NsDraw::RED, "队伍中无人知晓。") + 1;
         std::vector<SellerHit> sh = formula_sellers(k);
         std::string w;
-        if (k >= 22) w = "No alchemist sells it: it is traded for or found.";
-        else if (sh.empty()) w = "No alchemist the party has been to sells it.";
+        if (k >= 22) w = "没有炼金术士出售它：它是用来交易或发现的。";
+        else if (sh.empty()) w = "队伍去过的所有炼金术士都不卖它。";
         else {
             int d = (int)(sh[0].days + 0.5);
             bool here = sh[0].days >= 0 && sh[0].days < 0.6;
-            w = here ? "Sold here, " + money_str(sh[0].price_fl * 240L) + "."
-                     : "Sold by the alchemist of " + sh[0].name + (sh[0].days < 0 ? "" : ", " + std::to_string(d) + (d == 1 ? " day away" : " days away")) + ", " + money_str(sh[0].price_fl * 240L) + ".";
+            w = here ? "在这里出售，" + money_str(sh[0].price_fl * 240L) + "."
+                     : "由……的炼金术士出售" + sh[0].name + (sh[0].days < 0 ? "" : ", " + std::to_string(d) + (d == 1 ? "距离……还有1天" : "天")) + ", " + money_str(sh[0].price_fl * 240L) + ".";
             if (sh.size() > 1) {
-                w += " Also in ";
+                w += "同时也在……";
                 for (size_t i = 1; i < sh.size() && i < 4; i++) w += (i > 1 ? ", " : "") + sh[i].name;
                 if (sh.size() > 4) w += " and " + std::to_string(sh.size() - 4) + " more";
                 w += ".";

@@ -21,8 +21,8 @@ static bool named(const ImGuiWindow *w, const char *const *list)
     return false;
 }
 
-static const char *const BACK[] = { "World map", "Level map", "##overlay_layer", nullptr };
-static const char *const OVER[] = { "Darklands+", "Welcome to Darklands+", "Saving options", "Keys and clicks", "Darklands sounds best", "##alert", "Debug##Default", nullptr };
+static const char *const BACK[] = { "世界地图", "层级地图", "##overlay_layer", nullptr };
+static const char *const OVER[] = { "Darklands+", "欢迎来到Darklands+", "保存选项", "键盘与鼠标操作", "Darklands 的音效最佳", "##alert", "Debug##Default", nullptr };
 
 static ImRect shown(const ImGuiWindow *w)
 {

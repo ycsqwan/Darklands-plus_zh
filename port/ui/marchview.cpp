@@ -41,8 +41,8 @@ extern "C" void marchview_draw(void)
         }
         for (int s2 = 0; s2 < 2; s2++) P.dl->AddLine(NsDraw::w(s2 ? rx1 : rx0, ry0), NsDraw::w(s2 ? rx1 : rx0, ry1), IM_COL32(90, 120, 50, 200), 1.6f * P.k);   /* (grass at its edges) */
     }
-    P.text(f, NsDraw::FS_HEAD, X0 + 4, Y0 + 3, ink, "Marching order");
-    P.para(fo, 4.2f, X0 + 4, Y0 + 12, X1 - X0 - 8, soft, "The first leads the way; in single file the others follow in this order.");
+    P.text(f, NsDraw::FS_HEAD, X0 + 4, Y0 + 3, ink, "行军顺序");
+    P.para(fo, 4.2f, X0 + 4, Y0 + 12, X1 - X0 - 8, soft, "第一位领路；其余人单列依次跟随。");
     float y = Y0 + 25;
     /* each row dragged by its handle (three bars) to its new place; the others make room */
     static int drag = -1; static float grab;
@@ -85,6 +85,6 @@ extern "C" void marchview_draw(void)
         if (drag >= 0) { float ry = ns_in.y - grab; if (ry < y - 4) ry = y - 4; if (ry > y + (m.n - 1) * RH + 4) ry = y + (m.n - 1) * RH + 4; row(to, ord[to], ry, true); }
     }
     float by = Y1 - 13;
-    if (P.button(X1 - 70, by, X1 - 38, by + 10, "Done", IM_COL32(40, 92, 34, 235), NsDraw::FS_SMALL, PB_X)) ns_push(MV_DONE, 0, 0, 0);
-    if (P.button(X1 - 35, by, X1 - 4, by + 10, "Cancel", IM_COL32(112, 40, 22, 235), NsDraw::FS_SMALL, PB_Y)) ns_push(MV_CANCEL, 0, 0, 0);
+    if (P.button(X1 - 70, by, X1 - 38, by + 10, "完成", IM_COL32(40, 92, 34, 235), NsDraw::FS_SMALL, PB_X)) ns_push(MV_DONE, 0, 0, 0);
+    if (P.button(X1 - 35, by, X1 - 4, by + 10, "取消", IM_COL32(112, 40, 22, 235), NsDraw::FS_SMALL, PB_Y)) ns_push(MV_CANCEL, 0, 0, 0);
 }

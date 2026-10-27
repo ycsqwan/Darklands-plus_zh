@@ -86,174 +86,174 @@ void options_sync_bundles(void)
     }
 }
 
-#define S_SCREENS "New screens"
-#define S_CARDS   "Cards and towns"
-#define S_PARTY   "The party and its items"
-#define S_BATTLE  "Battles"
-#define S_TRAVEL  "Travel"
-#define S_CONTROL "Controls"
-#define S_EDIT    "Editing tools"
-#define S_OTHER   "Elsewhere"
-#define S_EASYPLAY "Easier play"   /* offered as built-in mods (F12 > Mods), no preset's */
-#define S_RESTORED "Reconstructed Content"   /* their own page, F12 > Reconstructed Content: off by default and in every preset */
+#define S_SCREENS "新屏幕"
+#define S_CARDS   "卡牌与城镇"
+#define S_PARTY   "队伍与物品"
+#define S_BATTLE  "战斗"
+#define S_TRAVEL  "旅行"
+#define S_CONTROL "操作控制"
+#define S_EDIT    "编辑工具"
+#define S_OTHER   "其他"
+#define S_EASYPLAY "更易上手"   /* offered as built-in mods (F12 > Mods), no preset's */
+#define S_RESTORED "重建内容"   /* their own page, F12 > Reconstructed Content: off by default and in every preset */
 
 /* key, section, parent, title, description, class, original, Darklands+, Easy, choices, values, apply, note, flags */
 static Option OPTIONS[] = {
-    { "display.native_screens", S_SCREENS, 0, "New screens", "these screens drawn anew by Darklands+, in the original's style: the party panel, the menus, the start screen, the cards, shops, the character sheet, loot, alchemy, the store room, the inn and camp, prayer, character creation, party selection, Party Info, the marching order, Enemy Info, the overland view's messages, and Save and Load. They show more (chances, what an item is worth, where an ingredient is sold); the rules are unchanged. When off: the original screens.", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, 0, 0, bundle_set },
-    { "display.shop_compare", S_SCREENS, 0, "Wares compared with what is equipped", "in a shop, a green arrow by a weapon, armor or shield that is better than what the member has equipped there now, a red one by a worse one (an empty arrow: nothing equipped there); pointing at a ware highlights the equipped item it would replace.", OC_SHOW, 0, 1, 1 },
-    { "display.native_panel", S_SCREENS, 0, "New party panel", "each member's Endurance, Strength and Divine Favor as labeled bars with numbers. Clicks work as in the original (open a character sheet; give orders in a battle). For a portrait of your own, put NAME.png (or .jpg) in a folder named portraits in the Darklands+ folder, NAME being the member's name.", OC_SHOW, 0, 1, 1 },
-    { "display.panel_picture", S_SCREENS, "display.native_screens", "Picture in the party panel", "beside each member", OC_TASTE, 0, 0, 0, "your portrait, else the battle sprite, else the crest|the battle sprite, else the crest|the crest|no picture", V_PICTURE, 0, 0, OF_COMBO },
-    { "display.tooltip_delay", S_SCREENS, 0, "Tooltip delay", "the notes that appear by the pointer: how long the pointer rests on something before its note shows (once one has shown, the next appears at once).", OC_TASTE, 0, 500, 500, "at once|after a moment|after a second", V_TIPDELAY, 0, 0, OF_COMBO },
-    { "display.native_menu", S_SCREENS, 0, "New menus", "the game's menus (Game, Orders, Attack, Party ...) open with a right-click or F10 and stay open until you choose or click elsewhere; the entries and what they do are unchanged. When off: the original menu bar, open only while the right button is held.", OC_SHOW, 0, 1, 1, 0, 0, menuview_set },
-    { "display.native_title", S_SCREENS, 0, "New start screen", "Continue (loads the newest save), Load, New party and Quickstart, over the original game's art.", OC_SHOW, 0, 1, 1, 0, 0, titleview_set },
-    { "display.native_cards", S_SCREENS, 0, "New card screens", "card text in the typeface you choose, the options as rows to click with their chances beside them; an option that uses an item or a saint lists who can. The game still decides every outcome. When off: the original cards (with crisp text drawn over them).", OC_SHOW, 0, 1, 1, 0, 0, cardview_set },
-    { "display.native_shops", S_SCREENS, 0, "New shop screen", "all the wares and all your items in two lists, with Buy and Sell on each row and the equipped items marked; the bottom of the screen describes whatever is under the pointer. Stock and prices are unchanged.", OC_SHOW, 0, 1, 1, 0, 0, barterview_set },
-    { "display.native_sheet", S_SCREENS, 0, "New character sheet", "the paper doll and the items with Equip, Unequip, Drink and Drop, all the skills on one page, the party's saints and formulae. Drag an item onto a member in the party panel to give it (hold Shift to give one from a stack). Equipping, giving and drinking work as in the original.", OC_SHOW, 0, 1, 1, 0, 0, sheetview_set },
-    { "inventory.shared", S_SCREENS, "display.native_screens", "One shared pack for the party", "in the original, each member carries their own items; with this (Darklands+ only), the party shares one pack. Each member keeps only their equipped items and their own potions; everything else goes into the party's pack. Equip and Drink take from the pack, and a shop buys from it. As in the original, only equipped items count toward the load. When the game needs a particular member to have an item (lock picks at a lock, a mount, arrows before a battle), Darklands+ first moves it from the pack to that member. Keep marks an item so it is never sold or dropped.", OC_PLUS, 0, 1, 1 },
-    { "display.native_loot", S_SCREENS, 0, "New loot screen", "the whole pile and each member's items in two lists; a whole stack moves in one click. The original keys G and P still move every item.", OC_SHOW, 0, 1, 1, 0, 0, lootview_set },
-    { "assist.loot_worth", S_SCREENS, "display.native_loot", "Shop value in the loot screen", "under the lists, about what a shop would pay for the item under the pointer.", OC_SHOW, 0, 1, 1 },
-    { "display.native_alchemy", S_SCREENS, 0, "New alchemy screen", "every known formula in one list, with its ingredients at hand, batches set with - and +, and the chance of success. The chance and the brewing are unchanged.", OC_SHOW, 0, 1, 1, 0, 0, alchemyview_set },
-    { "assist.where_sold", S_SCREENS, "display.native_alchemy", "Where to buy missing ingredients", "beside an ingredient that runs short, the nearest town seen selling it.", OC_SHOW, 0, 1, 1 },
-    { "display.native_cache", S_SCREENS, 0, "New store room screen", "everything stored and everything the member carries in two lists, with Take and Put on each row (one or the whole stack), and Put away to store everything not equipped. When off: the original screen, four items at a time.", OC_SHOW, 0, 1, 1, 0, 0, cacheview_set },
-    { "store.shared", S_SCREENS, "display.native_screens", "One store room shared by every inn", "what you leave with one innkeeper is waiting at every other inn, as with the item boxes of a certain mansion; best not to ask how (100 kinds of items at most). Items already stored in several towns are put together the first time a store room is opened.", OC_PLUS, 0, 1, 1 },
-    { "assist.inn_earn", S_CARDS, 0, "At the inn, rested members earn money", "a member at full Endurance starts the day set to Earn a little money instead of Just Relax (which only refills Endurance). Change it as you like on the inn's screen.", OC_EASE, 0, 1, 1 },
-    { "display.native_lodge", S_SCREENS, 0, "New inn and camp screen", "each member's activity for the day, its cost, the teachers and their fees, and \"Until rested\".", OC_SHOW, 0, 1, 1, 0, 0, lodgeview_set },
-    { "display.native_pray", S_SCREENS, 0, "New prayer screen", "the saint's statue, what the saint does, the Divine Favor to spend and the chance (by the original game's rules).", OC_SHOW, 0, 1, 1, 0, 0, prayview_set },
-    { "display.native_create", S_SCREENS, 0, "New character creation", "each step on one page, with what a childhood or profession would give: the attributes afterwards (and the aging past thirty), each skill's gain and how far it can still rise, the Virtue and the saints gained. The rules are unchanged.", OC_SHOW, 0, 1, 1, 0, 0, createview_set },
-    { "assist.creation_guide", S_SCREENS, "display.native_create", "Step-by-step guide", "a short explanation of each step, in the empty column on the left.", OC_SHOW, 0, 1, 1 },
-    { "display.native_roster", S_SCREENS, 0, "New party selection screen", "the four party slots with their sprites, the saved characters and the selected character's attributes and skills; click to select, double-click to add or remove.", OC_SHOW, 0, 1, 1, 0, 0, rosterview_set },
-    { "display.native_info", S_SCREENS, 0, "New Party Info screen", "fame and its title, the date, the place, the wealth, and the party's reputation in every town at once (the original shows one town at a time, under the pointer).", OC_SHOW, 0, 1, 1, 0, 0, infoview_set },
-    { "display.native_march", S_SCREENS, 0, "New marching order screen", "a list to move members up and down, then Done, instead of clicking each member in turn.", OC_SHOW, 0, 1, 1, 0, 0, marchview_set },
-    { "display.native_enemyinfo", S_SCREENS, 0, "New Enemy Info screen", "E in a battle: every kind of enemy on the field, its armor and weapons, and how well your weapons work against it.", OC_SHOW, 0, 1, 1, 0, 0, enemyview_set },
-    { "display.native_mapmsg", S_SCREENS, 0, "New overland view messages", "the overland view's messages (a robber knight's land and the like) drawn in the style of the cards.", OC_SHOW, 0, 1, 1, 0, 0, mapmsg_set },
-    { "display.native_saves", S_SCREENS, 0, "New Save and Load screens", "each save listed with its place, date and party; Save asks for its comment beside the list, and Load lists every save (the original lists only nine).", OC_SHOW, 0, 1, 1, 0, 0, savesview_set },
+    { "display.native_screens", S_SCREENS, 0, "新屏幕", "这些屏幕由Darklands+全新绘制，延续原作风格：队伍面板、菜单、开始画面、卡牌、商店、角色表、战利品、炼金术、储物间、旅店与营地、祈祷、角色创建、队伍选择、队伍信息、行军顺序、敌人信息、陆地视图中的消息，以及存档与载入。它们显示更多内容（概率、物品价值、食材售卖地点等）；规则保持不变。关闭时则显示原版屏幕。", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, 0, 0, bundle_set },
+    { "display.shop_compare", S_SCREENS, 0, "商品与装备对比", "在商店中，武器、盔甲或盾牌旁若出现绿色箭头，表示其性能优于当前队员所装备的；红色箭头则表示性能较差（空箭头表示未装备任何物品）；指向某件商品时，会高亮显示其所替换的装备。", OC_SHOW, 0, 1, 1 },
+    { "display.native_panel", S_SCREENS, 0, "新队伍面板", "每位队员的耐力、力量和神恩以带数字的标签条显示。点击操作与原版相同（打开角色表；战斗中下达指令）。若要添加个人肖像，请将NAME.png（或.jpg）文件放入Darklands+文件夹下的portraits子文件夹，NAME即队员姓名。", OC_SHOW, 0, 1, 1 },
+    { "display.panel_picture", S_SCREENS, "display.native_screens", "队伍面板中的图片", "每位队员旁边", OC_TASTE, 0, 0, 0, "你的肖像，否则为战斗精灵，否则为徽章|战斗精灵，否则为徽章|徽章|无图片", V_PICTURE, 0, 0, OF_COMBO },
+    { "display.tooltip_delay", S_SCREENS, 0, "工具提示延迟", "鼠标指针停留时显示的说明：指针停留在某物上多久后才会显示说明（一旦显示，下一条立即出现）。", OC_TASTE, 0, 500, 500, "立即|片刻之后|一秒钟之后", V_TIPDELAY, 0, 0, OF_COMBO },
+    { "display.native_menu", S_SCREENS, 0, "新菜单", "游戏菜单（游戏、命令、攻击、队伍等）可通过右键或F10打开，并持续显示，直到你选择或点击其他地方；各项条目及其功能保持不变。关闭时则显示原版菜单栏，仅在按住右键时可见。", OC_SHOW, 0, 1, 1, 0, 0, menuview_set },
+    { "display.native_title", S_SCREENS, 0, "新开始画面", "继续（加载最新存档）、载入、新建队伍和快速开始，均采用原版游戏的艺术风格。", OC_SHOW, 0, 1, 1, 0, 0, titleview_set },
+    { "display.native_cards", S_SCREENS, 0, "新卡牌屏幕", "卡牌文字采用你选择的字体，选项以可点击的行呈现，每行旁附带相应概率；使用某物品或圣人的选项会列出适用者名单。游戏仍决定所有结果。关闭时则显示原版卡牌（文字清晰，叠加于其上）。", OC_SHOW, 0, 1, 1, 0, 0, cardview_set },
+    { "display.native_shops", S_SCREENS, 0, "新商店屏幕", "所有商品与你的全部物品分列两栏，每行设有买卖按钮，已装备物品亦予标注；屏幕底部描述指针下方的内容。库存与价格保持不变。", OC_SHOW, 0, 1, 1, 0, 0, barterview_set },
+    { "display.native_sheet", S_SCREENS, 0, "新角色面板", "纸娃娃与物品，包括装备、卸下、饮用和丢弃功能，所有技能均在同一页面，队伍中的圣人与配方。将物品拖拽至队伍栏中的成员身上即可装备（按住Shift可从堆叠中选择一件）。装备、赠送与饮用操作与原版相同。", OC_SHOW, 0, 1, 1, 0, 0, sheetview_set },
+    { "inventory.shared", S_SCREENS, "display.native_screens", "队伍共享背包", "原版中每位成员各自携带物品；而此版本（仅限Darklands+）则由队伍共享一个背包。每位成员仅保留已装备的物品及自己的药水，其余物品均放入队伍背包。装备与饮用均从背包中获取，商店也从背包中采购。与原版一样，只有已装备的物品才计入负重。当游戏需要某位成员持有特定物品时（如开锁时的撬锁工具、骑乘坐骑、战斗前的箭矢），Darklands+会先将其从背包移至该成员手中。标记物品后，该物品将永不被出售或丢弃。", OC_PLUS, 0, 1, 1 },
+    { "display.native_loot", S_SCREENS, 0, "新增战利品界面", "整个战利品堆与每位成员的物品分列两栏；一键即可移动整堆物品。原版中的G键与P键仍可逐件移动物品。", OC_SHOW, 0, 1, 1, 0, 0, lootview_set },
+    { "assist.loot_worth", S_SCREENS, "display.native_loot", "战利品界面中的商店估价", "列表下方显示指针所指物品在商店中的大致售价。", OC_SHOW, 0, 1, 1 },
+    { "display.native_alchemy", S_SCREENS, 0, "新增炼金术界面", "所有已知配方集中于一栏，配料触手可及，通过“-”与“+”设定批次，并显示成功率。成功率与酿造过程均保持不变。", OC_SHOW, 0, 1, 1, 0, 0, alchemyview_set },
+    { "assist.where_sold", S_SCREENS, "display.native_alchemy", "缺少原料的购买地点", "当某种原料即将耗尽时，显示附近城镇中出售该原料的店铺。", OC_SHOW, 0, 1, 1 },
+    { "display.native_cache", S_SCREENS, 0, "新增储物室界面", "所有储存物品与成员随身携带之物分列两栏，每行均有“取”与“放”选项（可单件或整堆），另有“收纳”按钮用于存放未装备的物品。关闭时：恢复原版界面，每次只能处理四件物品。", OC_SHOW, 0, 1, 1, 0, 0, cacheview_set },
+    { "store.shared", S_SCREENS, "display.native_screens", "所有旅店共享同一储物室", "在某家旅店留下的物品将在其他旅店等待，如同某座宅邸的物品箱一般；最好不要追问原因（最多容纳100种物品）。已在多处城镇储存的物品，首次开启储物室时将被统一归集。", OC_PLUS, 0, 1, 1 },
+    { "assist.inn_earn", S_CARDS, 0, "旅店中，休息后的成员可赚取金钱", "充满耐力的成员每日开始时，默认设置为“赚取少量金钱”，而非“仅放松”（后者只恢复耐力）。可在旅店界面随意更改。", OC_EASE, 0, 1, 1 },
+    { "display.native_lodge", S_SCREENS, 0, "新增旅店与营地界面", "每位成员当日活动、所需消耗、教师及其费用，以及“直至恢复体力”。", OC_SHOW, 0, 1, 1, 0, 0, lodgeview_set },
+    { "display.native_pray", S_SCREENS, 0, "新增祈祷界面", "圣像、圣人的事迹、可消耗的神恩及概率（按原版规则）。", OC_SHOW, 0, 1, 1, 0, 0, prayview_set },
+    { "display.native_create", S_SCREENS, 0, "新增角色创建界面", "每一步骤均置于一页，注明童年或职业所能带来的属性（以及三十岁后的衰老）、每项技能的提升幅度与上限、获得的美德与圣人。规则保持不变。", OC_SHOW, 0, 1, 1, 0, 0, createview_set },
+    { "assist.creation_guide", S_SCREENS, "display.native_create", "分步指南", "左侧空白栏内附各步骤简要说明。", OC_SHOW, 0, 1, 1 },
+    { "display.native_roster", S_SCREENS, 0, "新增队伍选择界面", "四个队伍槽位及其对应图标、已保存的角色，以及所选角色的属性与技能；点击选择，双击添加或移除。", OC_SHOW, 0, 1, 1, 0, 0, rosterview_set },
+    { "display.native_info", S_SCREENS, 0, "新增队伍信息界面", "名声与头衔、日期、地点、财富，以及队伍在各城镇的声誉（原版仅显示指针所在城镇）。", OC_SHOW, 0, 1, 1, 0, 0, infoview_set },
+    { "display.native_march", S_SCREENS, 0, "新增行军顺序界面", "提供一份名单，用于上下调整队员顺序，完成后直接确认，无需逐一点击。", OC_SHOW, 0, 1, 1, 0, 0, marchview_set },
+    { "display.native_enemyinfo", S_SCREENS, 0, "新增敌人信息界面", "战斗中的E：场上各类敌人的护甲与武器，以及己方武器对其的克制效果。", OC_SHOW, 0, 1, 1, 0, 0, enemyview_set },
+    { "display.native_mapmsg", S_SCREENS, 0, "新增陆地视图消息", "陆地视图的消息（如强盗骑士的地盘等）以卡牌风格绘制。", OC_SHOW, 0, 1, 1, 0, 0, mapmsg_set },
+    { "display.native_saves", S_SCREENS, 0, "新增存档与载入界面", "每次存档均列出其位置、日期与队伍；存档时需在列表旁填写备注，载入时则列出所有存档（原版仅列九个）。", OC_SHOW, 0, 1, 1, 0, 0, savesview_set },
 
-    { "assist.card_helpers", S_CARDS, 0, "Chances and hints on the cards", "on a card, the chance of each option that can fail and who would try it; which saints and items it accepts and who has them; a lectern by an option that brings a teacher (skill, level, fee); the options at once without the fade-in, and 1 to 9 to choose them; at the docks, a small map of where each boat goes. Tooltips say what an item, saint or formula is good for.", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, 0, 5, bundle_set },
-    { "assist.chances", S_CARDS, 0, "Chances of success", "beside each card option that can fail, with the member who would try it (the original shows one at a time while Shift is held).", OC_SHOW, 0, 2, 2, "Always, as numbers|As the difficulty level allows|Off", V_CHANCES, assist_set_chances },
-    { "assist.best_leader", S_CARDS, 0, "The best member speaks for the party", "when a card tests the leader, the member best at it takes the test instead, and the one with the best Charisma haggles in shops; the chance shown is theirs, with their head. The arrow at the end of the chance shows every member's: a click on one has that member speak instead. After the card, your chosen leader is leader again. (When off, the leader speaks, and the arrow still lets you pick another.)", OC_EASE, 0, 1, 1, 0, 0, assist_set_best_leader },
-    { "assist.card_help", S_CARDS, 0, "Saints and items on cards", "which saints and items a card accepts, and who knows or carries them (as the Darklands Companion, a players' reference, did: saints are listed even when nobody knows them yet).", OC_SHOW, 0, 1, 1, 0, 0, assist_set_card_help },
-    { "assist.shop_info", S_CARDS, 0, "Tooltips", "what the item, saint or formula under the pointer is good for (in shops, the loot screen, character sheets, and the prayer and alchemy screens).", OC_SHOW, 0, 1, 1 },
-    { "assist.fast_fades", S_CARDS, 0, "Cards without the fade-in", "a card shows its options at once, without the slow fade-in.", OC_SHOW, 0, 1, 1 },
-    { "assist.card_keys", S_CARDS, 0, "Number keys for card options", "1 to 9 choose a card's options.", OC_SHOW, 0, 1, 1, 0, 0, assist_set_card_keys },
-    { "assist.goto_work", S_CARDS, "assist.city_goto", "Who has work", "in the Go to list, beside the Fugger, the Medici, the Hanse, the cathedral, the council, the lord and the market stalls: the chance that asking brings a quest, the date they will have one again, or a note that their quest is under way or its reward is waiting.", OC_SHOW, 0, 1, 1 },
-    { "assist.teachers", S_CARDS, 0, "Teachers", "a lectern beside each card option that brings a teacher to the inn, with the skill, the teacher's level and the fee; the margin and the world map (M) show which teachers each town can offer.", OC_SHOW, 0, 1, 1 },
-    { "assist.city_goto", S_CARDS, 0, "Go to (G)", "G on a town's card lists its places; pick one and the party goes there, clicking through the menus for you.", OC_EASE, 0, 1, 1 },
-    { "assist.docks_map", S_CARDS, 0, "Map at the docks", "beside the docks' list of boats, a small map of the towns they go to and the way each takes along the rivers and coasts; a click on a town takes that boat.", OC_EASE, 0, 1, 1 },
-    { "journal.enabled", S_CARDS, 0, "Note each town's shops and wares", "each town's shops, their wares, qualities and prices, noted on arrival (shown on the world map, M). Switched in F12 > Journal.", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "journal.chronicle", S_CARDS, "journal.enabled", "Chronicle", "every text the cards show, word for word, with the date, the place and the choice made, so a clue read weeks ago can be found again (F12 > Journal > Chronicle, where it is switched).", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "assist.card_helpers", S_CARDS, 0, "卡牌上的概率与提示", "卡牌上标明每种可能失败选项的概率及尝试者；接受哪些圣人与物品、谁拥有它们；针对带来教师的选项设有讲台（技能、等级、费用）；各项选项同时呈现，无渐显效果，可供1至9种选择；码头处还附有小地图，标明各船的去向。工具提示说明物品、圣人或配方的用途。", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, 0, 5, bundle_set },
+    { "assist.chances", S_CARDS, 0, "成功几率", "在每个可能失败的卡牌选项旁，显示尝试该选项的队员（原版在按住Shift时一次显示一个）。", OC_SHOW, 0, 2, 2, "始终、按数字|根据难度等级|关闭", V_CHANCES, assist_set_chances },
+    { "assist.best_leader", S_CARDS, 0, "最优秀的队员代表队伍发言", "当某张卡牌考验队长时，由最擅长该项的队员代为测试；而在商店里，则由魅力值最高的队员进行讨价还价；显示的几率为该队员的数值，并在其头像旁标注。几率末尾的箭头表示每位队员的状况：点击其中一位，即可让该队员代替发言。卡牌结束后，你所选择的队长将重新担任队长。（关闭时，仍由队长发言，但箭头依然可让你选择其他队员。）", OC_EASE, 0, 1, 1, 0, 0, assist_set_best_leader },
+    { "assist.card_help", S_CARDS, 0, "卡牌上的圣人与物品", "卡牌接受哪些圣人与物品，以及谁知晓或携带它们（正如《Darklands Companion》这本玩家参考手册所示：即使尚无人知晓，圣人也会被列出）。", OC_SHOW, 0, 1, 1, 0, 0, assist_set_card_help },
+    { "assist.shop_info", S_CARDS, 0, "工具提示", "指针下的物品、圣人或配方有何用途（在商店、战利品界面、角色面板以及祈祷与炼金术界面中）。", OC_SHOW, 0, 1, 1 },
+    { "assist.fast_fades", S_CARDS, 0, "无淡入效果的卡牌", "卡牌一次性显示所有选项，不再采用缓慢的淡入效果。", OC_SHOW, 0, 1, 1 },
+    { "assist.card_keys", S_CARDS, 0, "卡牌选项的数字键", "1至9可选择卡牌的各个选项。", OC_SHOW, 0, 1, 1, 0, 0, assist_set_card_keys },
+    { "assist.goto_work", S_CARDS, "assist.city_goto", "谁有工作", "在“前往”列表中，在富格尔、美第奇、汉萨同盟、大教堂、议会、领主和集市摊位旁：显示询问是否能获得任务的几率、他们下次获得任务的日期，或注明其任务正在进行中或奖励已待领取。", OC_SHOW, 0, 1, 1 },
+    { "assist.teachers", S_CARDS, 0, "教师", "在每个带来教师到旅店的卡牌选项旁，设有讲台，标明技能、教师等级及收费；边距与世界地图（M）则显示各城镇所能提供的教师。", OC_SHOW, 0, 1, 1 },
+    { "assist.city_goto", S_CARDS, 0, "前往（G）", "在城镇卡牌上，G列出该地的各类场所；选中一处，队伍即前往，并自动为你逐级进入相关菜单。", OC_EASE, 0, 1, 1 },
+    { "assist.docks_map", S_CARDS, 0, "码头的地图", "在码头的船只列表旁，附有一张小地图，标示各船将前往的城镇及其沿河沿海的行进路线；点击某个城镇，即可乘坐相应船只。", OC_EASE, 0, 1, 1 },
+    { "journal.enabled", S_CARDS, 0, "记录各城镇的商店与商品", "各城镇的商店、其商品、品质与价格，均在抵达时记录（显示于世界地图，M）。可在F12 > 日志中切换查看。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "journal.chronicle", S_CARDS, "journal.enabled", "编年史", "卡牌所展示的每一段文字，都逐字逐句记录，包括日期、地点及所作选择，以便数周前读到的线索也能再次找到（F12 > 日志 > 编年史，可在其中切换）。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
 
-    { "assist.return_thrown", S_PARTY, 0, "Thrown weapons picked up after a battle", "when the loot screen opens after a battle, the javelins, throwing axes, throwing knives and darts each member threw are taken from the pile and given back to them.", OC_EASE, 0, 1, 1, 0, 0, return_thrown },
-    { "assist.endless", S_PARTY, 0, "Endless ammunition and thrown weapons", "arrows, quarrels and balls, and javelins, throwing axes, throwing knives and darts, never run out (one is enough to shoot or throw); enemies still use up theirs. When off: each shot uses one, and about 7 in 10 arrows and quarrels can be picked up in the loot afterwards; with the shared pack they are then each member's own, listed with them like potions (picked-up ones go to whoever shoots them; drag them onto another member to hand them over).", OC_PLUS, 0, 1, 1, 0, 0, 0, 0, 0, 6, bundle_set },
-    { "assist.infinite_ammo", S_PARTY, 0, "Endless ammunition", "arrows, quarrels and balls never run out (one is enough to shoot); enemies still use up theirs. When off: each shot uses one, and about 7 in 10 arrows and quarrels can be picked up in the loot afterwards; with the shared pack they are then each member's own, listed with them like potions.", OC_PLUS, 0, 1, 1, 0, 0, ammo_set },
-    { "assist.infinite_thrown", S_PARTY, 0, "Endless thrown weapons", "javelins, throwing axes, throwing knives and darts never run out either (one is enough to throw). When off, with the shared pack they are each member's own, listed with them like potions.", OC_PLUS, 0, 1, 1, 0, 0, thrown_set },
-    { "rules.aging", S_PARTY, 0, "Aging during play", "characters go on aging during play (Darklands+ only; the original ages them only during character creation): from thirty on, a little each month, more with age (by seventy, a total loss of 25 Endurance, 21 Strength and Agility each, 10 Perception and Charisma each, and 5 Intelligence).", OC_PLUS, 0, 1, 0 },
-    { "assist.loss_alerts", S_PARTY, 0, "Warn about permanent losses", "anything lost for good (an attribute's maximum, a skill, armor eaten by acid or fire, the toll of the years) pauses the game with a window saying exactly what was lost, and by whom.", OC_SHOW, 0, 1, 1 },
+    { "assist.return_thrown", S_PARTY, 0, "战斗后拾取的投掷武器", "战斗结束后打开战利品界面时，每位队员投掷过的标枪、投斧、飞刀及飞镖都会从堆中取出并归还给他们。", OC_EASE, 0, 1, 1, 0, 0, return_thrown },
+    { "assist.endless", S_PARTY, 0, "无限弹药与投掷武器", "箭矢、箭镞与箭丸，以及标枪、投斧、飞刀和飞镖，永不耗尽（一支即可射击或投掷）；而敌方的同类武器则会被消耗殆尽。关闭时：每次射击使用一支，约十分之七的箭矢与箭镞可在战利品中拾取；借助共享背包，这些武器便成为每位队员自己的物品，如同药剂一般列于清单（拾取的武器归投掷者所有；拖动至另一名队员即可移交）。", OC_PLUS, 0, 1, 1, 0, 0, 0, 0, 0, 6, bundle_set },
+    { "assist.infinite_ammo", S_PARTY, 0, "无限弹药", "箭矢、箭镞与箭丸永不耗尽（一支即可射击）；而敌方的同类武器则会被消耗殆尽。关闭时：每次射击使用一支，约十分之七的箭矢与箭镞可在战利品中拾取；借助共享背包，这些武器便成为每位队员自己的物品，如同药剂一般列于清单。", OC_PLUS, 0, 1, 1, 0, 0, ammo_set },
+    { "assist.infinite_thrown", S_PARTY, 0, "无限投掷武器", "标枪、投斧、飞刀和飞镖同样永不耗尽（一支即可投掷）。关闭时，借助共享背包，这些武器便成为每位队员自己的物品，如同药剂一般列于清单。", OC_PLUS, 0, 1, 1, 0, 0, thrown_set },
+    { "rules.aging", S_PARTY, 0, "游戏中的衰老", "角色在游戏过程中会逐渐衰老（仅限Darklands+；原版仅在创建角色时才会衰老）：自三十岁起，每月略有衰退，随年龄增长愈发明显（至七十岁时，将累计损失25点耐力、21点力量与敏捷、10点感知与魅力，以及5点智力）。", OC_PLUS, 0, 1, 0 },
+    { "assist.loss_alerts", S_PARTY, 0, "提醒永久性损失", "凡是永久性丧失的项目（如属性上限、技能、被酸或火侵蚀的护甲，以及岁月的损耗），都会暂停游戏，并弹出窗口明确告知具体损失内容及责任人。", OC_SHOW, 0, 1, 1 },
 
-    { "battle.controls", S_BATTLE, 0, "Easier battle controls", "click a member (or their box in the party panel), then an enemy to attack it or the ground to walk there: one click gives the order, and while paused the next member without orders is chosen. A bow or sword on each shooter's box says whether a click shoots or fights. Order buttons with icons, right-drag to move the view, selecting a member doesn't move the view, a shorter wait at the end of a battle, and Z to fast-forward (Z again: back to the chosen speed).", OC_EASE, 0, 1, 1, 0, 0, 0, 0, 0, 1, bundle_set },
-    { "battle.helpers", S_BATTLE, 0, "Battle info on screen", "a bar over each wounded enemy, and pointing at someone shows who it is, how badly hurt, their melee rating, aim and weapons; the line of a shot with what is in the way; what a click will do; an arrow to enemies off screen; skill gains rising over the fighter; a reload bar under a shooter; and the battle log (every blow, parry and fall).", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, 0, 2, bundle_set },
-    { "battle.pauses", S_BATTLE, 0, "Pauses in battle", "the battle pauses when a member falls and when enemies waiting in a castle, dungeon or mine come out to fight.", OC_EASE, 0, 1, 1, 0, 0, 0, 0, 0, 3, bundle_set },
-    { "battle.scrolling", S_BATTLE, 0, "Smooth, steady scrolling", "the battle view slides instead of jumping, scrolls at a steady pace, and resting the pointer on the edge scrolls it without Shift.", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, 0, 4, bundle_set },
-    { "battle.pause_down", S_BATTLE, 0, "Pause when a member falls", "", OC_EASE, 0, 1, 1, 0, 0, ap_down },
-    { "battle.pause_hurt", S_BATTLE, 0, "Pause when badly hurt", "the battle pauses when a party member's Endurance drops below a quarter.", OC_EASE, 0, 0, 0, 0, 0, ap_hurt },
-    { "battle.pause_foes", S_BATTLE, 0, "Pause when enemies come out", "the battle pauses when enemies waiting in a castle, dungeon or mine come out to fight.", OC_EASE, 0, 1, 1, 0, 0, autopause_set_foes },
-    { "battle.improved", S_BATTLE, 0, "Improved combat", "the party fights on sensibly between orders. A member with a bow, crossbow, gun or thrown weapon shoots first and keeps shooting: when the target falls, at the nearest enemy in sight; with no clear line (a wall, a tree or someone standing between, as the aiming line shows), the member moves to the nearest spot a few paces off that has one (or walks up until there is one); hand to hand only once an enemy is close or there is nothing left to shoot. A member whose enemy falls turns on one close by, Parry, Berserk and Vulnerable stay as ordered, and a click on an enemy opens with a Vulnerable attack (aimed at the gaps in its armor) when only that would get through its armor. When off: the original's ways.", OC_EASE, 0, 1, 1 },
-    { "battle.click_attack", S_BATTLE, 0, "Click an enemy to attack it", "a click on an enemy sends the selected member to attack it, even before an attack is chosen: a standard attack, or with Improved combat a Vulnerable one where only that gets through the enemy's armor.", OC_EASE, 0, 1, 1, 0, 0, click_attack },
-    { "battle.volley_toggle", S_BATTLE, "battle.click_attack", "Bow or sword on each member's box", "in a battle, a member holding a missile weapon shows a bow or a sword on their box in the party panel: whether a click on an enemy makes them shoot or fight hand to hand. Click it to switch; each member keeps their choice.", OC_SHOW, 0, 1, 1 },
-    { "battle.panel_select", S_BATTLE, 0, "Click a member's box to give them orders", "in a battle, a click on a member's box in the party panel selects them for orders, as 1 to 5 do (a double-click also moves the view to them); a right-click on the box opens their character sheet. When off: a click on the box opens the sheet, as in the original.", OC_EASE, 0, 1, 1 },
-    { "battle.quick_orders", S_BATTLE, 0, "One click gives an order", "with a member selected, a click on an enemy or the ground gives the order at once, as do orders that need no target (Halt, a door, the stairs). An attack picked from the Orders menu or the buttons (Standard, Vulnerable, Berserk, Parry) goes against the enemy the member is already fighting. If selecting the member paused the battle, it resumes with the order. When off: a click only marks the target, and Enter, Space or selecting another member gives the order, as in the original.", OC_EASE, 0, 1, 1 },
-    { "battle.next_member", S_BATTLE, "battle.quick_orders", "Then select the next member without orders", "while the battle is paused, giving an order selects the next member on screen who has no order, so at the start of a battle each order is a single click on an enemy. Space resumes the battle.", OC_EASE, 0, 1, 1 },
-    { "battle.order_bar", S_BATTLE, 0, "Order buttons over the field", "while a member is selected, their orders appear as buttons in a strip at the foot of the battlefield, grouped by what they do (attacks, moving, the things at hand, potions and items, the battle), so no right-click menu is needed. Fast forward and Resume stand at the top of the right margin (in the strip when the window has no right margin).", OC_SHOW, 0, 1, 1 },
-    { "battle.order_icons", S_BATTLE, 0, "Icons on the order buttons", "each order button shows an icon beside its name: a sword for a standard attack, a shield for Parry, footprints for Walk towards, a white flag for Surrender.", OC_SHOW, 0, 1, 1 },
-    { "battle.los_line", S_BATTLE, 0, "Show the line of a shot", "when a member is about to shoot or throw at the enemy under the pointer, a line runs from them to it. Anything in the way (a wall, a tree, someone standing between) is outlined in red, and the line turns red past it: the shot can't be taken from there.", OC_SHOW, 0, 1, 1 },
-    { "battle.click_hint", S_BATTLE, 0, "Say what a click will do", "with a member selected, a short label by the pointer says what a click there does when it isn't a plain attack or walk (shoot, throw, flee, a Vulnerable or Berserk attack) or why it can't (no way there, no clear shot).", OC_SHOW, 0, 1, 1 },
-    { "battle.drag_pan", S_BATTLE, 0, "Drag to move the view", "hold the right (or middle) button and move the mouse to drag the battle view; a right-click without moving still opens the menus.", OC_SHOW, 0, 1, 1 },
-    { "battle.select_stays", S_BATTLE, 0, "Selecting a member doesn't move the view", "1 to 5 (or a click on a member's box) select a member without moving the view; press twice to move the view to the member and follow them. Selecting a member on another floor still moves the view to them.", OC_SHOW, 0, 1, 1 },
-    { "battle.smooth_scroll", S_BATTLE, 0, "Smooth scrolling", "the battle view slides to each new place instead of jumping.", OC_SHOW, 0, 1, 1 },
-    { "battle.scroll_paced", S_BATTLE, 0, "Steady scrolling", "the battlefield scrolls at a steady pace (holding Shift at the edge no longer scrolls all the way to the end of the field at speed).", OC_SHOW, 0, 1, 1, 0, 0, bs_paced },
-    { "battle.scroll_rest", S_BATTLE, "battle.scroll_paced", "Edge scrolling without Shift", "resting the pointer on the edge of the screen scrolls the battlefield; no Shift needed.", OC_SHOW, 0, 1, 1, 0, 0, bs_rest },
-    { "battle.info", S_BATTLE, 0, "Info under the pointer", "a bar over each wounded enemy with the Endurance it has left (Alt: over all); pointing at someone shows who it is, how badly hurt they are, their melee rating (attack and defense hand to hand), their aim with a missile weapon, and their weapons.", OC_SHOW, 0, 1, 1 },
-    { "battle.info_numbers", S_EASYPLAY, 0, "Enemy Endurance as numbers", "", OC_EASY, 0, 0, 1 },
-    { "battle.foe_arrow", S_BATTLE, 0, "Arrow to enemies off screen", "when no enemy is on screen, an arrow at the edge points to the nearest one; click it to move the view there.", OC_EASE, 0, 1, 1 },
-    { "battle.skill_gains", S_BATTLE, 0, "Show skill gains", "a skill raised in a fight rises in gold over the fighter's head (+2 Edged), and a note of it shows in the member's box in the party panel.", OC_SHOW, 0, 1, 1 },
-    { "battle.reload_bar", S_BATTLE, 0, "Reload bar", "a thin amber line under a member readying a shot (bow, crossbow, gun or thrown weapon), filling up until they shoot.", OC_SHOW, 0, 1, 1 },
-    { "battle.log", S_BATTLE, 0, "Battle log", "every blow, parry, wound and fall, in the left margin on a wide window, otherwise over the field (F12 > Journal > Battle log keeps it).", OC_SHOW, 0, 1, 1 },
-    { "assist.level_map", S_BATTLE, 0, "Level map (Tab)", "Tab in battles, castles, mines and dungeons: a map of the level as far as the party has seen it; a click on it walks the party there.", OC_SHOW, 0, 1, 1 },
-    { "assist.level_map_all", S_EASYPLAY, 0, "The whole level on the level map", "Tab shows the whole level, not only what the party has seen.", OC_EASY, 0, 0, 1 },
-    { "assist.more_jobs", S_PARTY, 0, "More day jobs", "nine jobs the original never offers (mercenary, guard sergeant, bodyguard, courtier, scribe, clerk, troubadour, entertainer, preaching friar) turn up in towns with the right places: soldiers' jobs by an arsenal or fortress, a lord's household at a fortress, clerks at a town hall, the great houses in a big city, friars by a monastery. Each member still takes the best-paid job they qualify for.", OC_EASE, 0, 1, 1 },
-    { "battle.foes_left", S_EASYPLAY, 0, "Enemies still waiting", "under the enemy list, how many enemies the party has yet to meet in a castle, dungeon or mine, floor by floor, and which floor its master is on (knowledge the party could not have).", OC_EASY, 0, 0, 1 },
-    { "battle.end_words", S_BATTLE, 0, "Shorter wait at the end of a battle", "when the last enemy falls, the field stands still for one second instead of three and a half before the loot, and \"Victory! The battle is won.\" (or the like) stays for three seconds instead of eight. The original's long waits looked like a freeze.", OC_SHOW, 0, 1, 1 },
-    { "fix.pathfinding", S_BATTLE, 0, "Fighters find their way around obstacles", "fighters plan their way around walls, furniture and each other; in the original they often give up on long or winding routes (members get stuck in mines). Enemies get it too, so battles are harder. In a crowd, a blocked fighter finds another way at once instead of standing still for seconds, and enemies at the back wait or pick another target rather than take a long detour.", OC_FIX, 0, 1, 1, 0, 0, pf_set },
-    { "battle.speed", S_BATTLE, 0, "Battle speed", "walking (in dungeons, castles and mines too), attacks, drinking potions and calling on saints all go faster; pausing (Space) works as before.", OC_TASTE, 100, 100, 100, "as the original|1.5x|2x|3x", V_SPEED, battle_speed_set },
-    { "battle.fast_key", S_BATTLE, 0, "Fast forward (Z)", "Z in a battle runs it six times faster; Z again goes back to the chosen speed.", OC_SHOW, 0, 1, 1, 0, 0, fast_key },
+    { "battle.controls", S_BATTLE, 0, "更简便的战斗操作", "点击一名队员（或其在队伍面板中的方框），再点击敌人以发起攻击，或点击地面以行走：一次点击即可下达指令，而在暂停期间，系统会自动选择下一位未接指令的队员。每位射手方框上的弓或剑图标，表明该次点击是射击还是格斗。配有图标的指令按钮、右拖动可调整视角、选择队员不会改变视角、战斗结束后的等待时间更短，以及Z键可快进（再次按下Z则恢复原速）。", OC_EASE, 0, 1, 1, 0, 0, 0, 0, 0, 1, bundle_set },
+    { "battle.helpers", S_BATTLE, 0, "屏幕上的战斗信息", "每个受伤的敌人都有一条横线，指向某人时会显示其身份、伤势程度、近战等级、瞄准情况和所持武器；射击轨迹及其途中的障碍物；点击后将执行的操作；对屏幕外敌人的箭头指示；战士技能提升进度条；射手下方的装填进度条；以及战斗日志（记录每一次攻击、格挡与倒地）。", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, 0, 2, bundle_set },
+    { "battle.pauses", S_BATTLE, 0, "战斗中的暂停", "当队伍成员倒下，或城堡、地牢、矿井中等待的敌人现身参战时，战斗便会暂停。", OC_EASE, 0, 1, 1, 0, 0, 0, 0, 0, 3, bundle_set },
+    { "battle.scrolling", S_BATTLE, 0, "平滑、稳定的滚动", "战斗视图滑动而非跳跃，以稳定速度滚动，将指针停留在边缘即可在不按Shift的情况下滚动。", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, 0, 4, bundle_set },
+    { "battle.pause_down", S_BATTLE, 0, "成员倒下时暂停", "", OC_EASE, 0, 1, 1, 0, 0, ap_down },
+    { "battle.pause_hurt", S_BATTLE, 0, "重伤时暂停", "当队伍成员的耐力降至四分之一以下时，战斗暂停。", OC_EASE, 0, 0, 0, 0, 0, ap_hurt },
+    { "battle.pause_foes", S_BATTLE, 0, "敌人现身时暂停", "当城堡、地牢或矿井中等待的敌人现身参战时，战斗暂停。", OC_EASE, 0, 1, 1, 0, 0, autopause_set_foes },
+    { "battle.improved", S_BATTLE, 0, "改进后的战斗系统", "队伍在指令之间合理作战。持有弓、弩、枪或投掷武器的队员优先射击并持续射击：目标倒下后，转向视野内最近的敌人；若无清晰视线（如墙壁、树木或中间有人阻挡，正如瞄准线所示），则移动至附近几步处有空隙的位置（或靠近直至出现空隙）；只有当敌人逼近或已无其他可射之物时才进行近身格斗。敌方倒下的队员会转向附近的敌人，格挡、狂暴与脆弱状态按指令维持，而点击敌人时若仅此招能穿透其护甲，则发动脆弱攻击（瞄准护甲缝隙）。离线时：沿用原版方式。", OC_EASE, 0, 1, 1 },
+    { "battle.click_attack", S_BATTLE, 0, "点击敌人发起攻击", "点击敌人会使选定队员立即对其发起攻击，即便尚未选择具体攻击方式：标准攻击，或在改进战斗模式下使用脆弱攻击——唯有该招式才能突破敌方护甲。", OC_EASE, 0, 1, 1, 0, 0, click_attack },
+    { "battle.volley_toggle", S_BATTLE, "battle.click_attack", "每位队员的装备栏上显示弓或剑", "在战斗中，手持远程武器的队员会在队伍面板的装备栏上显示弓或剑：点击敌人时是射击还是近身格斗。点击切换；每位队员保持自己的选择。", OC_SHOW, 0, 1, 1 },
+    { "battle.panel_select", S_BATTLE, 0, "点击队员的装备栏下达指令", "在战斗中，点击队伍面板上队员的装备栏即可为其下达指令，如同1至5号操作一样（双击还可将视图移至该队员）；右键点击装备栏则打开其角色面板。离线时：点击装备栏即打开面板，与原版相同。", OC_EASE, 0, 1, 1 },
+    { "battle.quick_orders", S_BATTLE, 0, "一次点击下达一条指令", "当选定队员后，点击敌人或地面即可立即下达指令，同样适用于无需目标的指令（停止、开门、上楼梯）。从“指令”菜单或按钮（标准、脆弱、狂暴、格挡）中选择的攻击将针对队员当前正在交战的敌人。若选中队员导致战斗暂停，则恢复时直接执行该指令。离线时：点击仅标记目标，按下Enter、Space或选择其他队员方可下达指令，与原版一致。", OC_EASE, 0, 1, 1 },
+    { "battle.next_member", S_BATTLE, "battle.quick_orders", "随后选择下一位未接指令的队员", "战斗暂停期间，下达指令会自动选取屏幕上首位未接指令的队员，因此每场战斗开始时，每条指令都只需点击一次敌人即可。按下Space即可恢复战斗。", OC_EASE, 0, 1, 1 },
+    { "battle.order_bar", S_BATTLE, 0, "战场上方的指令按钮", "当队员被选中时，其指令以按钮形式显示于战场底部的一条横带上，按功能分类（攻击、移动、随身物品、药剂与道具、战斗等），无需右键菜单。快进与恢复按钮位于右侧边栏顶部（窗口无右侧边栏时则置于横带顶端）。", OC_SHOW, 0, 1, 1 },
+    { "battle.order_icons", S_BATTLE, 0, "指令按钮上的图标", "每个指令按钮名称旁均配有图标：标准攻击为剑，格挡为盾，前进为脚印，投降为白旗。", OC_SHOW, 0, 1, 1 },
+    { "battle.los_line", S_BATTLE, 0, "显示射击轨迹", "当队员即将在指针下方向敌人射击或投掷时，一条连线会从其延伸至目标。途中任何障碍物（墙壁、树木、中间有人阻挡）均以红色勾勒，连线越过障碍物后亦变为红色：该位置无法完成射击。", OC_SHOW, 0, 1, 1 },
+    { "battle.click_hint", S_BATTLE, 0, "标明点击后的作用", "当队员被选中时，指针旁会显示简短说明，解释该处点击在非普通攻击或行走时的具体作用（射击、投掷、逃跑、脆弱或狂暴攻击），或为何无法执行（无路径、无清晰射击）。", OC_SHOW, 0, 1, 1 },
+    { "battle.drag_pan", S_BATTLE, 0, "拖动以移动视图", "按住右键（或中键）并移动鼠标即可拖动战斗视图；不移动时右键仍可打开菜单。", OC_SHOW, 0, 1, 1 },
+    { "battle.select_stays", S_BATTLE, 0, "选中队员不会移动视图", "1至5号（或点击队员装备栏）选中队员时不会移动视图；连续按两次则可将视图移至该队员并跟随其行动。在另一层楼选中队员仍会移动视图至该队员。", OC_SHOW, 0, 1, 1 },
+    { "battle.smooth_scroll", S_BATTLE, 0, "平滑滚动", "战斗视图每次到达新位置时都会平滑滑动，而非跳跃。", OC_SHOW, 0, 1, 1 },
+    { "battle.scroll_paced", S_BATTLE, 0, "稳定滚动", "战场以稳定速度滚动（在边缘按住Shift不再能快速滚动至战场尽头）。", OC_SHOW, 0, 1, 1, 0, 0, bs_paced },
+    { "battle.scroll_rest", S_BATTLE, "battle.scroll_paced", "无Shift的边缘滚动", "将指针停留在屏幕边缘即可滚动战场；无需按Shift。", OC_SHOW, 0, 1, 1, 0, 0, bs_rest },
+    { "battle.info", S_BATTLE, 0, "指针下的信息", "在每个受伤的敌人上方显示其剩余的耐力条（Alt：显示所有）；指向某人时，会显示其身份、伤势程度、近战属性（近战攻击与防御）、远程武器的瞄准精度以及所持武器。", OC_SHOW, 0, 1, 1 },
+    { "battle.info_numbers", S_EASYPLAY, 0, "敌人的耐力数值", "", OC_EASY, 0, 0, 1 },
+    { "battle.foe_arrow", S_BATTLE, 0, "屏幕外敌人的箭头", "当屏幕上没有敌人时，边缘会有一根箭头指向最近的敌人；点击它即可将视角移至该处。", OC_EASE, 0, 1, 1 },
+    { "battle.skill_gains", S_BATTLE, 0, "显示技能提升", "战斗中提升的技能会在战士头顶以金色浮标显示（+2 刀剑），同时在队伍面板成员栏中也会出现相关提示。", OC_SHOW, 0, 1, 1 },
+    { "battle.reload_bar", S_BATTLE, 0, "重新装填进度条", "在准备射击的队员下方有一条细长的琥珀色进度条（弓、弩、枪或投掷武器），随着射击动作逐渐填满。", OC_SHOW, 0, 1, 1 },
+    { "battle.log", S_BATTLE, 0, "战斗日志", "左侧边栏宽屏显示每一次击打、格挡、伤口与倒地；其他情况下则在战场上显示（F12 > 日志 > 战斗日志可保留）。", OC_SHOW, 0, 1, 1 },
+    { "assist.level_map", S_BATTLE, 0, "关卡地图（Tab）", "战斗、城堡、矿井与地下城中的Tab键：显示队伍已探索过的关卡地图；点击即可带领队伍前往相应地点。", OC_SHOW, 0, 1, 1 },
+    { "assist.level_map_all", S_EASYPLAY, 0, "关卡地图上的整个关卡", "Tab键显示的是整个关卡，而不仅仅是队伍已探索的部分。", OC_EASY, 0, 0, 1 },
+    { "assist.more_jobs", S_PARTY, 0, "更多兼职工作", "原版未提供的九种职业（雇佣兵、卫队军士、保镖、宫廷侍从、书记员、文员、游吟诗人、艺人、传教修士）会在合适的城镇中出现：士兵类职业在军械库或要塞附近，领主家政在要塞内，文职在市政厅，大城市中的贵族府邸，修士则在修道院旁。每位成员仍会选择自己最擅长且薪酬最高的工作。", OC_EASE, 0, 1, 1 },
+    { "battle.foes_left", S_EASYPLAY, 0, "敌人仍在等待", "在敌人列表下方，显示队伍在城堡、地牢或矿井中尚未遭遇的敌人数量，按楼层逐一列出，并标明其首领所在楼层（这是队伍原本无法得知的信息）。", OC_EASY, 0, 0, 1 },
+    { "battle.end_words", S_BATTLE, 0, "战斗结束时的等待时间缩短", "当最后一名敌人倒下时，战场会静止一秒钟而非原先的三秒半，随后“胜利！战斗已获胜。”（或其他类似提示）会停留三秒而非八秒。原版漫长的等待时间曾让人感觉像是画面冻结。", OC_SHOW, 0, 1, 1 },
+    { "fix.pathfinding", S_BATTLE, 0, "战士们能绕过障碍物", "战士们会规划路线避开墙壁、家具以及彼此；在原版中，他们常常因路径过长或曲折而放弃（成员甚至会在矿井里被困）。敌人也同样如此，因此战斗更加艰难。在人群拥挤时，被堵住的战士会立即寻找新路，而不是僵立数秒；而位于后方的敌人则会等待或另选目标，而不必绕远路。", OC_FIX, 0, 1, 1, 0, 0, pf_set },
+    { "battle.speed", S_BATTLE, 0, "战斗速度", "行走（包括在地牢、城堡和矿井中）、攻击、服用药剂以及召唤圣人等动作都会加快；暂停（空格键）功能保持不变。", OC_TASTE, 100, 100, 100, "按原版|1.5倍|2倍|3倍", V_SPEED, battle_speed_set },
+    { "battle.fast_key", S_BATTLE, 0, "快进（Z）", "Z键在战斗中可使游戏速度提升六倍；再次按下Z则恢复到之前选择的速度。", OC_SHOW, 0, 1, 1, 0, 0, fast_key },
 
-    { "map.key_m", S_TRAVEL, 0, "World map (M)", "M opens a map of the whole land (the towns, the quests, where saints and formulae are found).", OC_SHOW, 0, 1, 1 },
-    { "travel.auto", S_TRAVEL, "map.key_m", "Auto-travel", "the party follows the roads to a place you pick: double-click it (or Travel there) on the world map (M), or Ctrl+click it in the overland view. Any key or click stops it.", OC_EASE, 0, 1, 1, 0, 0, tr_auto },
-    { "travel.fast", S_TRAVEL, "travel.auto", "Auto-travel speed", "", OC_TASTE, 0, 1, 1, "walking pace|4x|instant", V_PACE, tr_fast },
-    { "map.overland_marks", S_TRAVEL, 0, "Names and quest markers in the overland view", "the towns and places named in the overland view, each quest's icon above its place, and a sign beside a town that bars the party or where the watch is after it.", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, 0, 7, bundle_set },
-    { "map.names", S_TRAVEL, 0, "Place names in the overland view", "the towns and places named in the overland view.", OC_SHOW, 0, 1, 1 },
-    { "map.quest_marks", S_TRAVEL, 0, "Quest markers in the overland view", "each quest's icon above its place in the overland view, and a sign beside a town that bars the party or where the watch is after it.", OC_SHOW, 0, 1, 1 },
-    { "map.offers_unvisited", S_EASYPLAY, 0, "What unvisited places offer", "the saints a library teaches, the formulae an alchemist sells and a shop's goods, also in towns and monasteries the party has not visited: on the world map, on the character sheet and beside an ingredient that runs short. When off: only what the party has seen. (How good each town's smiths and shops are is shown either way.)", OC_EASY, 0, 0, 1 },
-    { "travel.encounters", S_EASYPLAY, 0, "Encounters on the road", "how often travel brings an encounter.", OC_EASY, 100, 100, 50, "a quarter|half|as the original|double", V_RATE },
-    { "travel.street_encounters", S_EASYPLAY, 0, "Night encounters in the streets", "how often thieves and the watch turn up in town at night (in the original, cutthroats about 8 times in 10 in the side streets for a party with little Stealth and Streetwise, and the watch now and then on the main street).", OC_EASY, 100, 100, 50, "a quarter|half|as the original|double", V_RATE },
+    { "map.key_m", S_TRAVEL, 0, "世界地图（M）", "M打开一张涵盖全境的地图（城镇、任务、圣人与配方的分布地点）。", OC_SHOW, 0, 1, 1 },
+    { "travel.auto", S_TRAVEL, "map.key_m", "自动旅行", "队伍会沿着道路自动前往你选定的目的地：在世界地图（M）上双击（或选择“前往”），或在陆地视图中Ctrl+点击。任何按键或点击均可停止自动旅行。", OC_EASE, 0, 1, 1, 0, 0, tr_auto },
+    { "travel.fast", S_TRAVEL, "travel.auto", "自动旅行速度", "", OC_TASTE, 0, 1, 1, "行走速度|4倍|即时", V_PACE, tr_fast },
+    { "map.overland_marks", S_TRAVEL, 0, "陆地视图中的名称与任务标记", "陆地视图中标注的城镇与地点、每个任务图标及其位置、以及城镇旁标注的禁止队伍进入或守卫驻扎的标志。", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, 0, 7, bundle_set },
+    { "map.names", S_TRAVEL, 0, "陆地视图中的地名", "陆地视图中标注的城镇与地点。", OC_SHOW, 0, 1, 1 },
+    { "map.quest_marks", S_TRAVEL, 0, "陆地视图中的任务标记", "陆地视图中每个任务图标及其位置、以及城镇旁标注的禁止队伍进入或守卫驻扎的标志。", OC_SHOW, 0, 1, 1 },
+    { "map.offers_unvisited", S_EASYPLAY, 0, "哪些未访问的地方提供", "圣人拥有的图书馆、炼金术士出售的配方，以及商店的商品——这些在城镇和修道院中队伍尚未造访过的地方：在世界地图上、角色面板上，以及当某种原料即将耗尽时的旁边。关闭时：仅显示队伍已见过的内容。（每个城镇的铁匠铺和商店有多出色，无论哪种方式都会显示。）", OC_EASY, 0, 0, 1 },
+    { "travel.encounters", S_EASYPLAY, 0, "路途中的遭遇", "旅行过程中遇到敌人的频率。", OC_EASY, 100, 100, 50, "四分之一|一半|与原版相同|两倍", V_RATE },
+    { "travel.street_encounters", S_EASYPLAY, 0, "夜间街道上的遭遇", "盗贼和守卫在夜间出现在城镇中的频率（原版中，在侧街里，对于一个隐蔽性和街头智慧较低的队伍，约有八成几率遇到歹徒；而在主街上则偶尔会出现守卫）。", OC_EASY, 100, 100, 50, "四分之一|一半|与原版相同|两倍", V_RATE },
 
 
 
     /* on other pages (Display, Sound, Saves): the presets set them */
-    { "display.text_font", S_OTHER, 0, "Typeface", "the typeface of the cards and the new screens (the game's own lettering drawn crisp, or one of several period hands).", OC_LOOK, 6, 6, 6, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.overlay_font_follow", S_OTHER, 0, "The same typeface for the margins", "the side panels, tooltips and the place names on the world map and in the overland view in the chosen typeface too.", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.spell_out", S_OTHER, 0, "Spell out abbreviations", "the character sheet's abbreviations written out (wPol: Polearm Wpns).", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.coins", S_OTHER, 0, "Money as coins", "florins, groschen and pfennigs as small coins (1 12 4) instead of 1fl 12gr 4pf.", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.text_edge", S_OTHER, 0, "Letter edges", "plain, a shadow or an outline around the letters drawn over pictures (0 plain, 1 shadow, 2 outline).", OC_LOOK, 2, 2, 2, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.text_contrast", S_OTHER, 0, "Darken faint text", "faint text darkened (or lightened) against its background so it stays readable.", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.text_size", S_OTHER, 0, "Text size", "the size of the text in the margins, the tooltips and the place names (world map and overland view), in percent.", OC_LOOK, 100, 100, 100, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.skill_icons", S_OTHER, 0, "Icons beside the skills", "small icons beside the skills and attributes.", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.skill_icon_look", S_OTHER, 0, "Skill icons' look", "heraldic charges on shields (2) or in color (0), wherever a skill or attribute is shown.", OC_LOOK, 2, 2, 2, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.potion_grade", S_OTHER, 0, "A potion's grade", "how a potion's grade shows on its flask (4 chevrons on a badge, 3 chevrons, 1 dots on a strip, 0 small dots).", OC_LOOK, 4, 4, 4, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.pstone_look", S_OTHER, 0, "The Philosopher's Stone", "how the stone is pictured (2 the squared circle, 1 a rough stone, 0 an egg).", OC_LOOK, 2, 2, 2, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.clock", S_OTHER, 0, "Clock", "the clock shown while hours pass (styles by number).", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.ornate", S_OTHER, 0, "Ornaments", "the plaited band and the gilt corners around the windows.", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.frame_style", S_OTHER, 0, "Frame style", "the band around the windows (styles by number).", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.button_style", S_OTHER, 0, "Button style", "the look of the buttons (styles by number).", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.art_names", S_OTHER, 0, "Replacement art: show file names", "the file each picture would be replaced from, for those making replacement art.", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.smooth", S_OTHER, 0, "Soft scaling", "the game's picture blurred a little, as an old monitor would, rather than in sharp pixels (Soft in F12 > Settings > Screen).", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.scaler", S_OTHER, 0, "Rounded edges", "the stair-steps of diagonal edges rounded off (Rounded edges in F12 > Settings > Screen): 0 as drawn, 1 and 2 rounded.", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.system_cursor", S_OTHER, 0, "System pointer", "the system's mouse pointer over the game too.", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.live_pointer", S_OTHER, 0, "Smooth pointer", "the game's mouse pointer moves as smoothly as the system's.", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.pointer_drawn", S_OTHER, 0, "Drawn pointer", "the game's armored gauntlet drawn anew, crisp at any size: a fist while something is dragged; on its cuff the pause in a paused battle, crossed blades over a foe, an hourglass while Go to walks (else the game's little picture).", OC_LOOK, 0, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.ui_scale", S_OTHER, 0, "Size of the menus", "the size of Darklands+'s menus in percent (0: the system's scale), after a restart.", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.pause_unfocused", S_OTHER, 0, "Pause in the background", "the game pauses while its window is in the background.", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.opening", S_OTHER, 0, "Intro at start-up", "the intro: 0 nothing, 1 the last scene, 2 the whole (-1: the whole the first time).", OC_LOOK, -1, -1, -1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.draw_cache", S_OTHER, 0, "Drawing cache", "the ornate frames drawn once and kept, not drawn again each time: 1 (the default: the plaited bands made into pictures by the processor, the rest kept as triangles), 0 off, 3 everything kept as triangles, 2 kept as pictures drawn by the graphics card.", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "encounters.new", S_OTHER, 0, "Encounters from mods", "the new encounters that mods add (F12 > Mods) come up on the road.", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "encounters.seal", S_OTHER, 0, "A seal on encounters from mods", "a small red seal in the corner of a card that comes from a mod, not the original game.", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "encounters.share", S_OTHER, 0, "How often encounters from mods come up", "in percent: at 100, each is as likely as any one of the original encounters for that terrain.", OC_LOOK, 100, 100, 100, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "input.prompts", S_OTHER, 0, "Button prompts", "the controller's buttons on screen: 0 the device in use, 1 keys and mouse, 2 Xbox, 3 PlayStation, 4 Nintendo.", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "saves.ironman", S_OTHER, 0, "Ironman", "the next new game keeps one save, saved over by the game itself as it goes (every card, each arrival, before each battle, on quitting); no loading back while it runs; when the party's journey ends, its save is deleted.", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "saves.backup", S_OTHER, 0, "Back up saves", "a copy of each save before it is overwritten.", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "saves.keep_auto", S_OTHER, 0, "Autosaves kept", "how many autosaves are kept.", OC_LOOK, 3, 3, 3, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "saves.keep_quick", S_OTHER, 0, "Quick saves kept", "how many quick saves are kept.", OC_LOOK, 3, 3, 3, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "sound.music_volume", S_OTHER, 0, "Music volume", "in percent.", OC_LOOK, 100, 100, 100, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "sound.effects_volume", S_OTHER, 0, "Effects volume", "in percent.", OC_LOOK, 100, 100, 100, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "sound.music_in_menus", S_OTHER, 0, "Music in the menus", "the music goes on while Darklands+'s menus are open.", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "sound.mt32_lcd", S_OTHER, 0, "MT-32 display", "the MT-32's little display shown at the top right when the game puts a message on it.", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "quests.sort", S_OTHER, 0, "Quests sorted by", "the margin's quests: 0 by deadline, 1 nearest first, 2 as taken.", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.crisp_text", S_OTHER, 0, "New text", "", OC_TASTE, 0, 2, 2, 0, 0, hdtext_set, 0, OF_ELSEWHERE },
-    { "display.hd_art", S_OTHER, 0, "Replacement art", "", OC_TASTE, 0, 1, 1, 0, 0, hdart_set, 0, OF_ELSEWHERE },
-    { "sound.effects", S_OTHER, 0, "Battle sounds from a sound pack", "", OC_LOOK, 0, 0, 0, 0, 0, sfx_set, 0, OF_ELSEWHERE },
-    { "display.margins", S_OTHER, 0, "Side margins", "", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.full_names", S_OTHER, 0, "Names in full", "", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "display.armour_worn", S_OTHER, 0, "Where armor is worn", "", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
-    { "saves.quick", S_OTHER, 0, "Quick saves and autosaves", "", OC_EASE, 0, 1, 1, 0, 0, saves_enable, 0, OF_ELSEWHERE },
-    { "saves.autosave_arrive", S_OTHER, 0, "Autosave on arriving", "", OC_EASE, 0, 1, 1, 0, 0, auto_arrive, 0, OF_ELSEWHERE },
-    { "saves.autosave_battle", S_OTHER, 0, "Autosave before a battle", "", OC_EASE, 0, 1, 1, 0, 0, auto_battle, 0, OF_ELSEWHERE },
-    { "saves.restart_on_end", S_OTHER, 0, "Back to the start screen when the journey ends", "", OC_EASE, 0, 1, 1, 0, 0, restart_end, 0, OF_ELSEWHERE },
+    { "display.text_font", S_OTHER, 0, "字体", "卡牌和新界面的字体样式（游戏自带的字体清晰锐利，或选用多种时代风格的手写体）。", OC_LOOK, 6, 6, 6, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.overlay_font_follow", S_OTHER, 0, "边框也用同一字体", "侧边栏、工具提示，以及世界地图和陆地视图中的地名，也都采用所选字体。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.spell_out", S_OTHER, 0, "拆解缩写", "角色面板上的缩写被完整写出（wPol：长柄武器）。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.coins", S_OTHER, 0, "货币以硬币形式", "弗罗林、格罗申和芬尼作为小额货币（1 12 4），而非1弗罗林 12格罗申 4芬尼。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.text_edge", S_OTHER, 0, "字母边缘", "纯色、阴影或轮廓环绕字母，叠加于图像之上（0纯色，1阴影，2轮廓）。", OC_LOOK, 2, 2, 2, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.text_contrast", S_OTHER, 0, "加深浅色文字", "浅色文字在其背景上被加深（或提亮），以确保可读性。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.text_size", S_OTHER, 0, "文字大小", "边框、工具提示及地名（世界地图和陆地视图）中文字的大小，以百分比表示。", OC_LOOK, 100, 100, 100, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.skill_icons", S_OTHER, 0, "技能旁的图标", "技能和属性旁的小图标。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.skill_icon_look", S_OTHER, 0, "技能图标外观", "盾牌上的纹章图案（2）或彩色图案（0），无论何时显示某项技能或属性。", OC_LOOK, 2, 2, 2, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.potion_grade", S_OTHER, 0, "药剂等级", "药剂等级如何体现在其瓶身上（徽章上有4个箭头，3个箭头，条纹上1个圆点，0个小圆点）。", OC_LOOK, 4, 4, 4, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.pstone_look", S_OTHER, 0, "哲学家之石", "石头的呈现方式（2为方形圆圈，1为粗糙石头，0为鸡蛋）。", OC_LOOK, 2, 2, 2, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.clock", S_OTHER, 0, "时钟", "计时器随时间流逝而显示的样式（按数字区分）。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.ornate", S_OTHER, 0, "装饰", "窗户周围的编织带与镀金角饰。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.frame_style", S_OTHER, 0, "框架样式", "窗户周围的装饰带（按数字区分）。", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.button_style", S_OTHER, 0, "按钮样式", "按钮的外观（按数字区分）。", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.art_names", S_OTHER, 0, "替代美术：显示文件名", "对于制作替代美术的人，每张图片将从哪个文件替换而来。", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.smooth", S_OTHER, 0, "软缩放", "游戏画面略显模糊，如同老式显示器一般，而非由清晰的像素构成（可在F12 > 设置 > 显示中调整“柔和”）。", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.scaler", S_OTHER, 0, "圆角效果", "对角线边缘的阶梯状部分被圆滑处理（可在F12 > 设置 > 显示中调整“圆角”）：0为原样，1和2为圆角。", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.system_cursor", S_OTHER, 0, "系统指针", "游戏界面中的系统鼠标指针。", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.live_pointer", S_OTHER, 0, "平滑指针", "游戏鼠标指针的移动与系统指针一样流畅。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.pointer_drawn", S_OTHER, 0, "绘制指针", "游戏装甲手套重新绘制，无论大小都清晰锐利：拖动时呈现拳头形态；暂停战斗时袖口处显示停顿标志，与敌人交锋时交叉剑刃，前往某地时则显示沙漏（否则为游戏的小图标）。", OC_LOOK, 0, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.ui_scale", S_OTHER, 0, "菜单尺寸", "Darklands+菜单的尺寸，以百分比表示（0为系统缩放比例），重启后生效。", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.pause_unfocused", S_OTHER, 0, "背景暂停", "当游戏窗口处于后台时，游戏会自动暂停。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.opening", S_OTHER, 0, "启动时的开场动画", "开场动画：0为无，1为最后一幕，2为全部内容（-1为首次启动时的全部内容）。", OC_LOOK, -1, -1, -1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.draw_cache", S_OTHER, 0, "绘制缓存", "精美边框仅绘制一次并保留，不再每次重复绘制：1（默认值，处理器将编织带制成图案，其余保持三角形）、0关闭、3全部以三角形保留、2以显卡绘制的图案保留。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "encounters.new", S_OTHER, 0, "模组新增遭遇", "模组添加的新遭遇（F12 > 模组）会在路途中出现。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "encounters.seal", S_OTHER, 0, "模组遭遇的标记", "来自模组而非原版游戏的卡片角落上，有一个小小的红色标记。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "encounters.share", S_OTHER, 0, "模组遭遇的出现频率", "以百分比表示：在100%时，每种遭遇与该地形原版遭遇的概率相同。", OC_LOOK, 100, 100, 100, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "input.prompts", S_OTHER, 0, "按钮提示", "屏幕上的控制器按钮：0为当前使用的设备，1为键盘与鼠标，2为Xbox，3为PlayStation，4为任天堂。", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "saves.ironman", S_OTHER, 0, "铁人模式", "下一局新游戏仅保留一份存档，由游戏自身在进行过程中不断覆盖保存（每张卡片、每次到达、每次战斗前、退出时均如此）；运行期间无法加载回退；当队伍旅程结束时，存档将被删除。", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "saves.backup", S_OTHER, 0, "备份存档", "每次存档被覆盖前的副本。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "saves.keep_auto", S_OTHER, 0, "自动存档保留数量", "自动存档保留的数量。", OC_LOOK, 3, 3, 3, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "saves.keep_quick", S_OTHER, 0, "快速存档保留数量", "快速存档保留的数量。", OC_LOOK, 3, 3, 3, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "sound.music_volume", S_OTHER, 0, "音乐音量", "以百分比表示。", OC_LOOK, 100, 100, 100, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "sound.effects_volume", S_OTHER, 0, "效果音量", "以百分比表示。", OC_LOOK, 100, 100, 100, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "sound.music_in_menus", S_OTHER, 0, "菜单中的音乐", "Darklands+菜单打开时，背景音乐持续播放。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "sound.mt32_lcd", S_OTHER, 0, "MT-32显示", "当游戏显示消息时，MT-32的小型显示屏会出现在右上角。", OC_LOOK, 1, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "quests.sort", S_OTHER, 0, "任务按以下方式排序", "边缘的任务：0 按截止日期，1 最近优先，2 按领取顺序。", OC_LOOK, 0, 0, 0, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.crisp_text", S_OTHER, 0, "新文本", "", OC_TASTE, 0, 2, 2, 0, 0, hdtext_set, 0, OF_ELSEWHERE },
+    { "display.hd_art", S_OTHER, 0, "替代美术", "", OC_TASTE, 0, 1, 1, 0, 0, hdart_set, 0, OF_ELSEWHERE },
+    { "sound.effects", S_OTHER, 0, "来自音效包的战斗音效", "", OC_LOOK, 0, 0, 0, 0, 0, sfx_set, 0, OF_ELSEWHERE },
+    { "display.margins", S_OTHER, 0, "侧边栏", "", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.full_names", S_OTHER, 0, "全名", "", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "display.armour_worn", S_OTHER, 0, "盔甲穿戴位置", "", OC_SHOW, 0, 1, 1, 0, 0, 0, 0, OF_ELSEWHERE },
+    { "saves.quick", S_OTHER, 0, "快速存档与自动存档", "", OC_EASE, 0, 1, 1, 0, 0, saves_enable, 0, OF_ELSEWHERE },
+    { "saves.autosave_arrive", S_OTHER, 0, "抵达时自动存档", "", OC_EASE, 0, 1, 1, 0, 0, auto_arrive, 0, OF_ELSEWHERE },
+    { "saves.autosave_battle", S_OTHER, 0, "战斗前自动存档", "", OC_EASE, 0, 1, 1, 0, 0, auto_battle, 0, OF_ELSEWHERE },
+    { "saves.restart_on_end", S_OTHER, 0, "旅程结束时返回主界面", "", OC_EASE, 0, 1, 1, 0, 0, restart_end, 0, OF_ELSEWHERE },
     /* what MicroProse wrote, coded or left unfinished and never switched on, put back: experimental, off by default and in every preset */
-    { "rules.fehde", S_RESTORED, 0, "\"Fehde!\" ambush", "a road ambush by soldiers of a private feud, written as a variant of the mercenaries' ambush and never used: half the time that ambush comes up, the Fehde comes instead, with its own texts but the same odds and battle (Soldiers led by a Knight).", OC_EXPERIMENT, 0, 0, 0 },
-    { "rules.hospice", S_RESTORED, 0, "Town hospice", "a town's hospice by day, written but never made playable: give alms, work a day beside the nuns (Healing), have the party's wounds tended for a fee, or beg to be tended for nothing. The church district leads there, and Go to (G) lists it.", OC_EXPERIMENT, 0, 0, 0 },
-    { "rules.war", S_RESTORED, 0, "Cities at war", "coded and never switched on. Now and then a city prepares for war for a few weeks, and some then stand a siege: prices rise, the news tells of it, Soldiers' Road and its market open, the docks are guarded or barricaded, and the gate turns travelers away (talk, bluff, sneak, a farmer's hay cart, or the walls, where patrols take you for spies). A save made during a war carries the war on if loaded in the original game.", OC_EXPERIMENT, 0, 0, 0 },
-    { "rules.politics", S_RESTORED, 0, "City politics", "the campaign written and never switched on. Now and then a city has a season of unrest: rumors in the news and the guild quarters lead to the rebels' leader or the government's man, the party takes a side, posts handbills, sways the guilds, and a war council sets the day of a march on the town hall or of the arrests.", OC_EXPERIMENT, 0, 0, 0 },
-    { "battle.black_cloud", S_RESTORED, 0, "Black Cloud in battle", "the party can throw Black Cloud in a battle too. The manual left it out (\"the screen takes too long\" on the machines of 1992), but the battle rules handle its smoke: shots through it hit a fifth as often, and fighting from inside it gives -15 to hit. Enemies and cards already use it.", OC_EXPERIMENT, 0, 0, 0 },
-    { "assist.hall_of_fame", S_RESTORED, 0, "Honor Roll of Glory (hall of fame)", "the hall of fame left unfinished in the game (its picture and table were in the files, never used): a party enters it when its journey ends, and F12 > Journal > Honor Roll shows it.", OC_EXPERIMENT, 0, 0, 0 },
+    { "rules.fehde", S_RESTORED, 0, "Fehde！”伏击", "由私人仇杀士兵发动的路障伏击，写成雇佣兵伏击的一种变体但从未启用：一半情况下出现的是Fehde伏击，拥有独立的文本但概率和战斗相同（由骑士率领的士兵）。", OC_EXPERIMENT, 0, 0, 0 },
+    { "rules.hospice", S_RESTORED, 0, "城镇收容所", "白天的城镇收容所，已编写但从未实装：施舍、在修女身边工作一天（治疗）、付费让队伍伤口得到护理，或乞讨免费护理。教堂区通往此处，且“前往”（G）中列有此地。", OC_EXPERIMENT, 0, 0, 0 },
+    { "rules.war", S_RESTORED, 0, "战争中的城市", "已编码但从未启用。偶尔某城会为战争做数周准备，部分城市还会遭遇围攻：物价上涨、新闻报道、士兵之路及其市场开放、码头被守卫或封锁、城门拒绝旅客通行（交谈、虚张声势、潜行、用农夫的干草车，或借助城墙巡逻队误以为你是间谍）。战争期间存档，原版游戏加载时仍保留战争状态。", OC_EXPERIMENT, 0, 0, 0 },
+    { "rules.politics", S_RESTORED, 0, "城市政治", "已编写但从未启用的竞选活动。偶尔某城会出现一段动荡期：新闻与公会区域的传闻会指向叛军首领或政府官员，队伍选边站队、张贴传单、影响公会、而战争委员会则决定何时游行至市政厅或实施逮捕。", OC_EXPERIMENT, 0, 0, 0 },
+    { "battle.black_cloud", S_RESTORED, 0, "战斗中的黑云", "队伍也可在战斗中释放黑云。手册曾将其略去（“1992年的机器上屏幕显示时间过长”），但战斗规则已处理其烟雾效果：穿透黑云的射击命中率降至五分之一，而在黑云内作战则使命中加减15。敌人与卡牌早已使用该机制。", OC_EXPERIMENT, 0, 0, 0 },
+    { "assist.hall_of_fame", S_RESTORED, 0, "荣誉榜（名人堂）", "游戏中未完成的名人堂（图片与表格存在于文件中，从未启用）：队伍在旅程结束时可进入，按下F12 > 日志 > 荣誉榜即可查看。", OC_EXPERIMENT, 0, 0, 0 },
 };
 #define NSTATIC ((int)(sizeof OPTIONS / sizeof OPTIONS[0]))
 
@@ -272,14 +272,14 @@ static void build_dyn(void)
     for (int i = 0; i < MOD_COUNT; i++) {            /* (easy: the ones once in the Easy preset; kept as the Easy column of docs/SWITCHES.md) */
         Option *o = &dyn[ndyn]; snprintf(dyn_key[ndyn], sizeof dyn_key[0], "mod.%s", MODS[i].id);
         int easy = !strcmp(MODS[i].id, "cheap_inn") || !strcmp(MODS[i].id, "quick_learning") || !strcmp(MODS[i].id, "heavy_blows") || !strcmp(MODS[i].id, "rich_start");
-        o->key = dyn_key[ndyn]; o->section = "Easier play"; o->title = MODS[i].name; o->desc = MODS[i].desc;
+        o->key = dyn_key[ndyn]; o->section = "更易上手"; o->title = MODS[i].name; o->desc = MODS[i].desc;
         o->cls = OC_EASY; o->orig = 0; o->def = 0; o->easy = easy; o->arg = i; o->apply_i = mod_apply;
-        o->note = MODS[i].needs_new_game ? "Takes effect when the next new game starts." : 0;
+        o->note = MODS[i].needs_new_game ? "下一局新游戏开始时生效。" : 0;
         ndyn++;
     }
     for (int i = 0; i < FIX_COUNT; i++) {
         Option *o = &dyn[ndyn]; snprintf(dyn_key[ndyn], sizeof dyn_key[0], "fix.%s", FIXES[i].id);
-        o->key = dyn_key[ndyn]; o->section = "Fixes for bugs of the original"; o->title = FIXES[i].name; o->desc = FIXES[i].desc;
+        o->key = dyn_key[ndyn]; o->section = "修复原版漏洞"; o->title = FIXES[i].name; o->desc = FIXES[i].desc;
         o->cls = OC_FIX; o->orig = 0; o->def = 1; o->easy = 1; o->arg = i; o->apply_i = fix_apply;
         ndyn++;
     }
@@ -326,12 +326,12 @@ const char *option_choice(const Option *o, int k, char *buf, int n)
 
 /* ---------------------------------------------------------------- presets */
 const Preset PRESETS[PRESET_COUNT] = {
-    { "Full Original", "Darklands as it played in 1993 (version 483.07), bugs and all: everything Darklands+ adds to the play is off, and the original game's sound setup is used. How it looks (the text, the frames, the screen) stays as set in those sections.",
-      "Saves load in the original game and back." },
-    { "Purist", "The original game with its bugs fixed: its own screens, rules and graphics.",
-      "Saves load in the original game and back." },
-    { "Darklands+", "The original rules with the original's bugs fixed, the new screens, on screen what the original keeps behind keys or only in its manual, and less busywork: auto-travel, Go to, easier battle controls, one shared pack, one store room for every inn, endless ammunition. Easier play is offered separately, as built-in mods (F12 > Mods).",
-      "Saves load in the original game and back, unless a member uses an enemy sprite." },
+    { "完整原版", "1993年Darklands原版（版本483.07），含所有漏洞：Darklands+新增的一切玩法均被关闭，沿用原版游戏的音效设置。外观（文字、画面、屏幕）保持各部分原有设定。",
+      "存档可在原版游戏与新版本间加载。" },
+    { "纯粹主义者", "修复了所有漏洞的原版游戏：自有界面、规则与画面。",
+      "存档可在原版游戏与新版本间加载。" },
+    { "Darklands+", "修正原版漏洞后的全新规则，搭配新界面，屏幕上呈现原版隐藏于按键后或仅见于手册的内容，并减少繁琐操作：自动旅行、前往、更便捷的战斗控制、统一装备包、每家旅店设单独储物间、弹药无限。更易上手功能以内置模组形式单独提供（F12 > 模组）。",
+      "存档可在原版游戏与新版本间加载，除非成员使用了敌方精灵。" },
 };
 
 int preset_value(const Option *o, int p)
@@ -453,12 +453,12 @@ int options_dump_markdown(const char *path)
 {
     FILE *f = fopen(path, "w");
     if (!f) return 0;
-    fputs("# Darklands+ switches\n\n"
-          "Every switch: its key (its name for good: never renamed, never reused), what it does, why it exists, the group\n"
-          "switch that sets it (if any), its class (what kind of change: fix, show, ease, plus, easy, experiment, taste,\n"
-          "tool) and its value in the original game / Darklands+ / for easy play (the column of the former Easy preset). Made by the game itself\n"
-          "(`DL_DUMP_SWITCHES=docs/SWITCHES.md`, from `port/mods/options.c` and `port/mods/optwhy.c`); `tools/check_switches.py`\n"
-          "fails if a key disappears without being listed as retired.\n\n", f);
+    fputs("# Darklands+切换\\n\\n"
+          "每次切换：其密钥（名称良好：从未改名、从未重复使用）、作用、存在理由、所属群体"
+          "设定它的切换（如有）、类别（何种变更：修复、展示、简化、附加、便捷、实验、口味等）"
+          "工具）以及它在原版游戏/Darklands+/为更易上手所赋予的价值（前者的“简易预设”栏目）。由游戏自身制作"
+          "（`DL_DUMP_SWITCHES=docs/SWITCHES.md`，源自`port/mods/options.c`与`port/mods/optwhy.c`）；`tools/check_switches.py`\\n"
+          "若密钥消失且未被列入退役名单，则检查失败。", f);
     int n = options_count();
     const char *secs[64]; int ns = 0;                 /* the sections in the order they first appear; each one's switches together */
     for (int i = 0; i < n; i++) {

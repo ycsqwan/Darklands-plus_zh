@@ -44,13 +44,13 @@ extern "C" int citynav_available(void);
 std::string hhmm(int minutes)      /* a time on the way, as an estimate reads: "40 minutes", "22 hours", "1.4 days", "14 days" */
 {
     char b[48];
-    if (minutes < 60) snprintf(b, sizeof b, "%d minute%s", minutes, minutes == 1 ? "" : "s");
-    else if (minutes < 23 * 60 + 30) { int h = (minutes + 30) / 60; snprintf(b, sizeof b, "%d hour%s", h, h == 1 ? "" : "s"); }
+    if (minutes < 60) snprintf(b, sizeof b, "%d 分钟%s", minutes, minutes == 1 ? "" : "s");
+    else if (minutes < 23 * 60 + 30) { int h = (minutes + 30) / 60; snprintf(b, sizeof b, "%d 小时%s", h, h == 1 ? "" : "s"); }
     else {
         int t = (minutes * 10 + 720) / 1440;                  /* tenths of a day */
-        if (t == 10) snprintf(b, sizeof b, "1 day");
-        else if (t < 100) snprintf(b, sizeof b, "%d.%d days", t / 10, t % 10);
-        else snprintf(b, sizeof b, "%d days", (t + 5) / 10);
+        if (t == 10) snprintf(b, sizeof b, "1 天");
+        else if (t < 100) snprintf(b, sizeof b, "%d.%d 天", t / 10, t % 10);
+        else snprintf(b, sizeof b, "%d 天", (t + 5) / 10);
     }
     return b;
 }
@@ -102,10 +102,10 @@ const char *kind_label(int k) { return loc_kind_label(k); }
 const char *loc_kind_label(int k)        /* a location's type (its record's +0) in words */
 {
     switch (k) {
-    case 0: return "town"; case 1: case 2: return "castle"; case 26: return "ruined castle"; case 3: return "monastery";
-    case 5: case 19: return "cave"; case 24: return "alpine cave"; case 6: return "mine"; case 8: case 10: return "village";
-    case 9: return "ruined village"; case 13: return "tomb"; case 16: return "spring"; case 17: case 25: return "lake";
-    case 18: return "shrine"; case 20: return "pagan altar"; case 4: return "standing stone"; case 21: return "witches' meeting place";
+    case 0: return "town"; case 1: case 2: return "castle"; case 26: return "废墟城堡"; case 3: return "monastery";
+    case 5: case 19: return "cave"; case 24: return "高山洞穴"; case 6: return "mine"; case 8: case 10: return "village";
+    case 9: return "废墟村庄"; case 13: return "tomb"; case 16: return "spring"; case 17: case 25: return "lake";
+    case 18: return "shrine"; case 20: return "异教祭坛"; case 4: return "立石"; case 21: return "巫师的集会地";
     case 22: case 23: return "castle"; default: return "place";
     }
 }
@@ -134,7 +134,7 @@ std::string kind_line(const std::vector<Place> &P, const Place &p)
         if (t.kind == 0) { double d = hypot((double)(t.x - p.x), (t.y - p.y) / 2.0); if (d < bd) { bd = d; best = &t; } }
     return best ? std::string(k) + " near " + best->name : std::string(k);
 }
-const char *IK_LABEL[IK_N] = { "Town", "Village", "Castle", "Monastery", "Shrine", "Cave", "Mine", "Spring or lake", "Tomb", "Pagan site", "Ruins", "Other" };
+const char *IK_LABEL[IK_N] = { "城镇", "村庄", "城堡", "修道院", "祭坛", "洞穴", "矿井", "泉水或湖泊", "墓穴", "异教圣地", "废墟", "其他" };
 void draw_icon_painted(ImDrawList *dl, ImVec2 c, float s, int ik)
 {
     const ImU32 K = IM_COL32(20, 14, 8, 235);                          /* the dark outline */
@@ -356,7 +356,7 @@ void draw_map_frame(ImDrawList *dl, ImVec2 a, ImVec2 b)
     dl->AddRect(c0, c1, ink, 0, 0, 1.0f);
     dl->AddRect(a, b, ink, 0, 0, 1.0f);
     /* the title over the top, and the rose at the lower left */
-    const char *t = "Map of Greater Germany";
+    const char *t = "大德意志地图";
     float tfs = band * 1.3f; ImVec2 tsz = f->CalcTextSizeA(tfs, FLT_MAX, 0, t);
     float tx = (a.x + b.x) * 0.5f - tsz.x * 0.5f, ty = o0.y - tsz.y - band * 0.3f;
     dl->AddText(f, tfs, ImVec2(tx, ty), ink, t);
@@ -520,8 +520,8 @@ extern "C" void travelmap_labels(void)
                 ImGui::BeginTooltip(); ImGui::PushTextWrapPos(ImGui::GetFontSize() * 22);
                 ImGui::TextUnformatted(name.c_str());
                 ImGui::TextDisabled("%s", loc_kind_label(kind));
-                if (tip_min > 0) ImGui::Text("About %s of travel", hhmm(tip_min).c_str());
-                if (config_get_int("travel.auto", 1)) ImGui::TextDisabled("Ctrl+click: travel there along the roads");
+                if (tip_min > 0) ImGui::Text("大约 %s 的路程", hhmm(tip_min).c_str());
+                if (config_get_int("travel.auto", 1)) ImGui::TextDisabled("按住 Ctrl 键并单击：沿道路前往");
                 ImGui::PopTextWrapPos(); ImGui::EndTooltip();
             }
         }

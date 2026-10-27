@@ -55,25 +55,25 @@ extern "C" void lootview_draw(void)
     P.page();
 
     /* the header */
-    P.text(f, NsDraw::FS_TITLE, 65, 3, ink, "The loot");
+    P.text(f, NsDraw::FS_TITLE, 65, 3, ink, "财物");
     {
         bool cash = l.cash_fl || l.cash_gr || l.cash_pf;
-        P.text(fo, NsDraw::FS_BODY, 65, 12.5f, soft, cash ? "Found " + money_fgp(l.cash_fl, l.cash_gr, l.cash_pf) + " in cash (added to the purse)." : std::string("No money found."));
+        P.text(fo, NsDraw::FS_BODY, 65, 12.5f, soft, cash ? "发现" + money_fgp(l.cash_fl, l.cash_gr, l.cash_pf) + "以现金形式（已添加到钱包）。" : std::string("未发现金钱。"));
     }
     float bx = 284;
-    if (P.button(bx, 4, 315, 15, "Leave", IM_COL32(112, 40, 22, 235), NsDraw::FS_HEADBTN, PB_Y)) ns_push(LV_LEAVE, 0, 0, 0);
+    if (P.button(bx, 4, 315, 15, "离开", IM_COL32(112, 40, 22, 235), NsDraw::FS_HEADBTN, PB_Y)) ns_push(LV_LEAVE, 0, 0, 0);
     if (l.shared && l.npile) {                                  /* (one pack: everything into it) */
-        if (P.button(bx - 33, 4, bx - 3, 15, "Take all", IM_COL32(40, 92, 34, 235), NsDraw::FS_HEADBTN)) ns_push(LV_SHARE, 0, 0, 0);
+        if (P.button(bx - 33, 4, bx - 3, 15, "全部取出", IM_COL32(40, 92, 34, 235), NsDraw::FS_HEADBTN)) ns_push(LV_SHARE, 0, 0, 0);
     } else if (l.assist && l.npile) {
-        if (P.button(bx - 36, 4, bx - 3, 15, "Share out", IM_COL32(40, 92, 34, 235), NsDraw::FS_SMALL)) ns_push(LV_SHARE, 0, 0, 0);
-        if (P.button(bx - 70, 4, bx - 39, 15, "Take all", IM_COL32(40, 92, 34, 235), NsDraw::FS_HEADBTN)) ns_push(LV_TAKEALL, 0, 0, 0);
+        if (P.button(bx - 36, 4, bx - 3, 15, "分配", IM_COL32(40, 92, 34, 235), NsDraw::FS_SMALL)) ns_push(LV_SHARE, 0, 0, 0);
+        if (P.button(bx - 70, 4, bx - 39, 15, "全部取出", IM_COL32(40, 92, 34, 235), NsDraw::FS_HEADBTN)) ns_push(LV_TAKEALL, 0, 0, 0);
     }
 
     /* the member tabs */
     const float LX0 = 63, LX1 = 180, RX0 = 184, RX1 = 317, LY0 = 31, ROWH = 9; const int NROWS = 13;
     const float LY1 = LY0 + NROWS * ROWH;
-    P.text(f, NsDraw::FS_HEAD, LX0 + 1, 21, ink, "The pile");
-    if (l.shared) P.text(f, NsDraw::FS_HEAD, RX0 + 1, 21, ink, "The party's pack");
+    P.text(f, NsDraw::FS_HEAD, LX0 + 1, 21, ink, "堆积物");
+    if (l.shared) P.text(f, NsDraw::FS_HEAD, RX0 + 1, 21, ink, "队伍的背包");
     else {
         int n = 0; for (int m = 0; m < 5; m++) if (l.present[m]) n++;
         float tw = n ? (RX1 - RX0) / n : 0, x = RX0;
@@ -100,7 +100,7 @@ extern "C" void lootview_draw(void)
         int maxs = n - NROWS; if (maxs < 0) maxs = 0;
         if (V.scroll[L] > maxs) V.scroll[L] = maxs;
         if (V.scroll[L] < 0) V.scroll[L] = 0;
-        if (!n) P.text(fo, NsDraw::FS_BODY, x0 + 4, LY0 + 3, dim, L ? (l.shared ? "No potions or spare items in the pack." : "Carries nothing.") : "Nothing left in the pile.");
+        if (!n) P.text(fo, NsDraw::FS_BODY, x0 + 4, LY0 + 3, dim, L ? (l.shared ? "背包中没有药水或备用物品。" : "什么都没携带。") : "堆积物中已无剩余。");
         for (int r = 0; r < NROWS && V.scroll[L] + r < n; r++) {
             int i = V.scroll[L] + r;
             float y = LY0 + r * ROWH;
@@ -130,12 +130,12 @@ extern "C" void lootview_draw(void)
             bool can = L || l.room;
             float b1 = x1 - 2;
             ImU32 bc = L ? IM_COL32(120, 44, 24, 235) : IM_COL32(40, 92, 34, 235);
-            if (!can) P.text(fo, NsDraw::FS_SMALL, 0, y + 2.4f, red, "no room", b1);
-            else if (kept) P.text(fo, NsDraw::FS_SMALL, 0, y + 2.4f, dim, "kept: stays", b1);
+            if (!can) P.text(fo, NsDraw::FS_SMALL, 0, y + 2.4f, red, "没有空间", b1);
+            else if (kept) P.text(fo, NsDraw::FS_SMALL, 0, y + 2.4f, dim, "保留：停留", b1);
             else if (count > 1) {                                   /* (the stack, or one of it: said so) */
-                if (P.button(b1 - 17, y + 1, b1, y + ROWH - 1, L ? "Put all" : "Take all", bc, 4.6f)) ns_push(L ? LV_PUT : LV_TAKE, i, 255, 0);
-                if (P.button(b1 - 32, y + 1, b1 - 18, y + ROWH - 1, L ? "Put 1" : "Take 1", IM_COL32(120, 84, 40, 235), 4.6f)) ns_push(L ? LV_PUT : LV_TAKE, i, 1, 0);
-            } else if (P.button(b1 - 20, y + 1, b1, y + ROWH - 1, L ? "Put back" : "Take", bc, 4.6f)) ns_push(L ? LV_PUT : LV_TAKE, i, 255, 0);
+                if (P.button(b1 - 17, y + 1, b1, y + ROWH - 1, L ? "全部放入" : "全部取出", bc, 4.6f)) ns_push(L ? LV_PUT : LV_TAKE, i, 255, 0);
+                if (P.button(b1 - 32, y + 1, b1 - 18, y + ROWH - 1, L ? "放入1件" : "取出1件", IM_COL32(120, 84, 40, 235), 4.6f)) ns_push(L ? LV_PUT : LV_TAKE, i, 1, 0);
+            } else if (P.button(b1 - 20, y + 1, b1, y + ROWH - 1, L ? "放回" : "取出", bc, 4.6f)) ns_push(L ? LV_PUT : LV_TAKE, i, 255, 0);
         }
         if (n > NROWS) {
             float th = (LY1 - LY0) * NROWS / n, ty = LY0 + (LY1 - LY0 - th) * V.scroll[L] / (float)(n - NROWS);
@@ -157,11 +157,11 @@ extern "C" void lootview_draw(void)
         t.cmp_who = L ? -1 : l.shared ? -2 : l.who;      /* (one pack: whom in the party it would suit) */
         if (config_get_int("assist.loot_worth", 1)) {
             long w = sale_worth(id, qual);
-            if (w > 0) t.right = "A shop pays about " + money_with_total(w) + (cnt > 1 ? " each" : "");
+            if (w > 0) t.right = "一家商店支付约" + money_with_total(w) + (cnt > 1 ? " each" : "");
         }
         t.y_max = SY1 - 1.5f;
         ns_item_strip(P, SY0, t);
-    } else P.text(fo, NsDraw::FS_BODY, 68, SY0 + 3, dim, l.shared ? "Point at an item to see it here; F11 shows what you can do."
-                                                         : "Point at an item to see it here. Click a name above the right list (or press D) for another member.");
+    } else P.text(fo, NsDraw::FS_BODY, 68, SY0 + 3, dim, l.shared ? "将鼠标指向某件物品即可在此查看；按F11可显示你能进行的操作。"
+                                                         : "将鼠标指向某件物品即可在此处查看。点击右侧列表上方的名称（或按D键）可切换另一位成员。");
     if (l.note[0] && plat_ticks_ms() - l.note_t < 6000) P.text(fo, NsDraw::FS_BODY, 68, SY1 - 8.5f, IM_COL32(112, 40, 22, 255), ns_gtext(l.note));
 }

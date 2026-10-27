@@ -112,12 +112,12 @@ static int take(int i, int all)
     char nm[32]; gm_itemdef_name(id, nm, sizeof nm);
     char t[160];
     if (shared) {
-        if (done && gm_is_potion(id)) snprintf(t, sizeof t, "%d %s to %s (to give it to another member, drag it from the character sheet onto them in the party panel).", done, nm, cache_model.names[m]);
-        else if (done) snprintf(t, sizeof t, "%d %s into the party's pack.", done, nm);
-        else snprintf(t, sizeof t, "No room: every member already carries 64 kinds of items.");
+        if (done && gm_is_potion(id)) snprintf(t, sizeof t, "%d %s 转移至 %s（要将其赠予其他成员，可从角色面板拖拽至队伍面板中的对应成员）。", done, nm, cache_model.names[m]);
+        else if (done) snprintf(t, sizeof t, "%d %s 放入队伍背包。", done, nm);
+        else snprintf(t, sizeof t, "容量已满：每位成员已携带64种物品。");
     }
-    else if (done) snprintf(t, sizeof t, "%s takes %d %s.", cache_model.names[m], done, nm);
-    else snprintf(t, sizeof t, "%s has no room for another kind of item (64 at most).", cache_model.names[m]);
+    else if (done) snprintf(t, sizeof t, "%s 需要 %d %s。", cache_model.names[m], done, nm);
+    else snprintf(t, sizeof t, "%s 已无空间再容纳另一种物品（最多64种）。", cache_model.names[m]);
     note(t);
     return done;
 }
@@ -142,8 +142,8 @@ static int put(int m, int idx, int all, int quiet)
     if (!quiet) {
         char nm[32]; gm_itemdef_name(first.id, nm, sizeof nm);
         char t[160];
-        if (done) snprintf(t, sizeof t, "%s stores %d %s.", cache_model.names[m], done, nm);
-        else snprintf(t, sizeof t, "The %s stays with %s.", nm, cache_model.names[m]);
+        if (done) snprintf(t, sizeof t, "%s 存放了 %d %s。", cache_model.names[m], done, nm);
+        else snprintf(t, sizeof t, "%s 留在 %s 身上。", nm, cache_model.names[m]);
         note(t);
     }
     return done;
@@ -168,8 +168,8 @@ static int pack_put(int id, int q, int all, int quiet)
     g_ww(GV_cache_who, (u16)shown);
     if (!quiet) {
         char nm[32], t[160]; gm_itemdef_name(id, nm, sizeof nm);
-        if (done) snprintf(t, sizeof t, "%d %s stored.", done, nm);
-        else snprintf(t, sizeof t, "The store room is full: the %s stays in the party's pack.", nm);
+        if (done) snprintf(t, sizeof t, "存放了 %d %s。", done, nm);
+        else snprintf(t, sizeof t, "储物室已满：%s 留在队伍背包中。", nm);
         note(t);
     }
     return done;
@@ -186,8 +186,8 @@ static void put_away(void)                   /* everything the member does not h
             if (d) { kinds++; units += d; }
         }
         char t[160];
-        if (units) snprintf(t, sizeof t, "Stored %d item%s (%d kind%s); potions%s and equipped items are not stored.", units, units == 1 ? "" : "s", kinds, kinds == 1 ? "" : "s", kept ? ", items marked Keep" : "");
-        else snprintf(t, sizeof t, kept ? "Nothing to store: the party's pack holds only items marked Keep." : "Nothing to store: the party's pack is empty.");
+        if (units) snprintf(t, sizeof t, "已存储 %d 物品%s（%d 类型%s）；药水%s 和已装备的物品不予存储。", units, units == 1 ? "" : "s", kinds, kinds == 1 ? "" : "s", kept ? "标有“保留”的物品" : "");
+        else snprintf(t, sizeof t, kept ? "无可存放：队伍背包仅容纳标有“保留”的物品。" : "无可存放：队伍背包为空。");
         note(t);
         return;
     }
@@ -198,8 +198,8 @@ static void put_away(void)                   /* everything the member does not h
         if (d) { kinds++; units += d; }
     }
     char t[160];
-    if (units) snprintf(t, sizeof t, "%s stores %d item%s (%d kind%s); equipped items stay with them.", cache_model.names[m], units, units == 1 ? "" : "s", kinds, kinds == 1 ? "" : "s");
-    else snprintf(t, sizeof t, "Nothing to store: everything %s carries is equipped.", cache_model.names[m]);
+    if (units) snprintf(t, sizeof t, "%s 存储 %d 物品%s（%d 类型%s）；已装备的物品仍随身携带。", cache_model.names[m], units, units == 1 ? "" : "s", kinds, kinds == 1 ? "" : "s");
+    else snprintf(t, sizeof t, "无可存放：%s 所携带的一切均已装备。", cache_model.names[m]);
     note(t);
 }
 

@@ -240,7 +240,7 @@ static int pending_check(void)
     if (plat_ticks_ms() - pend_t > 60000) { pend_loc = -1; return 0; }
     if (!map_ready()) return 0;
     int loc = pend_loc; pend_loc = -1;
-    if (!travel_to_loc(loc, pend_name)) { void ui_notice(const char *); ui_notice("No way there from here."); return 0; }
+    if (!travel_to_loc(loc, pend_name)) { void ui_notice(const char *); ui_notice("从这里根本去不了那里。"); return 0; }
     return 1;
 }
 
@@ -363,7 +363,7 @@ static void step_hook(void)                 /* s030 1462:0c44 (key): one step of
                     void ui_notice(const char *);
                     still = 0; travel.active = 0;
                     fprintf(stderr, "travel: stopped, the party did not move for 150 steps at (%d,%d)\n", px, py);
-                    ui_notice("Travel stopped: the party could not get any further this way.");
+                    ui_notice("旅行中断：队伍无法再沿这条路继续前进。");
                 }
             }
             if (travel.active) {
@@ -515,7 +515,7 @@ void travel_click(int gx, int gy)
         }
     }
     if (blocked(travel_terrain(tx, ty))) return;
-    travel_to_tile(tx, ty, -1, "the marked place");
+    travel_to_tile(tx, ty, -1, "标记的位置");
 }
 
 /* tests: travel to the nearest location of a type (6 = mine ...) */

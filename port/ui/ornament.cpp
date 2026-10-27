@@ -394,7 +394,7 @@ void orn_frame_style(ImDrawList *dl, ImVec2 a, ImVec2 b, float w, int style)
     default: orn_braid_frame(dl, a, b, w); break;
     }
 }
-const char *orn_style_name(int s) { static const char *N[5] = { "Off", "Plaited copper", "Walnut and brass", "Illuminated", "Gothic stone" }; return s >= 0 && s <= 4 ? N[s] : "?"; }
+const char *orn_style_name(int s) { static const char *N[5] = { "关闭", "编织铜", "核桃与黄铜", "光明", "哥特式石质" }; return s >= 0 && s <= 4 ? N[s] : "?"; }
 
 /* a small window in the given style, for the settings' choice */
 void orn_preview(ImDrawList *dl, ImVec2 a, ImVec2 b, int style, ImFont *f)
@@ -414,7 +414,7 @@ void orn_preview(ImDrawList *dl, ImVec2 a, ImVec2 b, int style, ImFont *f)
         lozenge(dl, ImVec2(b.x - w * 1.9f, y), w * 0.3f, false);
     }
     float ui_face_k(ImFont *f);
-    if (f) dl->AddText(f, w * 1.6f * ui_face_k(f), ImVec2(a.x + w * (style ? 2.6f : 1.6f), a.y + w * 2.3f), IM_COL32(44, 26, 10, 255), "Quests");
+    if (f) dl->AddText(f, w * 1.6f * ui_face_k(f), ImVec2(a.x + w * (style ? 2.6f : 1.6f), a.y + w * 2.3f), IM_COL32(44, 26, 10, 255), "任务");
     for (int i = 0; i < 3; i++) {                                  /* lines of text */
         float y = a.y + w * (5.2f + i * 1.4f);
         dl->AddRectFilled(ImVec2(a.x + w * 1.8f, y), ImVec2(a.x + w * (1.8f + 9 - i * 2.2f), y + w * 0.5f), IM_COL32(120, 92, 60, 150), 2);
@@ -516,22 +516,22 @@ extern "C" void orn_test_sheet_draw(void)
     ImVec2 o(16, 16);
     float cw = 226, ch = 150;
     dl->AddRectFilled(o, ImVec2(o.x + cw * 4 + 30, o.y + ch * 2 + 70), IM_COL32(60, 44, 30, 255), 6);
-    static const char *FN[4] = { "Gilt rule", "Rubricated", "Pen flourishes", "Blind tooling" };
-    static const char *BN[4] = { "Metal plaque", "Rubric", "Seal tab", "Lettered" };
+    static const char *FN[4] = { "镀金规则", "朱红色书写", "笔触装饰", "盲刻工艺" };
+    static const char *BN[4] = { "金属铭牌", "朱红色标记", "封印标签", "文字标记" };
     for (int i = 0; i < 4; i++) {          /* frames: a tooltip-like panel */
         ImVec2 a(o.x + 10 + i * (cw + 4), o.y + 10), b(a.x + cw - 6, a.y + ch - 30);
         dl->AddRectFilled(a, b, IM_COL32(237, 222, 189, 255));
         orn_parchment_edges(dl, a, b, 10);
         orn_frame_style_box(dl, a, b, 16, i);
-        dl->AddText(f, fs, ImVec2(a.x + 22, a.y + 24), IM_COL32(44, 26, 10, 255), "St. Adrian");
-        dl->AddText(f, fs * 0.8f, ImVec2(a.x + 22, a.y + 50), IM_COL32(110, 84, 56, 255), "Heals 8 to 15 Endurance");
+        dl->AddText(f, fs, ImVec2(a.x + 22, a.y + 24), IM_COL32(44, 26, 10, 255), "圣人阿德里安");
+        dl->AddText(f, fs * 0.8f, ImVec2(a.x + 22, a.y + 50), IM_COL32(110, 84, 56, 255), "治愈8至15点耐力");
         dl->AddText(f, fs, ImVec2(a.x + 8, b.y + 6), IM_COL32(246, 236, 214, 255), FN[i]);
     }
     for (int i = 0; i < 4; i++) {          /* buttons: on parchment, in three colours */
         ImVec2 a(o.x + 10 + i * (cw + 4), o.y + ch + 20), b(a.x + cw - 6, a.y + ch - 30);
         dl->AddRectFilled(a, b, IM_COL32(242, 230, 200, 255));
         static const ImU32 C[3] = { IM_COL32(112, 40, 22, 235), IM_COL32(40, 92, 34, 235), IM_COL32(120, 84, 40, 235) };
-        static const char *L[3] = { "Leave", "Buy", "Sell" };
+        static const char *L[3] = { "离开", "购买", "出售" };
         for (int k = 0; k < 3; k++) {
             ImVec2 p0(a.x + 20, a.y + 14 + k * 34), p1(a.x + 150, a.y + 40 + k * 34);
             orn_button_style(dl, p0, p1, C[k], k == 1, true, i);

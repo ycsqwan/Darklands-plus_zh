@@ -142,7 +142,7 @@ extern "C" void halloffame_draw(void)
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(io.DisplaySize);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-    ImGui::Begin("Honor Roll", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse);
+    ImGui::Begin("名誉榜", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse);
     ImGui::PopStyleVar();
     ImDrawList *dl = ImGui::GetWindowDrawList();
     ImVec2 o = ImGui::GetWindowPos(), sz = io.DisplaySize;
@@ -171,14 +171,14 @@ extern "C" void halloffame_draw(void)
         char n[16]; snprintf(n, sizeof n, "%d.", i + 1);
         text(G(30, PY[i]), line, n, false);
         text(G(44, PY[i]), line, names_of(e), false);
-        char fm[24]; snprintf(fm, sizeof fm, "fame %d", e.fame);
+        char fm[24]; snprintf(fm, sizeof fm, "名声%d", e.fame);
         text(G(290, PY[i]), line, fm, true);
     }
     if (game_mode() != GM_OTHER) {
         FameRec cur = current_party();
         if (!cur.names[0].empty()) {
             text(G(44, PY[4]), line, names_of(cur), false);
-            char fm[24]; snprintf(fm, sizeof fm, "fame %d", cur.fame);
+            char fm[24]; snprintf(fm, sizeof fm, "名声%d", cur.fame);
             text(G(290, PY[4]), line, fm, true);
         }
     }

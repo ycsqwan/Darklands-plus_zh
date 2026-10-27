@@ -26,11 +26,11 @@ static std::string ago(long long t)
     if (t <= 0) return "";
     long long d = (long long)time(nullptr) - t;
     char b[48];
-    if (d < 60) snprintf(b, sizeof b, "just now");
-    else if (d < 3600) snprintf(b, sizeof b, "%lld min ago", d / 60);
-    else if (d < 86400) snprintf(b, sizeof b, "%lld h ago", d / 3600);
+    if (d < 60) snprintf(b, sizeof b, "刚刚");
+    else if (d < 3600) snprintf(b, sizeof b, "%lld 分钟前", d / 60);
+    else if (d < 86400) snprintf(b, sizeof b, "%lld 小时前", d / 3600);
     else if (d < 86400 * 2) snprintf(b, sizeof b, "yesterday");
-    else if (d < 86400 * 60) snprintf(b, sizeof b, "%lld days ago", d / 86400);
+    else if (d < 86400 * 60) snprintf(b, sizeof b, "%lld 天前", d / 86400);
     else { struct tm *tm = localtime((time_t *)&t); strftime(b, sizeof b, "%Y-%m-%d", tm); }
     return b;
 }
@@ -66,24 +66,24 @@ extern "C" void savesview_draw(void)
     static unsigned seq; static float scroll; static int last_click_row = -1; static u32 last_click_t;
     if (seq != S.seq) { seq = S.seq; scroll = 0; last_click_row = -1; }
 
-    P.text(f, NsDraw::FS_TITLE, 65 + L, 3, ink_t, S.loading ? "Load a saved game" : "Save the game");
+    P.text(f, NsDraw::FS_TITLE, 65 + L, 3, ink_t, S.loading ? "载入存档" : "保存游戏");
     float bx = 284;
-    if (P.button(bx, 4, 315, 15, "Cancel", IM_COL32(112, 40, 22, 235), NsDraw::FS_HEADBTN, PB_Y)) savesview_push(SVV_CANCEL, 0);
-    if (S.loading) { if (S.sel >= 0 && P.button(bx - 34, 4, bx - 3, 15, "Load", IM_COL32(40, 92, 34, 235), NsDraw::FS_HEADBTN, PB_X)) savesview_push(SVV_OK, S.sel); }
-    else if (P.button(bx - 34, 4, bx - 3, 15, "Save", IM_COL32(40, 92, 34, 235), NsDraw::FS_HEADBTN, PB_X)) savesview_push(SVV_OK, 0);
+    if (P.button(bx, 4, 315, 15, "取消", IM_COL32(112, 40, 22, 235), NsDraw::FS_HEADBTN, PB_Y)) savesview_push(SVV_CANCEL, 0);
+    if (S.loading) { if (S.sel >= 0 && P.button(bx - 34, 4, bx - 3, 15, "载入", IM_COL32(40, 92, 34, 235), NsDraw::FS_HEADBTN, PB_X)) savesview_push(SVV_OK, S.sel); }
+    else if (P.button(bx - 34, 4, bx - 3, 15, "保存", IM_COL32(40, 92, 34, 235), NsDraw::FS_HEADBTN, PB_X)) savesview_push(SVV_OK, 0);
     static bool opts;                                         /* the saving options (quick save, autosaves): here, by the saves */
-    if (P.button(bx - 94, 4, bx - 38, 15, opts ? "Close options" : "Saving options", IM_COL32(120, 92, 70, 220), NsDraw::FS_HEADBTN)) opts = !opts;
+    if (P.button(bx - 94, 4, bx - 38, 15, opts ? "关闭选项" : "保存选项", IM_COL32(120, 92, 70, 220), NsDraw::FS_HEADBTN)) opts = !opts;
     if (opts) {
         ImGuiIO &io = ImGui::GetIO();
         ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
         ImGui::SetNextWindowSize(ImVec2(fminf(io.DisplaySize.x * 0.8f, 900), 0), ImGuiCond_Appearing);
-        if (ImGui::Begin("Saving options", &opts, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) saves_prefs();
+        if (ImGui::Begin("保存选项", &opts, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) saves_prefs();
         ImGui::End();
     }
 
     float LY0 = 22;
     if (!S.loading) {
-        P.text(fo, NsDraw::FS_BODY, 65 + L, 15.5f, soft_t, "Save name (up to 22 characters):");
+        P.text(fo, NsDraw::FS_BODY, 65 + L, 15.5f, soft_t, "保存名称（最多 22 个字符）：");
         P.rect(64 + L, 23, 316, 33, IM_COL32(255, 250, 236, 255), 1.5f);
         P.frame(64 + L, 23, 316, 33, IM_COL32(120, 80, 36, 160), 1.5f);
         std::string c = S.comment;
@@ -94,11 +94,11 @@ extern "C" void savesview_draw(void)
             P.rect(cx, 24.5f, cx + 0.6f, 31.5f, ink);
         }
         LY0 = 40;
-        P.text(f, NsDraw::FS_HEAD, 65 + L, LY0 - 3.5f, ink_t, "Existing saves");
-        P.text(fo, NsDraw::FS_SMALL, 0, LY0 - 2.2f, soft_t, S.sel >= 0 ? "click it again not to replace it" : "click one to replace it with this save", 316);
+        P.text(f, NsDraw::FS_HEAD, 65 + L, LY0 - 3.5f, ink_t, "现有存档");
+        P.text(fo, NsDraw::FS_SMALL, 0, LY0 - 2.2f, soft_t, S.sel >= 0 ? "再次点击以不替换该存档" : "点击其中一个存档以用此存档替换它", 316);
         LY0 += 5;
     }
-    else P.text(fo, NsDraw::FS_SMALL, 65 + L, 15.5f, soft_t, "Double-click a save to load it.");
+    else P.text(fo, NsDraw::FS_SMALL, 65 + L, 15.5f, soft_t, "双击存档即可载入。");
 
     const float X0 = 63 + L, X1 = 317, Y1 = 196, ROWH = 15.5f;
     if (!full) {                                                 /* the register: bound in leather, stitched at the spine, its ribbon */
@@ -119,7 +119,7 @@ extern "C" void savesview_draw(void)
         if (S.sel != last_sel) { if (S.sel < scroll) scroll = (float)S.sel; if (S.sel >= scroll + vis) scroll = (float)(S.sel - vis + 1); last_sel = S.sel; }
     }
     scroll = fmaxf(0, fminf(scroll, maxs));
-    if (!S.nsaves) P.text(fo, NsDraw::FS_BODY, X0 + 3, LY0 + 3, dim, "No saved games yet.");
+    if (!S.nsaves) P.text(fo, NsDraw::FS_BODY, X0 + 3, LY0 + 3, dim, "尚未有存档。");
     P.dl->PushClipRect(NsDraw::w(X0, LY0), NsDraw::w(X1, Y1), true);
     int first = (int)scroll;
     for (int i = first; i < S.nsaves && i < first + vis + 1; i++) {
@@ -141,7 +141,7 @@ extern "C" void savesview_draw(void)
         if (S.loading && sel && !cur) {                           /* Load: the chosen save can be deleted (a second click does it) */
             float wx1 = X1 - 6 - P.width(fo, NsDraw::FS_SMALL, when), wx0 = wx1 - (armed ? 34 : 22);
             del_hit = P.over(wx0, y + 1.2f, wx1, y + 7.6f);
-            if (P.button(wx0, y + 1.2f, wx1, y + 7.6f, armed ? "Delete it?" : "Delete", armed ? IM_COL32(150, 40, 22, 240) : IM_COL32(120, 92, 70, 220))) savesview_push(SVV_DELETE, i);
+            if (P.button(wx0, y + 1.2f, wx1, y + 7.6f, armed ? "删除它吗？" : "删除", armed ? IM_COL32(150, 40, 22, 240) : IM_COL32(120, 92, 70, 220))) savesview_push(SVV_DELETE, i);
         }
         std::string who;
         for (int m = 0; m < v.nmembers; m++) { if (m) who += ", "; who += ns_gtext(v.members[m]); }
@@ -150,11 +150,11 @@ extern "C" void savesview_draw(void)
         line += "  -  " + money_fgp(v.florins, v.groschen, v.pfennigs);
         P.text(fo, NsDraw::FS_SMALL, tx, y + 8.6f, dim, line, -1, X1 - 60);
         std::string tag = ago(v.mtime);
-        if (v.battle) tag = "in a battle, " + tag;
-        if (cur) tag = (S.loading ? "the last loaded or saved, " : "the last used, ") + tag;
+        if (v.battle) tag = "在战斗中，" + tag;
+        if (cur) tag = (S.loading ? "最后一次载入或存档，" : "最后一次使用，") + tag;
         ImU32 tc = cur ? NsDraw::GREEN : dim;
-        if (sel && !S.loading) { tag = "will be replaced by this save"; tc = IM_COL32(150, 40, 22, 255); }
-        if (armed) { tag = "click again to delete it for good"; tc = IM_COL32(150, 40, 22, 255); }
+        if (sel && !S.loading) { tag = "将被此存档替换"; tc = IM_COL32(150, 40, 22, 255); }
+        if (armed) { tag = "再次点击以永久删除它"; tc = IM_COL32(150, 40, 22, 255); }
         P.text(fo, NsDraw::FS_SMALL, 0, y + 8.6f, tc, tag, X1 - 3);
         if (!del_hit && P.hit(X0, y, X1, y + ROWH) && P.over(X0, LY0, X1, Y1)) {
             u32 now = plat_ticks_ms();

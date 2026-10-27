@@ -62,7 +62,7 @@ extern "C" void ui_draw_guard(ImDrawData *dd)
                 const char *what = nullptr;
                 if (look) {
                     for (const ImDrawVert *v : { &a, &b, &cc })
-                        if (!(fabsf(v->pos.x) <= FAR && fabsf(v->pos.y) <= FAR)) { what = v->pos.x == v->pos.x && v->pos.y == v->pos.y ? "a corner absurdly far" : "a corner not a number"; break; }
+                        if (!(fabsf(v->pos.x) <= FAR && fabsf(v->pos.y) <= FAR)) { what = v->pos.x == v->pos.x && v->pos.y == v->pos.y ? "一个荒谬地遥远的角落" : "一个角落而非数字"; break; }
                 }
                 if (!what && is_font && !(a.uv.x == white.x && a.uv.y == white.y)) {   /* (most triangles: a shape, from the atlas's white pixel) */
                     float uw = (fmaxf(fmaxf(a.uv.x, b.uv.x), cc.uv.x) - fminf(fminf(a.uv.x, b.uv.x), cc.uv.x)) * tw;
@@ -70,7 +70,7 @@ extern "C" void ui_draw_guard(ImDrawData *dd)
                     if (uw > 1.0f && uh > 1.0f) {               /* (a letter: its picture in the atlas both ways) */
                         float sw = fmaxf(fmaxf(a.pos.x, b.pos.x), cc.pos.x) - fminf(fminf(a.pos.x, b.pos.x), cc.pos.x);
                         float sh = fmaxf(fmaxf(a.pos.y, b.pos.y), cc.pos.y) - fminf(fminf(a.pos.y, b.pos.y), cc.pos.y);
-                        if (sw > uw * MAGNIFIED && sh > uh * MAGNIFIED) what = "a letter drawn many times its size";
+                        if (sw > uw * MAGNIFIED && sh > uh * MAGNIFIED) what = "一个被放大许多倍的字母";
                     }
                 }
                 if (!what) continue;

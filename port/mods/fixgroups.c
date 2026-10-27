@@ -7,11 +7,11 @@
 #include "fixgroups.h"
 
 const FixGroup FIX_GROUPS[FIX_NGROUPS] = {
-    { "Game-breaking", "Crashes, freezes, items or progress lost, saved games spoiled, quests that can never be finished. Nobody wants these." },
-    { "Plain mistakes", "Something the game sets out to do and gets wrong: the wrong member, the wrong town, a check on the wrong option, a number lost on the way." },
-    { "As the manual and the game's texts say", "The game does something other than what its manual, or its own texts, say it does. Fixed to match the words." },
-    { "Old tricks closed", "Bugs players have long used to their advantage (invulnerability from fire protection, confession's clock turned back, the same bounty again and again). Leave these off to keep the old tricks." },
-    { "Left over from 1992", "Not bugs, but nobody misses them: the question from the printed manual before the party first sets out." },
+    { "破坏游戏平衡", "崩溃、卡顿、物品或进度丢失、存档损坏、任务永远无法完成。没人想要这些。" },
+    { "普通错误", "游戏本该做到却做错的事：选错了队员、去了错的城镇、检查了错误的选项、数字在途中丢失。" },
+    { "正如说明书和游戏文本所言", "游戏做了与说明书或自身文本所述不同的事情。已修正以符合原文表述。" },
+    { "老把戏被封禁", "玩家长期利用的漏洞（防火保护失效、忏悔时时间倒退、重复领取同一赏金）。为保留老把戏，暂不修复。" },
+    { "1992年的遗留问题", "不是漏洞，但也没人怀念：队伍首次出发前，印刷版说明书中的那个问题。" },
 };
 
 static const struct { const char *id; int g; } G[] = {

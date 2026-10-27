@@ -508,9 +508,9 @@ static const char *why_locked(void)
 {
     switch (game_mode()) {
     case GM_CARD: case GM_MAP: return nullptr;
-    case GM_BATTLE: return "Items can't change hands during a battle.";
-    case GM_SCREEN: return "Close the game's current screen (sheet, shop ...) to hand items over.";
-    default: return "Start or load a game first.";
+    case GM_BATTLE: return "战斗中物品不可易手。";
+    case GM_SCREEN: return "关闭当前游戏界面（表格、商店等）以便交接物品。";
+    default: return "请先开始或加载游戏。";
     }
 }
 
@@ -543,22 +543,22 @@ void ui_item_details(const ItemDef *d, int id, int q)    /* (q: the thing's qual
             dmg = rb(G_FAR20A5, (u16)(0x76e7 + w)), minsk = rb(G_FAR20A5, (u16)(0x7726 + w)), minst = rb(G_FAR20A5, (u16)(0x7765 + w)),
             maxst = rb(G_FAR20A5, (u16)(0x77a4 + w)), reload = rb(G_FAR20A5, (u16)(0x77e3 + w));
         ImGui::Separator();
-        ui_rich_textf("{%s}, %s", gm_skill_name(sk), (cp >> 4) >= 2 ? "two hands" : "one hand");
-        ImGui::Text("Damage %d, penetration %d", dmg, cp & 15);
-        if (speed) ImGui::Text("Time for a blow %d", speed);
-        if (reload) ImGui::Text("Time to %s %d", w >= 30 ? "reload" : w >= 27 ? "draw and loose" : "throw", reload);
+        ui_rich_textf("{%s}，%s", gm_skill_name(sk), (cp >> 4) >= 2 ? "双手" : "一手");
+        ImGui::Text("伤害%d，穿透%d", dmg, cp & 15);
+        if (speed) ImGui::Text("一击所需时间%d", speed);
+        if (reload) ImGui::Text("%s所需时间%d", w >= 30 ? "reload" : w >= 27 ? "抽取与松动" : "throw", reload);
         /* (the combatant's melee rating +0x20 and aim +0x21, weapon_ready: mods/gamemodel.h) */
         const bool shot = sk >= 4 && sk <= 6;                 /* (Thrown, Bows, Missile Devices: aimed) */
         if (shot) {
-            ui_rich_textf("{%s:%d} needed: each point short costs 2 aim", gm_skill_name(sk), minsk);
-            if (maxst < 99) ui_rich_textf("{Strength:%d to %d}: below that, each point short costs 1 aim and hits are softer; above %d, hits are harder", minst, maxst, maxst);
-            else ui_rich_textf("{Strength:%d}: below that, each point short costs 1 aim and hits are softer", minst);
+            ui_rich_textf("需要{%s:%d}：每少一点需耗费2点瞄准", gm_skill_name(sk), minsk);
+            if (maxst < 99) ui_rich_textf("{力量：%d至%d}：低于此，每少一点需耗费1点瞄准且攻击更轻；高于%d，攻击更重", minst, maxst, maxst);
+            else ui_rich_textf("{力量：%d}：低于此，每少一点需耗费1点瞄准且攻击更轻", minst);
         } else {
-            ui_rich_textf("{%s:%d} needed: each point short costs 2 melee rating (attack and defense hand to hand)", gm_skill_name(sk), minsk);
-            if (maxst < 99) ui_rich_textf("{Strength:%d to %d}: below that, each point short costs 3 melee rating and blows hit softer;\nabove %d, each point adds 2 melee rating and blows hit harder", minst, maxst, maxst);
-            else ui_rich_textf("{Strength:%d}: below that, each point short costs 3 melee rating and blows hit softer", minst);
+            ui_rich_textf("需要{%s:%d}：每少一点需耗费2点近战评级（近身攻防）", gm_skill_name(sk), minsk);
+            if (maxst < 99) ui_rich_textf("{力量：%d 至 %d}：低于该值时，每少1点损失3点近战评级，攻击力度较弱；高于%d时，每增加1点，近战评级提升2点，攻击力度更强", minst, maxst, maxst);
+            else ui_rich_textf("{力量：%d}：低于该值时，每少1点损失3点近战评级，攻击力度较弱", minst);
         }
-        ImGui::TextDisabled("Lower times are quicker.");
+        ImGui::TextDisabled("时间越短，速度越快。");
         /* who in the party could use it, and what it would cost them */
         ImGui::Separator();
         int size = (s16)g_rw(G_PARTY_SIZE); if (size < 0 || size > 5) size = 0;
@@ -568,13 +568,13 @@ void ui_item_details(const ItemDef *d, int id, int q)    /* (q: the thing's qual
             int have = sk < 7 ? (s8)g_rb((u16)(b + G_M_SKILLS + sk)) : 0, str = (s8)g_rb((u16)(b + G_M_ATTR_CUR + 1));
             int ss = minsk - have, ws = minst - str;
             std::string v;
-            if (ss > 0) v += "needs " + std::to_string(ss) + " more skill";
-            if (ws > 0) v += std::string(v.empty() ? "" : ", ") + "too weak by " + std::to_string(ws);
-            if (v.empty()) v = str > maxst && maxst < 99 ? "suits (strong enough to hit harder)" : "suits";
+            if (ss > 0) v += "needs " + std::to_string(ss) + "更多技能";
+            if (ws > 0) v += std::string(v.empty() ? "" : ", ") + "太弱了" + std::to_string(ws);
+            if (v.empty()) v = str > maxst && maxst < 99 ? "适合（强度足以造成更重的打击）" : "suits";
             int loss = 2 * (ss > 0 ? ss : 0) + (shot ? 1 : 3) * (ws > 0 ? ws : 0);
             ImVec4 c = loss ? ImVec4(0.62f, 0.20f, 0.12f, 1) : ImVec4(0.18f, 0.40f, 0.16f, 1);
-            if (loss) ui_rich_textf_c(c, "%s: {%s:%d} {Strength:%d} - %s (-%d %s)", game_text(n, sizeof n).c_str(), gm_skill_name(sk), have, str, v.c_str(), loss, shot ? "aim" : "melee rating");
-            else ui_rich_textf_c(c, "%s: {%s:%d} {Strength:%d} - %s", game_text(n, sizeof n).c_str(), gm_skill_name(sk), have, str, v.c_str());
+            if (loss) ui_rich_textf_c(c, "%s：{%s：%d} {力量：%d} - %s（-%d %s）", game_text(n, sizeof n).c_str(), gm_skill_name(sk), have, str, v.c_str(), loss, shot ? "aim" : "近战评级");
+            else ui_rich_textf_c(c, "%s：{%s：%d} {力量：%d} - %s", game_text(n, sizeof n).c_str(), gm_skill_name(sk), have, str, v.c_str());
         }
     }
     if (d && d->type >= 67 && d->type <= 84) {
@@ -585,16 +585,16 @@ void ui_item_details(const ItemDef *d, int id, int q)    /* (q: the thing's qual
            comes off the attacker's skill in every blow's damage (a tenth of it) */
         int h = rb(G_FAR20A5, (u16)(0x781e + d->type));
         ImGui::Separator();
-        ImGui::Text(d->type <= 75 ? "Covers the vitals (body and arms)" : "Covers the legs");
+        ImGui::Text(d->type <= 75 ? "覆盖要害部位（躯干和手臂）" : "覆盖腿部");
         static const char *HN[6] = { "none", "soft", "stiff", "scale", "mail", "plate" };
-        ImGui::Text("Hardness %d of 5 (%s)", h, h >= 0 && h < 6 ? HN[h] : "?");
+        ImGui::Text("硬度为5中的%d（%s）", h, h >= 0 && h < 6 ? HN[h] : "?");
         std::vector<std::string> grp[3];                          /* 0 deflected, 1 halved, 2 gets through */
         for (const ItemDef &w : gamedata.items) {
             if (w.type < 0 || w.type > 33 || w.name.empty() || (w.kind != K_WEAPON && w.kind != K_MISSILE)) continue;
             int pen = rb(G_FAR20A5, (u16)(0x76a8 + w.type)) & 15;
             grp[pen < h ? 0 : pen == h ? 1 : 2].push_back(game_text(w.name.c_str(), w.name.size()));
         }
-        static const char *GL[3] = { "Deflects most of the blow (penetration below %d):", "Halves the blow (penetration %d):", "Pierced (penetration above %d):" };
+        static const char *GL[3] = { "可偏转大部分冲击力（穿透力低于%d）：", "将冲击力减半（穿透力为%d）：", "已被刺穿（穿透力高于%d）：" };
         ImVec4 GC[3] = { ImVec4(0.18f, 0.40f, 0.16f, 1), ImVec4(0.6f, 0.42f, 0.08f, 1), ImVec4(0.62f, 0.20f, 0.12f, 1) };
         for (int g = 0; g < 3; g++) {
             if (grp[g].empty()) continue;
@@ -604,23 +604,23 @@ void ui_item_details(const ItemDef *d, int id, int q)    /* (q: the thing's qual
             ImGui::TextColored(GC[g], GL[g], h);
             ImGui::Indent(UIS(12)); ImGui::TextWrapped("%s", l.c_str()); ImGui::Unindent(UIS(12));
         }
-        ui_rich_textf_dim("A blow that pierces also wounds {Strength}; a good hit gets through more easily.");
-        ImGui::TextDisabled("Quality: every 10 points take 1 off each blow's damage.");
+        ui_rich_textf_dim("刺穿的攻击还会造成{力量}伤害；击中效果越好，越容易穿透。");
+        ImGui::TextDisabled("品质：每10点品质，每次攻击的伤害减少1点。");
     }
     if (d && d->type >= 95 && d->type <= 97) {             /* a shield: what each size adds to the defence (mods/gamemodel.h, the game's to-hit rolls) */
         ImGui::Separator();
-        ImGui::TextUnformatted("Adds to its bearer's defense, more the better it is made; unusable with a two-handed weapon.");
+        ImGui::TextUnformatted("提升持有者的防御力，制作越精良效果越佳；无法与双手武器同时使用。");
         if (q < 0) q = d->quality;
-        static const char *SZ[3] = { "Small", "Medium", "Large" };
+        static const char *SZ[3] = { "小型", "中型", "大型" };
         for (int t = 95; t <= 97; t++)
-            (t == d->type ? ImGui::Text : ImGui::TextDisabled)("%s shield at %dq: %d against blows, %d against shots and throws", SZ[t - 95], q, gm_shield_defence(t, q, 0), gm_shield_defence(t, q, 1));
-        ui_rich_textf_dim("No shield counts as -5, and a flail's blow passes any shield. Hand to hand, the chance to hit is 50 + 2/3 of the attacker's\nmelee rating minus (the defender's melee rating + the shield); against a shot or throw, the defense is the shield plus twice {Agility} (less under a load).");
+            (t == d->type ? ImGui::Text : ImGui::TextDisabled)("%s 盾牌在%dq处：对打击防御%d，对射击和投掷防御%d", SZ[t - 95], q, gm_shield_defence(t, q, 0), gm_shield_defence(t, q, 1));
+        ui_rich_textf_dim("没有盾牌则视为-5，而链枷的攻击可穿透任何盾牌。近战时，命中几率为50 + 攻击者近战评级的2/3 减去（防守者近战评级 + 盾牌）；面对射击或投掷时，防御力等于盾牌加上两倍{敏捷}（负重时会降低）。");
     }
     if (d && d->kind == K_POTION) {
         int p = id - 95;
         ImGui::PushTextWrapPos(UIS(380));
         if (p >= 0 && 3 * p < (int)gamedata.formulas.size()) ImGui::TextWrapped("%s", gamedata.formulas[3 * p].text.c_str());
-        { std::string ns_potion_effect(int id); std::string e = ns_potion_effect(id); if (!e.empty()) { ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]); ui_rich_text(("How it works: " + e).c_str()); ImGui::PopStyleColor(); } }
+        { std::string ns_potion_effect(int id); std::string e = ns_potion_effect(id); if (!e.empty()) { ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]); ui_rich_text(("工作原理：" + e).c_str()); ImGui::PopStyleColor(); } }
         ImGui::PopTextWrapPos();
     }
 }

@@ -29,17 +29,17 @@ struct Fig { std::string code, title, arms, arms_all; SDL_Texture *tex = nullptr
    of the weapons that enemy carries; another weapon is shown with the nearest of them) */
 static const char *weapon_word(const char *w)
 {
-    static const char *const W[][2] = { { "SW", "sword" }, { "S2", "two-handed sword" }, { "DR", "dagger" }, { "AX", "axe" }, { "A2", "great axe" },
-        { "MC", "mace" }, { "M2", "great mace" }, { "HM", "hammer" }, { "H2", "great hammer" }, { "FL", "flail" }, { "F2", "great flail" },
-        { "CL", "club" }, { "QS", "staff" }, { "SP", "spear" }, { "HB", "halberd" }, { "PT", "potion throw" }, { "BW", "bow" }, { "CB", "crossbow" },
-        { "HG", "gun" }, { "TA", "throwing axe" }, { "TK", "throwing knife" }, { "DT", "dart" } };
+    static const char *const W[][2] = { { "SW", "sword" }, { "S2", "双手剑" }, { "DR", "dagger" }, { "AX", "axe" }, { "A2", "大斧" },
+        { "MC", "mace" }, { "M2", "大锤" }, { "HM", "hammer" }, { "H2", "大铁锤" }, { "FL", "flail" }, { "F2", "大连枷" },
+        { "CL", "club" }, { "QS", "staff" }, { "SP", "spear" }, { "HB", "halberd" }, { "PT", "投掷药剂" }, { "BW", "bow" }, { "CB", "crossbow" },
+        { "HG", "gun" }, { "TA", "投掷斧头" }, { "TK", "投掷匕首" }, { "DT", "dart" } };
     for (auto &x : W) if (!strncasecmp(x[0], w, 2)) return x[1];
     return nullptr;
 }
 static void fig_arms(Fig &f)
 {
     char w[24][3]; int n = looks_weapons(f.code.c_str(), w, 24);
-    if (n < 0) { f.arms = "every weapon"; f.arms_all = "An original party sprite: it has an animation for every weapon."; return; }
+    if (n < 0) { f.arms = "每种武器"; f.arms_all = "一个原始队伍精灵：它为每种武器都配有动画。"; return; }
     std::string all, shown; int k = 0, hidden = 0;
     for (int i = 0; i < n; i++) {
         const char *word = weapon_word(w[i]);
@@ -48,7 +48,7 @@ static void fig_arms(Fig &f)
         if (k < 2) { shown += (shown.empty() ? "" : ", ") + std::string(word); k++; } else hidden++;
     }
     f.arms = shown + (hidden ? " +" + std::to_string(hidden) : "");
-    f.arms_all = "Its own animations: " + all + ". Any other weapon is shown with the nearest of these (a sword swung as an axe, a bow drawn as a crossbow).";
+    f.arms_all = "自己的动画：" + all + "。任何其他武器都会以这些中最接近的一种来显示（例如，一把剑被当作斧头挥舞，一张弓被当作弩拉满）。";
 }
 static std::vector<Fig> figs;
 
@@ -108,13 +108,13 @@ extern "C" void figpick_window(void)
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowFocus();
     char nick[16]; g_str(G_DGROUP, (u16)(0x9c55 + 0x80 * fp_member + 0x3e), nick, sizeof nick);
-    std::string title = "Choose a sprite for " + game_text(nick, sizeof nick) + "##figpick";
+    std::string title = "为……选择一个精灵" + game_text(nick, sizeof nick) + "##figpick";
     bool keep = true;
     if (ImGui::Begin(title.c_str(), &keep, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings)) {
         ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + grid_w);
         if (ui_font_small) ImGui::PushFont(ui_font_small);
         ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-        ImGui::TextWrapped("Click a sprite (or use the arrow keys and Enter). The first four are the original party sprites; the others are enemy sprites. The 1st, 2nd and 3rd color buttons recolor them afterwards. A save with a member using an enemy sprite loads only in Darklands+ (the original game stops at the missing picture).");
+        ImGui::TextWrapped("点击一个精灵（或使用方向键和回车）。前四个是原始队伍精灵；其余的是敌人精灵。第1、2、3个彩色按钮可在之后为其重新上色。如果保存时有成员使用了敌人精灵，则只能在Darklands+中加载（原版游戏会因缺少图片而停止）。");
         ImGui::PopStyleColor();
         if (ui_font_small) ImGui::PopFont();
         ImGui::Spacing();
@@ -160,7 +160,7 @@ extern "C" void figpick_window(void)
             if (clicked) choose(i);
         }
         ImGui::SetCursorScreenPos(o); ImGui::Dummy(ImVec2(grid_w, grid_h));
-        if (fp_open && ImGui::Button("Keep the current sprite (Esc)")) keep = false;
+        if (fp_open && ImGui::Button("保留当前精灵（Esc）")) keep = false;
     }
     ImGui::End();
     if (!keep) fp_open = false;

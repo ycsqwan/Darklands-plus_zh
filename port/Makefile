@@ -89,7 +89,7 @@ $(OUT)/fonts.c: third_party/fonts/*.ttf tools/bin2c.py | $(OUT)
 	    FONT_ALEGREYA=third_party/fonts/Alegreya-Medium.ttf FONT_FELL=third_party/fonts/IMFellEnglish-Regular.ttf \
 	    FONT_MEDIEVAL=third_party/fonts/MedievalSharp-Regular.ttf FONT_ATKINSON=third_party/fonts/AtkinsonHyperlegible-Regular.ttf \
 	    FONT_FRAKTUR=third_party/fonts/DLFraktur-Regular.ttf FONT_GRENZE=third_party/fonts/GrenzeGotisch-Medium.ttf \
-	    FONT_COMIC=third_party/fonts/ComicNeue-Bold.ttf
+	    FONT_COMIC=third_party/fonts/ComicNeue-Bold.ttf FONT_CJK=third_party/fonts/wqy-12px-cjk.ttf
 $(OUT)/fonts.o: $(OUT)/fonts.c
 	$(CC) -c -o $@ $<
 $(OUT)/mods_%.o: mods/%.c mods/*.h runtime/*.h ui/*.h | $(OUT)

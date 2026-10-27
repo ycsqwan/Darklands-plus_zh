@@ -444,7 +444,7 @@ const char *hdart_virtual_file(const char *dosname)
 static u8 crest_last[5];
 static int crest_exists(int letter)
 {
-    char k[16]; snprintf(k, sizeof k, "SHIELD%c", letter);
+    char k[16]; snprintf(k, sizeof k, "盾牌%c", letter);
     if (art_for(k)) return 1;
     char d[32], p[1200]; snprintf(d, sizeof d, "PICS\\SHIELD%c.PIC", letter); dos_host_path(d, p, sizeof p);
     FILE *f = fopen(p, "rb"); if (f) { fclose(f); return 1; }
@@ -774,10 +774,10 @@ int hdart_ndraws;
  * picture's row above or below the word) and the word joins the crisp text. */
 typedef struct { const char *pic; int x0, y0, x1, y1; const char *text; } Baked;
 static const Baked BAKED[] = {
-    { "ARMBACK", 199, 152, 254, 159, "Equipment" }, { "ARMBACK", 199, 168, 254, 175, "Formulae" }, { "ARMBACK", 199, 184, 254, 191, "Saints" },
-    { "CHARGEN", 177, 171, 232, 178, "Formulae" }, { "CHARGEN", 177, 188, 232, 193, "Saints" },
-    { "STARTSCR", 120, 58, 200, 66, "Quickstart" }, { "STARTSCR", 88, 91, 226, 99, "Create a New World" },
-    { "STARTSCR", 84, 123, 234, 132, "The Story Continues" },
+    { "ARMBACK", 199, 152, 254, 159, "装备" }, { "ARMBACK", 199, 168, 254, 175, "配方" }, { "ARMBACK", 199, 184, 254, 191, "圣人" },
+    { "CHARGEN", 177, 171, 232, 178, "配方" }, { "CHARGEN", 177, 188, 232, 193, "圣人" },
+    { "STARTSCR", 120, 58, 200, 66, "快速开始" }, { "STARTSCR", 88, 91, 226, 99, "创建新世界" },
+    { "STARTSCR", 84, 123, 234, 132, "故事继续" },
 };
 #define NBAKED ((int)(sizeof BAKED / sizeof BAKED[0]))
 int has_baked(const char *name) { for (int k = 0; k < NBAKED; k++) if (!strcmp(BAKED[k].pic, name)) return 1; return 0; }
@@ -989,7 +989,7 @@ int hdart_export(char *msg, int msgn)
         if (f) { fclose(f); continue; }
         if (write_png(p, pics[i].w, pics[i].h, pics[i].px, pics[i].ref, pics[i].sprite)) done++; else failed++;
     }
-    snprintf(msg, msgn, "%d pictures written to %s%s", done, dir, failed ? " (some could not be written)" : "");
+    snprintf(msg, msgn, "已将 %d 张图片写入 %s%s", done, dir, failed ? "（部分未能写入）" : "");
     if (logon) fprintf(stderr, "art: export: %s\n", msg);
     return done;
 }

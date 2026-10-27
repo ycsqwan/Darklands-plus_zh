@@ -89,14 +89,14 @@ bool ui_subtab_icon(const char *label, bool select, int page)
     ImGui::PopFont(); return r;
 }
 
-ImFont *ui_font_small, *ui_font_text;
+ImFont *ui_font_small, *ui_font_text, *ui_font_cjk, *ui_font_cjk_hi;
 float ui_scale = 1.0f;
 ImFont *ui_font_game[UI_GAME_FONTS];       /* the crisp game text: EB Garamond, Alegreya, IM Fell, Atkinson, MedievalSharp, Fraktur */
 ImFont *ui_font_game_hi[UI_GAME_FONTS];    /* the same baked larger on big screens (0 if not needed) */
 int ui_game_font, ui_text_edge;            /* edge: 0 none, 1 shadow, 2 outline */
 int ui_sys_cursor;                     /* display.system_cursor: the system pointer stays over the game */
-const char *UI_GAME_FONT_NAMES[UI_GAME_FONTS] = { "EB Garamond (book face)", "Alegreya (calligraphic)", "IM Fell English (old print)",
-    "Atkinson Hyperlegible (easiest to read)", "MedievalSharp (medieval hand)", "Fraktur (blackletter, for the brave)",
+const char *UI_GAME_FONT_NAMES[UI_GAME_FONTS] = { "EB Garamond（书籍字体）", "Alegreya (calligraphic)", "IM Fell English (old print)",
+    "Atkinson Hyperlegible (easiest to read)", "MedievalSharp（中世纪手写体）", "弗拉克图尔字体（黑体字，适合勇敢者）",
     "Grenze Gotisch (gothic, still readable)", "Comic Sans (we are so sorry)" };
 #define UI_DEFAULT_FONT 6                  /* Grenze Gotisch */
 /* the text over and beside the picture (side panels, tooltips, map names, notices): the game
@@ -105,6 +105,7 @@ ImFont *ui_font_overlay;
 void ui_overlay_font_update(void)
 {
     extern ImFont *ui_font_text;
+extern ImFont *ui_font_cjk, *ui_font_cjk_hi;
     ui_font_overlay = config_get_int("display.overlay_font_follow", 1) && ui_font_game[ui_game_font] ? ui_font_game[ui_game_font] : ui_font_text;
 }
 SDL_Window *ui_window;
@@ -226,6 +227,45 @@ extern "C" void ui_init(SDL_Window *win, SDL_Renderer *ren)
         }
         ui_font_game[0] = ui_font_text;
         for (int i = 1; i < UI_GAME_FONTS; i++) ui_font_game[i] = io.Fonts->AddFontFromMemoryTTF((void *)data[i], (int)size[i], 34.0f, &tc, ranges);
+        {   /* the translated text: one pixel font for every Han glyph.  ImGui has no
+               fallback between fonts, so the Han glyphs have to live in the font the
+               run is drawn with; gamedata.cpp game_text() passes the UTF-8 through and
+               leaves the game's colour codes as bytes no font carries */
+            ImFontConfig cc = tc; cc.OversampleH = 1; cc.OversampleV = 1;
+            /* 0x2000-0x206f carries the dashes, curly quotes and ellipsis the translations use */
+            static const ImWchar ranges_cjk[] = { 0x20, 0xff, 0x2000, 0x206f, 0x3000, 0x9fff, 0xff00, 0xffef, 0 };
+            ui_font_cjk = io.Fonts->AddFontFromMemoryTTF((void *)FONT_CJK, (int)FONT_CJK_SIZE, 34.0f, &cc, ranges_cjk);
+            if (ui_font_cjk) {   /* the fallback of every other face (third_party/imgui, imgui_draw.cpp):
+                                    a codepoint a font lacks is drawn from here, not as '?' */
+                extern ImFont *ImFontFallback;
+                ImFontFallback = ui_font_cjk;
+            }
+            /* 嵌入的 WQY 12px 子集缺的字符，运行时从系统 CJK 字体借，
+               这样不必把微软的字体一起分发 */
+            static const ImWchar gaps[] = { 0x00e0,0x00f6, 0x00f8,0x00ff, 0 };
+            const char *wd = getenv("WINDIR");
+            std::string base = std::string(wd ? wd : "C:\\Windows") + "\\Fonts\\";
+            std::string p_msyh = base + "msyh.ttc", p_simsun = base + "simsun.ttc", p_deng = base + "Deng.ttf";
+            const char *sys_fonts[] = { p_msyh.c_str(), p_simsun.c_str(), p_deng.c_str() };
+            for (const char *p : sys_fonts) {
+                size_t n = 0; void *d = SDL_LoadFile(p, &n);
+                if (!d || n < 1000) { if (d) SDL_free(d); continue; }
+                ImFontConfig gc = cc; gc.MergeMode = true; gc.FontDataOwnedByAtlas = false;
+                io.Fonts->AddFontFromMemoryTTF(d, (int)n, 34.0f, &gc, gaps);
+                SDL_free(d); break;
+            }
+            if (bake > 44) {
+                ImFontConfig hc2 = cc; hc2.OversampleH = 1; hc2.OversampleV = 1;
+                ui_font_cjk_hi = io.Fonts->AddFontFromMemoryTTF((void *)FONT_CJK, (int)FONT_CJK_SIZE, bake, &hc2, ranges_cjk);
+                for (const char *p : sys_fonts) {
+                    size_t n = 0; void *d = SDL_LoadFile(p, &n);
+                    if (!d || n < 1000) { if (d) SDL_free(d); continue; }
+                    ImFontConfig gc = hc2; gc.MergeMode = true; gc.FontDataOwnedByAtlas = false;
+                    io.Fonts->AddFontFromMemoryTTF(d, (int)n, bake, &gc, gaps);
+                    SDL_free(d); break;
+                }
+            }
+        }
         if (bake > 44) {      /* big screens: a second, larger set for the game's text in a big window */
             ImFontConfig hc = tc; hc.OversampleH = 1; hc.OversampleV = 1;
             for (int i = 0; i < UI_GAME_FONTS; i++) ui_font_game_hi[i] = io.Fonts->AddFontFromMemoryTTF((void *)data[i], (int)size[i], bake, &hc, ranges);
@@ -258,8 +298,8 @@ extern "C" void ui_init(SDL_Window *win, SDL_Renderer *ren)
     gamedata_load(game_dir);
     if (getenv("DL_RESTARTED")) {
         const char *ee = getenv("DL_ERROR_EXIT");
-        if (ee && atoi(ee)) ui_notice_for("Darklands stopped because of an error. Your saves are safe: Load is in the Game menu (right-click). F12 > About > Report a problem makes a report of it.", 30000);
-        else ui_notice_for("The party's journey has ended. Load a saved game to go on: Load in the Game menu (right-click).", 20000);
+        if (ee && atoi(ee)) ui_notice_for("Darklands因错误而停止运行。您的存档安全无虞：可在“游戏”菜单中加载（右键点击）。按F12 > 关于 > 报告问题即可提交报告。", 30000);
+        else ui_notice_for("队伍的旅程已结束。请加载存档继续：在“游戏”菜单中加载（右键点击）。", 20000);
     }
     halloffame_set_renderer(ren);
     gamepics_set_renderer(ren); partypanel_set_renderer(ren); partypanel_init();
@@ -303,9 +343,9 @@ extern "C" void ui_toggle_map(void)
     if (open_map) { open_map = false; fprintf(stderr, "world map: closed\n"); return; }
     int gm = game_mode();                                   /* (battles and their loot reuse the places' memory) */
     if (gm != GM_CARD && gm != GM_MAP) {
-        ui_notice(gm == GM_BATTLE ? "The world map can only be opened from the overland view or a card, not in a battle."
-                  : gm == GM_SCREEN ? "The world map can only be opened from the overland view or a card: close this screen first."
-                                    : "The world map can only be opened from the overland view or a card, once a game is under way.");
+        ui_notice(gm == GM_BATTLE ? "世界地图只能在陆地视图或卡片界面中打开，战斗时无法访问。"
+                  : gm == GM_SCREEN ? "世界地图只能在陆地视图或卡片界面中打开：请先关闭此界面。"
+                                    : "世界地图只能在陆地视图或卡片界面中打开，且仅在游戏进行时可用。");
         return;
     }
     if (worldmap_open()) { open_map = true; if (open_menu) ui_toggle(); open_map = true; fprintf(stderr, "world map: open\n"); }
@@ -409,20 +449,20 @@ extern "C" int ui_event(const SDL_Event *e)
 static void tab_guide_all(void)
 {
     if (!ui_subtabs_begin("guide")) return;
-    if (ui_subtab("Weapons")) { rules_tab(); ImGui::EndTabItem(); }
-    if (ui_subtab("Enemies")) { void bestiary_tab(void); bestiary_tab(); ImGui::EndTabItem(); }
+    if (ui_subtab("武器")) { rules_tab(); ImGui::EndTabItem(); }
+    if (ui_subtab("敌人")) { void bestiary_tab(void); bestiary_tab(); ImGui::EndTabItem(); }
     ImGui::EndTabBar();
 }
 /* F12 > Editor (with the editing tools on): the characters, and the item table for a mod */
 static void tab_editor_all(void)
 {
-    ImGui::TextColored(ImVec4(0.62f, 0.32f, 0.08f, 1), "A deep editor, for fixing and modding:");
+    ImGui::TextColored(ImVec4(0.62f, 0.32f, 0.08f, 1), "一款深度编辑器，用于修复与模组制作：");
     ImGui::SameLine();
-    ImGui::TextWrapped("it changes the saved game's own data directly, as the community's save editors do (to repair a character hit by an old bug, to cheat, or to make a mod). Nothing here is needed to play.");
+    ImGui::TextWrapped("它直接修改存档中的数据，如同社区的存档编辑工具一样（用于修复旧版Bug导致的角色问题、作弊或制作模组）。游玩时无需使用此功能。");
     ImGui::Spacing();
     if (!ui_subtabs_begin("editor")) return;
-    if (ui_subtab("Characters")) { tab_editor(); ImGui::EndTabItem(); }
-    if (ui_subtab("Items (for a mod)")) { void itemedit_tab(void); itemedit_tab(); ImGui::EndTabItem(); }
+    if (ui_subtab("角色")) { tab_editor(); ImGui::EndTabItem(); }
+    if (ui_subtab("物品（用于模组）")) { void itemedit_tab(void); itemedit_tab(); ImGui::EndTabItem(); }
     ImGui::EndTabBar();
 }
 
@@ -473,10 +513,10 @@ static void draw_icon_grid(void)
         ImFont *ft = ui_font_text ? ui_font_text : ImGui::GetFont(), *fh = ui_font_head ? ui_font_head : ft;
         ImU32 ink = IM_COL32(52, 36, 22, 255), dim = IM_COL32(120, 98, 70, 255), rule = IM_COL32(150, 120, 80, 255);
         float u = ds.y / 1080.0f, fs = 24 * u, top = 124 * u, mx = 34 * u;
-        dl->AddText(fh, 40 * u, ImVec2(mx, 22 * u), ink, "Darklands+: the potions and the alchemical ingredients");
+        dl->AddText(fh, 40 * u, ImVec2(mx, 22 * u), ink, "Darklands+：药剂与炼金术原料");
         float split = ds.x * 0.62f;
-        dl->AddText(fh, 28 * u, ImVec2(mx, top - 44 * u), ink, "Potions, grades 1, 2 and 3 (the gold dots on the neck)");
-        dl->AddText(fh, 28 * u, ImVec2(split + 20 * u, top - 44 * u), ink, "Ingredients");
+        dl->AddText(fh, 28 * u, ImVec2(mx, top - 44 * u), ink, "药剂，分为1级、2级和3级（瓶颈上的金色圆点）");
+        dl->AddText(fh, 28 * u, ImVec2(split + 20 * u, top - 44 * u), ink, "配料");
         dl->AddLine(ImVec2(split, top - 30 * u), ImVec2(split, ds.y - 24 * u), rule, 1.5f * u);
         float pw = (split - mx) / 4, ph = (ds.y - top - 20 * u) / 6, ps = fminf(pw / 3.6f, ph * 0.62f);
         for (int k = 0; k < 22; k++) {
@@ -585,15 +625,15 @@ extern "C" void ui_draw(SDL_Renderer *ren)
                would not all show (the whole bar in that face: ImGui measures the tabs again when
                it lays them out) */
             struct Page { const char *name; void (*fn)(void); };
-            static const Page pages[UI_PAGE_N] = { { "Journal", tab_journal }, { "Saves", tab_saves },   /* (Saves, Records: no tab of their own now: the game's Save and Load, the right-click menu; the Guide and the Editor) */
-                { "Settings", tab_helpers }, { "Mods", tab_mods }, { "Settings", tab_helpers }, { "Appendices", tab_guide_all },
-                { "About", tab_about }, { "Editor", tab_editor_all }, { "Appendices", tab_guide_all }, { "Reconstructed Content", tab_restored } };
+            static const Page pages[UI_PAGE_N] = { { "日志", tab_journal }, { "保存次数", tab_saves },   /* (Saves, Records: no tab of their own now: the game's Save and Load, the right-click menu; the Guide and the Editor) */
+                { "设置", tab_helpers }, { "模组", tab_mods }, { "设置", tab_helpers }, { "附录", tab_guide_all },
+                { "关于", tab_about }, { "编辑器", tab_editor_all }, { "附录", tab_guide_all }, { "重建内容", tab_restored } };
             struct Group { const char *name; int icon; int page[5]; int n; };
             static const Group groups[] = {      /* (one page each: no tabs under tabs) */
-                { "Journal", UI_PAGE_JOURNAL, { UI_PAGE_JOURNAL }, 1 }, { "Settings", UI_PAGE_HELPERS, { UI_PAGE_HELPERS }, 1 },
-                { "Reconstructed Content", UI_PAGE_RESTORED, { UI_PAGE_RESTORED }, 1 }, { "Mods", UI_PAGE_MODS, { UI_PAGE_MODS }, 1 },
-                { "Editor", UI_PAGE_EDITOR, { UI_PAGE_EDITOR }, 1 }, { "Appendices", UI_PAGE_GUIDE, { UI_PAGE_GUIDE }, 1 },
-                { "About", UI_PAGE_ABOUT, { UI_PAGE_ABOUT }, 1 } };
+                { "日志", UI_PAGE_JOURNAL, { UI_PAGE_JOURNAL }, 1 }, { "设置", UI_PAGE_HELPERS, { UI_PAGE_HELPERS }, 1 },
+                { "重建内容", UI_PAGE_RESTORED, { UI_PAGE_RESTORED }, 1 }, { "模组", UI_PAGE_MODS, { UI_PAGE_MODS }, 1 },
+                { "编辑器", UI_PAGE_EDITOR, { UI_PAGE_EDITOR }, 1 }, { "附录", UI_PAGE_GUIDE, { UI_PAGE_GUIDE }, 1 },
+                { "关于", UI_PAGE_ABOUT, { UI_PAGE_ABOUT }, 1 } };
             const int NG = (int)(sizeof groups / sizeof groups[0]);
             auto shown = [](const Group &g) { return g.page[0] != UI_PAGE_EDITOR || !ui_original_mode(); };
             ImFont *tf = font_tab;
@@ -751,13 +791,13 @@ extern "C" void ui_progress_draw(SDL_Renderer *ren, const char *step, int pct, c
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(ImGui::GetFontSize() * 30, 0));
     ImGui::Begin("Darklands+##prepare", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
-    ImGui::TextWrapped("Darklands+ is preparing the game from your own DARKLAND.EXE. This happens only once and takes a minute or two.");
+    ImGui::TextWrapped("Darklands+正基于您自己的DARKLAND.EXE文件对游戏进行重新编译。这一过程仅需一次，耗时一两分钟。");
     ImGui::Spacing();
-    ImGui::TextUnformatted(step && *step ? step : "Starting");
+    ImGui::TextUnformatted(step && *step ? step : "启动");
     ImGui::ProgressBar(pct / 100.0f, ImVec2(-1, 0));
     ImGui::Spacing();
     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-    ImGui::TextWrapped("%s", note && *note ? note : "Nothing from the game is included in the Darklands+ download; it is built here from your own copy.");
+    ImGui::TextWrapped("%s", note && *note ? note : "Darklands+下载包中不包含游戏本身的任何内容；它完全由您自己的游戏副本构建而成。");
     ImGui::PopStyleColor();
     ImGui::End();
     orn_windows();

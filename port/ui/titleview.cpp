@@ -23,9 +23,9 @@ static std::string written(long long t)          /* when a save was written, on 
     time_t tt = (time_t)t, now = time(nullptr);
     struct tm a = *localtime(&tt), b = *localtime(&now);
     char s[64];
-    if (a.tm_year == b.tm_year && a.tm_yday == b.tm_yday) snprintf(s, sizeof s, "saved today at %d:%02d", a.tm_hour, a.tm_min);
-    else if (a.tm_year == b.tm_year && a.tm_yday + 1 == b.tm_yday) snprintf(s, sizeof s, "saved yesterday at %d:%02d", a.tm_hour, a.tm_min);
-    else snprintf(s, sizeof s, "saved %d %s %d", a.tm_mday, gm_month_name(a.tm_mon % 12), a.tm_year + 1900);
+    if (a.tm_year == b.tm_year && a.tm_yday == b.tm_yday) snprintf(s, sizeof s, "今天 %d:%02d 保存", a.tm_hour, a.tm_min);
+    else if (a.tm_year == b.tm_year && a.tm_yday + 1 == b.tm_yday) snprintf(s, sizeof s, "昨天 %d:%02d 保存", a.tm_hour, a.tm_min);
+    else snprintf(s, sizeof s, "%d %s %d 保存", a.tm_mday, gm_month_name(a.tm_mon % 12), a.tm_year + 1900);
     return s;
 }
 
@@ -63,7 +63,7 @@ extern "C" void titleview_draw(void)
         for (int k = 0; k < 8; k++) at(0.55f * cosf(k * 0.785f), 0.55f * sinf(k * 0.785f), IM_COL32(74, 40, 24, 255));
         at(0, 0, IM_COL32_WHITE);
     }
-    const char *tag = "Medieval Germany, the fifteenth century";
+    const char *tag = "十五世纪的中世纪德意志";
     P.text(fo, NsDraw::FS_SMALL, LX0 + (LX1 - LX0 - P.width(fo, NsDraw::FS_SMALL, tag)) * 0.5f, 38, soft, tag);
 
     /* the choices */
@@ -77,14 +77,14 @@ extern "C" void titleview_draw(void)
         snprintf(b, sizeof b, "%s, %d %s %d", ns_gtext(s.place).c_str(), s.day, gm_month_name((unsigned)s.month % 12), s.year);
         std::string sub = b;
         if (!who.empty()) sub += " - " + who;
-        items[n++] = { TV_CONTINUE, strncmp(s.comment, "Ironman ", 8) ? "Continue" : "Continue (Ironman)", sub, m.can_continue != 0 };
-        snprintf(b, sizeof b, "%d saved game%s to choose from (The Story Continues)", m.nsaves, m.nsaves == 1 ? "" : "s");
-        items[n++] = { TV_LOAD, "Load a saved game", b, true };
-    } else items[n++] = { TV_LOAD, "Load a saved game", "No saved games yet", false };
-    items[n++] = { TV_NEW, "A new party", "Create a New World: up to four characters of your own", true };
-    items[n++] = { TV_QUICK, "Quickstart", "Start at once with four ready-made characters", true };
-    items[n++] = { TV_SETTINGS, "Settings", "Darklands+ settings and mods (F12)", true };
-    items[n++] = { TV_QUIT, "Quit", "Back to the desktop", true };
+        items[n++] = { TV_CONTINUE, strncmp(s.comment, "Ironman ", 8) ? "继续" : "继续（铁人模式）", sub, m.can_continue != 0 };
+        snprintf(b, sizeof b, "%d 保存的游戏%s 可供选择（故事继续）", m.nsaves, m.nsaves == 1 ? "" : "s");
+        items[n++] = { TV_LOAD, "载入存档", b, true };
+    } else items[n++] = { TV_LOAD, "载入存档", "还没有存档", false };
+    items[n++] = { TV_NEW, "新的队伍", "创建新世界：最多四名自建角色", true };
+    items[n++] = { TV_QUICK, "快速开始", "直接用四名现成角色开局", true };
+    items[n++] = { TV_SETTINGS, "设置", "Darklands+ 设置与模组（F12）", true };
+    items[n++] = { TV_QUIT, "退出", "回到桌面", true };
 
     float y = 50, ih = 21;
     for (int i = 0; i < n; i++) {
@@ -101,10 +101,10 @@ extern "C" void titleview_draw(void)
         if (it.on && P.hit(LX0 - 3, y, LX1 + 6, y + ih - 2)) ns_push(it.action, 0, 0, 0);
         y += ih;
     }
-    P.text(fo, NsDraw::FS_SMALL, LX0, 189, dim, m.can_continue ? "Enter continues;  L load,  N new party,  Q Quickstart" : m.nsaves ? "L load,  N new party,  Q Quickstart" : "Enter or N: a new party;  Q Quickstart");
+    P.text(fo, NsDraw::FS_SMALL, LX0, 189, dim, m.can_continue ? "Enter 继续； L 载入， N 新队伍， Q 快速开始" : m.nsaves ? "L 载入， N 新队伍， Q 快速开始" : "Enter 或 N：新队伍； Q 快速开始");
     {   /* the version, at the foot of the page (over the picture's dark ground, in its light) */
         extern const char dlp_version[], dlp_release[];
-        char v[96]; snprintf(v, sizeof v, dlp_release[0] ? "Darklands+ %s (build %s)" : "Darklands+ build %s%s", dlp_release[0] ? dlp_release : dlp_version, dlp_release[0] ? dlp_version : "");
+        char v[96]; snprintf(v, sizeof v, dlp_release[0] ? "Darklands+ %s（版本 %s）" : "Darklands+ 版本 %s%s", dlp_release[0] ? dlp_release : dlp_version, dlp_release[0] ? dlp_version : "");
         P.text(fo, NsDraw::FS_SMALL, 0, 189, IM_COL32(226, 210, 170, 200), v, 312);
     }
 }

@@ -68,8 +68,8 @@ static std::string place_name(void)
             long dx = (x - px) * 4, dy = (y - py), d = dx * dx + dy * dy;      /* tiles are 16x4 apart */
             if (d < bd) { bd = d; best = k; }
         }
-        if (best < 0 || bd > 60 * 60) return "In the wilds";
-        return "Traveling, near " + loc_display_name(best);
+        if (best < 0 || bd > 60 * 60) return "在野外";
+        return "旅行中，靠近" + loc_display_name(best);
     }
     return loc_display_name(cur);
 }
@@ -190,14 +190,14 @@ static void place_quests(int cur);
  * `width`: where the rows wrap (0: the room left); `words`: each picture's name after it (where
  * no tooltip can show: the world map's tooltip on a town). */
 static const char *TOWN_OFFER_TIP[2] = {
-    "University: new saints and alchemical formulae to learn, rare alchemical materials, a better Philosopher's Stone, teachers to hire (it expects {Latin} and a sharp mind).",
-    "Cathedral: donations for {Divine Favor} (and maybe {Virtue}), an errand for the canon (a relic), the patron saint's story, sanctuary." };
+    "大学：可学习新的圣人与炼金术配方、获取稀有炼金材料、打造更优质的哲人石，还可聘请教师（需具备{拉丁语}知识与敏锐头脑）。",
+    "大教堂：为{神恩}（或许还有{美德}）捐款、为教士跑腿（取圣物）、讲述守护圣人的故事、提供庇护所。" };
 static const struct { int shop, icon; const char *wares; } NOTABLE_SHOPS[] = {
-    { 2, TI_SWORD, "weapons" }, { 3, TI_ARMOUR, "armor and shields" }, { 5, TI_BOW, "bows, crossbows and guns" },
-    { 0, TI_SMITH, "weapons" }, { 6, TI_TOOLS, "hammers, maces, flails and polearms (pikes, halberds, spears, staves)" },
-    { 8, TI_CLOTH, "clothing and soft armor (padded, leather, studded leather, cuir bouilli)" } };   /* (the clothmaker: only with the cardopts fix, which opens its shopfronts by day) */
+    { 2, TI_SWORD, "weapons" }, { 3, TI_ARMOUR, "盔甲与盾牌" }, { 5, TI_BOW, "弓、弩与枪械" },
+    { 0, TI_SMITH, "weapons" }, { 6, TI_TOOLS, "锤、狼牙棒、连枷与长柄武器（长矛、戟、标枪、杖）" },
+    { 8, TI_CLOTH, "衣物与软质盔甲（棉衣、皮革、带钉皮革、煮皮甲）" } };   /* (the clothmaker: only with the cardopts fix, which opens its shopfronts by day) */
 enum { NOTABLE_Q = 30 };
-static const char *TOWN_OFFER_WORD[2] = { "University", "Cathedral" };
+static const char *TOWN_OFFER_WORD[2] = { "大学", "大教堂" };
 /* the teachers to be had in town loc (mods/teachers.c), and whether anyone in the party could use
    them: a fighting skill only if some member's best weapon of that kind (hand to hand: Edged,
    Impact, Flails, Polearms; at range: Thrown, Bows, Missile Devices) is below what the teacher
@@ -247,22 +247,22 @@ static void teacher_row(const TchSource &t, float is, bool lines)
         ui_skill_icon(dl, ImVec2(b.x + is * 0.45f, b.y + is * 0.5f), is * 0.9f, t.skill[j]);
         ImGui::Dummy(ImVec2(is * 0.9f, is));
     }
-    char to[16]; snprintf(to, sizeof to, fix_is_on("teachcap") ? "to %d" : "%d", t.strength);
+    char to[16]; snprintf(to, sizeof to, fix_is_on("teachcap") ? "至%d" : "%d", t.strength);
     ImGui::SameLine(0, gap); ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (is - lh) * 0.5f);
     ImGui::TextUnformatted(to);
     ImGui::EndGroup();
     if (!any || t.off) ui_dim_since(dl, v0, 0.38f);
     if (!lines) return;
     ImGui::Indent(is + gap);
-    if (t.off) { std::string c = t.now; size_t p2 = c.find(" ("); if (p2 != std::string::npos) c = c.substr(0, p2) + "."; ui_rich_textf_c(ImVec4(0.6f, 0.2f, 0.1f, 1), "Not now: %s", c.c_str()); }
+    if (t.off) { std::string c = t.now; size_t p2 = c.find(" ("); if (p2 != std::string::npos) c = c.substr(0, p2) + "."; ui_rich_textf_c(ImVec4(0.6f, 0.2f, 0.1f, 1), "现在不行：%s", c.c_str()); }
     for (int j = 0; j < t.n; j++) {                           /* each skill: its shield, who would learn it and their skill now */
         std::vector<Learner> L; teach_learners(t.skill[j], t.strength, &L);
         ImVec2 b = ImGui::GetCursorScreenPos(); float s2 = lh * 1.1f;
         ui_skill_icon(dl, ImVec2(b.x + s2 * 0.45f, b.y + lh * 0.5f), s2 * 0.9f, t.skill[j]);
         ImGui::Dummy(ImVec2(s2, lh)); ImGui::SameLine(0, gap);
         std::string w;
-        for (const Learner &l : L) w += (w.empty() ? "" : ", ") + (l.name.empty() ? std::string("the party's best") : l.name) + " " + std::to_string(l.v);
-        if (L.empty()) ImGui::TextDisabled("nobody would learn"); else ImGui::TextColored(ImVec4(0.15f, 0.42f, 0.15f, 1), "%s", w.c_str());
+        for (const Learner &l : L) w += (w.empty() ? "" : ", ") + (l.name.empty() ? std::string("队伍的最佳") : l.name) + " " + std::to_string(l.v);
+        if (L.empty()) ImGui::TextDisabled("没人愿意学习"); else ImGui::TextColored(ImVec4(0.15f, 0.42f, 0.15f, 1), "%s", w.c_str());
     }
     ImGui::Unindent(is + gap);
 }
@@ -291,8 +291,8 @@ static void teachers_chip(int loc, bool &first, float isz, float gap, float x0, 
     if (item_hovered()) {                                    /* a row a teacher: who would learn, or why not now */
         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(44, 26, 10, 255));
         ImGui::BeginTooltip(); ImGui::PushTextWrapPos(ImGui::GetFontSize() * 24);
-        ImGui::TextUnformatted("Teachers here: a lesson a day at the inn, for a fee");
-        ImGui::TextDisabled("Under each, who would learn, and their skill now.");
+        ImGui::TextUnformatted("此地教师：可在旅店每天上一课，需付费");
+        ImGui::TextDisabled("每位教师下方注明了谁将学习，以及他们当前的技能水平。");
         ImGui::Separator();
         for (int i = 0; i < n; i++) { teacher_row(ts[i], ImGui::GetTextLineHeight() * 1.3f, true); ImGui::Spacing(); }
         ImGui::PopTextWrapPos(); ImGui::EndTooltip();
@@ -306,7 +306,7 @@ static void stone_chip(int loc, bool &first, float isz, float gap, float x0, flo
     int al = citynav_town_offers(loc, TI_ALCHEMIST) ? town_stone_offer(loc, 0) : 0, un = citynav_town_offers(loc, TI_UNIVERSITY) ? town_stone_offer(loc, 1) : 0;
     int best = al > un ? al : un, have = (s16)g_rw(GV_philosophers_stone);
     if (!best) return;
-    char t[40]; snprintf(t, sizeof t, words ? "Philosopher's Stone %dq" : "%dq", best);
+    char t[40]; snprintf(t, sizeof t, words ? "哲学家之石%dq" : "%dq", best);
     float lh = ImGui::GetTextLineHeight(), tw = ImGui::CalcTextSize(t).x + lh * 0.25f, cw = isz + tw;
     if (!first) { ImGui::SameLine(0, gap); if (ImGui::GetCursorScreenPos().x + cw > x0 + w) ImGui::NewLine(); }
     first = false;
@@ -321,12 +321,12 @@ static void stone_chip(int loc, bool &first, float isz, float gap, float x0, flo
     dl->AddText(ImVec2(a.x + isz + lh * 0.2f, a.y + (isz - lh) * 0.5f), ImGui::GetColorU32(ImGuiCol_Text), t);
     if (best <= have) ui_dim_since(dl, v0, 0.38f);              /* no better than the party's: dim */
     if (item_hovered()) {
-        std::string b = "A better Philosopher's Stone, for a price:";
+        std::string b = "更优质的哲人石，需付费：";
         char l[120];
-        if (al) { snprintf(l, sizeof l, " the alchemist's, quality %d;", al); b += l; }
-        if (un) { snprintf(l, sizeof l, " the university's, quality %d;", un); b += l; }
+        if (al) { snprintf(l, sizeof l, "炼金术师的，品质%d；", al); b += l; }
+        if (un) { snprintf(l, sizeof l, "大学的，品质%d；", un); b += l; }
         b.back() = '.';
-        snprintf(l, sizeof l, have ? " The party's is %d%s." : " The party has none.", have, best <= have ? ": nothing to gain here" : "");
+        snprintf(l, sizeof l, have ? "队伍的为%d%s。" : "队伍目前没有。", have, best <= have ? "：此处无收获" : "");
         margin_tip((b + l).c_str());
     }
 }
@@ -366,9 +366,9 @@ void ui_town_offers(int loc, bool tables, float width, bool words)
     for (const auto &s : NOTABLE_SHOPS) {
         int q = c.shopq[s.shop] > 0 ? shop_wares_q(c.shopq[s.shop]) : 0;
         if (q < NOTABLE_Q || (s.shop == 8 && !fix_is_on("cardopts"))) continue;
-        if (!head) { ImGui::Spacing(); if (words) ImGui::TextDisabled("Notable shops"); else heading("Notable shops"); head = true; first = true; }
+        if (!head) { ImGui::Spacing(); if (words) ImGui::TextDisabled("值得关注的商店"); else heading("值得关注的商店"); head = true; first = true; }
         char t[48], tip[160]; snprintf(t, sizeof t, words ? "%s %dq" : "%.0s%dq", SHOP_NAMES[s.shop], q);
-        snprintf(tip, sizeof tip, "%s: %s of %dq (most shops sell about 25q).", SHOP_NAMES[s.shop], s.wares, q);
+        snprintf(tip, sizeof tip, "%s：%s 的 %dq（大多数商店出售约 25q）。", SHOP_NAMES[s.shop], s.wares, q);
         chip(first, s.icon, t, tip);
     }
 }
@@ -381,7 +381,7 @@ static void library_line(int loc)
 {
     const Library *L = library_at(loc);
     if (!L) return;
-    ImGui::Spacing(); list_heading("Saints taught here");
+    ImGui::Spacing(); list_heading("此地教授的圣人");
     int shown[4], ns = 0;
     for (int k = 0; k < 4; k++) {
         int s = L->saint[k]; bool dup = false;
@@ -398,7 +398,7 @@ static void library_line(int loc)
             if (known) ImGui::TextDisabled("%s", t.c_str()); else ImGui::TextUnformatted(t.c_str());
         } else name_line(t, known);
         if (item_hovered()) {
-            std::string tip = gamedata.saints[s].name + (known ? " (someone in the party knows this saint): " : " (nobody in the party knows this saint): ") + "\n" + saint_effects_text(s) + (*saint_info_note(s) ? "\n" : "") + saint_info_note(s);   /* (what its help really does: mods/saintinfo.h) */
+            std::string tip = gamedata.saints[s].name + (known ? "（队伍中有人知道这位圣人）：" : "（队伍中无人知道这位圣人）：") + "\n" + saint_effects_text(s) + (*saint_info_note(s) ? "\n" : "") + saint_info_note(s);   /* (what its help really does: mods/saintinfo.h) */
             margin_tip(tip.c_str());
         }
     }
@@ -413,7 +413,7 @@ static void formulae_line(int town)
 {
     int fo[4], pr[4];
     if (town < 0 || town >= (int)gamedata.cities.size() || !alchemist_formulae(town, fo, pr)) return;
-    ImGui::Spacing(); list_heading("Formulae sold here");
+    ImGui::Spacing(); list_heading("此处出售的配方");
     float gap = ImGui::GetStyle().ItemSpacing.x, s = fminf(ImGui::GetTextLineHeight() * (lists_panel ? 1.6f : 1.35f), (ImGui::GetContentRegionAvail().x - 3 * gap) / 4 - 1);   /* (as the town's icons above) */
     bool first = true;
     for (int k = 0; k < 4; k++) {
@@ -431,8 +431,8 @@ static void formulae_line(int town)
         if (item_hovered()) {
             const std::string &t = gamedata.formula_names[f];
             const ItemDef *pd = 95 + f / 3 < (int)gamedata.items.size() ? &gamedata.items[95 + f / 3] : nullptr;
-            char head[200]; snprintf(head, sizeof head, "%s: %s, grade %d of 3, %s.\n%s\n\n", t.c_str(), pd ? pd->name.c_str() : "?", f % 3 + 1, money_str(pr[k] * 240L).c_str(),
-                                     known ? "Someone in the party knows this formula." : "Nobody in the party knows this formula.");
+            char head[200]; snprintf(head, sizeof head, "%s：%s，等级为 3 中的 %d，%s。\\n%s\\n\\n", t.c_str(), pd ? pd->name.c_str() : "?", f % 3 + 1, money_str(pr[k] * 240L).c_str(),
+                                     known ? "队伍中有人知道这个配方。" : "队伍中无人知道这个配方。");
             std::string tip = head + (f < (int)gamedata.formulas.size() ? gamedata.formulas[f].text : std::string());
             { std::string enc = ns_item_encounters(95 + f / 3, nullptr); if (!enc.empty()) tip += "\n\n" + enc; }
             margin_tip(tip.c_str());
@@ -453,7 +453,7 @@ static void teacher_rows(int loc)
     TchSource ts[12];
     int n = ui_town_teachers(loc, ts, 12);
     if (!n) return;
-    ImGui::Spacing(); list_heading("Teachers to be hired");
+    ImGui::Spacing(); list_heading("招聘的教师");
     float lh = ImGui::GetTextLineHeight(), is = lh * 1.3f;
     for (int i = 0; i < n; i++) {
         const TchSource &t = ts[i];
@@ -463,9 +463,9 @@ static void teacher_rows(int loc)
         if (hov) {
             ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(44, 26, 10, 255));
             ImGui::BeginTooltip(); ImGui::PushTextWrapPos(ImGui::GetFontSize() * 24);
-            char head[200]; snprintf(head, sizeof head, fix_is_on("teachcap") ? "%s: %s, up to %d" : "%s: %s (their skill %d)", ui_teacher_short(t.src), ui_teacher_skills(t).c_str(), t.strength);
+            char head[200]; snprintf(head, sizeof head, fix_is_on("teachcap") ? "%s：%s，最多 %d" : "%s：%s（其技能为 %d）", ui_teacher_short(t.src), ui_teacher_skills(t).c_str(), t.strength);
             ui_rich_text(head);
-            ImGui::TextDisabled("A lesson a day at the inn, for a fee. Who would learn, and their skill now:");
+            ImGui::TextDisabled("在旅店每天可学一课，需付费。谁会学习，以及他们目前的技能：");
             teacher_row(t, ImGui::GetTextLineHeight() * 1.3f, true);
             ImGui::PopTextWrapPos(); ImGui::EndTooltip();
             ImGui::PopStyleColor();
@@ -581,20 +581,20 @@ static void right_panel(int size)
             ImGui::SameLine(0, s * 0.2f);
         };
         /* the party's fame first, at the right over the town's name: it is the party's, the same in every town */
-        {   char ft[32]; snprintf(ft, sizeof ft, "Fame %d", fame);
+        {   char ft[32]; snprintf(ft, sizeof ft, "声望 %d", fame);
             float fs = ImGui::GetFontSize(), w = fs * 1.3f + ImGui::CalcTextSize(ft).x, room = ImGui::GetContentRegionAvail().x;
             if (room > w) ImGui::SetCursorPosX(ImGui::GetCursorPosX() + room - w);
             standing(1); ImGui::TextDisabled("%s", ft);
-            if (item_hovered()) margin_tip("The party's fame: the same in every town (the town's own opinion of the party is its Reputation, under its name).");
+            if (item_hovered()) margin_tip("队伍的声望：在每个城镇都相同（城镇对队伍的看法称为“声誉”，在其名称下方显示）。");
         }
         /* the town's name, and under it the town's opinion of the party (its own) */
-        heading(((near ? "Near " : "") + c.name).c_str());
+        heading(((near ? "附近" : "") + c.name).c_str());
         auto rp = rep_seen.find(cur);
         if (rp != rep_seen.end()) {                                   /* coloured by how the town sees the party */
             int r = rp->second;
             ImVec4 col = r <= -30 ? ImVec4(0.95f, 0.22f, 0.16f, 1) : r < -10 ? ImVec4(0.95f, 0.45f, 0.35f, 1) : r < 0 ? ImVec4(0.95f, 0.68f, 0.55f, 1)
                        : r >= 30 ? ImVec4(0.55f, 0.88f, 0.50f, 1) : ImGui::GetStyleColorVec4(ImGuiCol_Text);
-            char rt[32]; snprintf(rt, sizeof rt, "Reputation %d", r);
+            char rt[32]; snprintf(rt, sizeof rt, "声誉 %d", r);
             standing(0);
             ImGui::TextColored(col, "%s", rt);
             bool rep_hov = item_hovered();
@@ -612,14 +612,14 @@ static void right_panel(int size)
                    times in 38 card modules), and below 0 the shops ask more and pay less - 1% for each
                    two points, up to 9% (buy_price, sell_price s032; above 0 the game's integer
                    rounding leaves the prices as they are) */
-                std::string t = "The town's opinion of the party; what the party does here moves it (the cards say when), and many of the town's cards weigh it. "
-                                "Below 0 its shops ask more and pay less (up to 9% from about -20 down).";
+                std::string t = "城镇对队伍的看法；队伍在此地的所作所为会影响其评价（卡片会注明何时发生），而城镇的许多卡片都会对其加以权衡。"
+                                "当数值低于0时，商店会要求更多、支付更少（从约-20开始，最高可至9%）。";
                 std::vector<RepChange> L; repwatch_list(cur, L);
                 if (!L.empty()) {
-                    t += "\n\nChanges seen since this game was loaded:";
+                    t += "\\n\\n自本游戏加载以来的变化：";
                     for (int k = (int)L.size() - 1, n = 0; k >= 0 && n < 6; k--, n++) {
-                        const RepChange &c = L[k]; char b[64]; snprintf(b, sizeof b, "\n%+d on %d.%d.%d", c.delta, c.day, c.month + 1, c.year); t += b;
-                        t += c.choice.empty() ? " (" + std::string(c.card[0] == '$' ? "a card" : "the overland view") + ")" : ", after choosing \"" + c.choice + "\"";
+                        const RepChange &c = L[k]; char b[64]; snprintf(b, sizeof b, "\\n%+d 在 %d.%d.%d", c.delta, c.day, c.month + 1, c.year); t += b;
+                        t += c.choice.empty() ? " (" + std::string(c.card[0] == '$' ? "一张卡片" : "陆地景观") + ")" : "，选择“之后" + c.choice + "\"";
                     }
                 }
                 margin_tip(t.c_str());
@@ -635,11 +635,11 @@ static void right_panel(int size)
             ui_draw_quest_icon(ImGui::GetWindowDrawList(), ImVec2(p0.x + is * 0.5f, p0.y + lh * 0.5f), is, t.cat);
             ImGui::Indent(is + lh * 0.3f);
             bool al = t.cat == QC_ALERT;
-            ImGui::TextColored(al ? ImVec4(0.95f, 0.78f, 0.45f, 1) : ImVec4(0.95f, 0.55f, 0.43f, 1), "%s %s", t.cat == QC_UNWELCOME ? "Unwelcome" : al ? "On alert" : "Wanted",
+            ImGui::TextColored(al ? ImVec4(0.95f, 0.78f, 0.45f, 1) : ImVec4(0.95f, 0.55f, 0.43f, 1), "%s %s", t.cat == QC_UNWELCOME ? "不受欢迎" : al ? "警戒中" : "通缉中",
                                short_date(t.until, (s16)g_rw(G_CUR_YEAR)).c_str());
-            if (item_hovered()) margin_tip(t.cat == QC_UNWELCOME ? "The town counts as hostile: its gates and people turn the party away."
+            if (item_hovered()) margin_tip(t.cat == QC_UNWELCOME ? "城镇视队伍为敌对：城门和居民都将队伍拒之门外。"
                                            : al ? town_alert_text(cur).c_str()
-                                                : "The watch is after the party: guards who recognize the party try to arrest it, and talking or bribing your way out is harder.");
+                                                : "守卫正在追捕队伍：认出队伍的守卫会试图逮捕，而通过交谈或贿赂脱身则更加困难。");
             ImGui::Unindent(is + lh * 0.3f);
         }
         {   /* a season of city politics (mods/politics.c, experimental): the town in turmoil, until the party takes a side
@@ -649,9 +649,9 @@ static void right_panel(int size)
                 ImVec2 p0 = ImGui::GetCursorScreenPos();
                 ui_draw_quest_icon(ImGui::GetWindowDrawList(), ImVec2(p0.x + is * 0.5f, p0.y + lh * 0.5f), is, QC_POLITICS);
                 ImGui::Indent(is + lh * 0.3f);
-                ImGui::TextColored(ImVec4(0.95f, 0.78f, 0.45f, 1), "In turmoil");
-                if (item_hovered()) margin_tip("Rebels and the government's men are hiring in this town. The news (the posted notices and gossip) "
-                                               "and its rumors of special jobs lead to them; so does the guild where the agitators meet.");
+                ImGui::TextColored(ImVec4(0.95f, 0.78f, 0.45f, 1), "动荡之中");
+                if (item_hovered()) margin_tip("反叛者与政府军正在此城镇招募人员。消息（张贴的告示与流言）"
+                                               "以及关于特殊工作的传言促使他们前来；煽动者聚集的公会也会带来这类机会。");
                 ImGui::Unindent(is + lh * 0.3f);
             }
         }
@@ -662,11 +662,11 @@ static void right_panel(int size)
                 ImVec2 p0 = ImGui::GetCursorScreenPos();
                 ui_draw_quest_icon(ImGui::GetWindowDrawList(), ImVec2(p0.x + is * 0.5f, p0.y + lh * 0.5f), is, QC_WAR);
                 ImGui::Indent(is + lh * 0.3f);
-                ImGui::TextColored(ImVec4(0.95f, 0.55f, 0.43f, 1), "%s", w == 1 ? "Preparing for war" : "At war");
-                if (item_hovered()) margin_tip(w == 1 ? "Prices are a quarter higher, the gate turns travelers away and patrols watch the walls; "
-                                                        "Soldiers' Road and its market are open, and few boats take passengers."
-                                                      : "Prices are 50% higher, food is short and the docks are barricaded; "
-                                                        "the gate turns travelers away and patrols watch the walls. Soldiers' Road and its market are open.");
+                ImGui::TextColored(ImVec4(0.95f, 0.55f, 0.43f, 1), "%s", w == 1 ? "准备战争" : "处于战争状态");
+                if (item_hovered()) margin_tip(w == 1 ? "物价上涨四分之一，城门拒绝旅客通行，巡逻队守卫城墙；"
+                                                        "士兵之路及其市场开放，但很少有船只载客。"
+                                                      : "物价上涨 50%，食物短缺，码头被封锁；"
+                                                        "城门拒绝旅客通行，巡逻队守卫城墙。士兵之路及其市场仍然开放。");
                 ImGui::Unindent(is + lh * 0.3f);
             }
         }
@@ -689,17 +689,17 @@ static void right_panel(int size)
             ImGui::TextDisabled("%s", loc_kind_label((s16)rw((u16)(r >> 16), (u16)r)));
             library_line(cur);
             place_quests(cur);
-            if ((s16)rw((u16)(r >> 16), (u16)((u16)r + 0x18)) > 0) ImGui::TextWrapped("The party has goods stored here (F12 > Journal > Stored).");
+            if ((s16)rw((u16)(r >> 16), (u16)((u16)r + 0x18)) > 0) ImGui::TextWrapped("队伍在此地存有货物（F12 > 日志 > 已存储）。");
             any = true;
         }
     }
     std::vector<Eff> e = effects_now(size);
     if (!e.empty()) {
         if (any) ImGui::Separator();
-        heading("Blessings and potions");
+        heading("祝福与药剂");
         /* one row a member: what is at work - an attribute or a skill raised (or lowered) as its shield and
            how much, the rest in words - then how long it lasts (from the soonest to the last) */
-        auto span = [](long h) { char b[24]; if (h < 48) snprintf(b, sizeof b, "%ld h", h); else snprintf(b, sizeof b, "%ld d", (h + 12) / 24); return std::string(b); };
+        auto span = [](long h) { char b[24]; if (h < 48) snprintf(b, sizeof b, "%ld 小时", h); else snprintf(b, sizeof b, "%ld 天", (h + 12) / 24); return std::string(b); };
         float lh = ImGui::GetTextLineHeight(), is = lh * 1.15f, gap = lh * 0.35f, right = ImGui::GetCursorScreenPos().x + ImGui::GetContentRegionAvail().x;
         ImDrawList *dl = ImGui::GetWindowDrawList();
         for (int m = 0; m < 5; m++) {
@@ -733,7 +733,7 @@ static void right_panel(int size)
         }
         any = true;
     }
-    if (!any) { ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled)); ImGui::TextWrapped("No blessings or potions at work."); ImGui::PopStyleColor(); }
+    if (!any) { ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled)); ImGui::TextWrapped("工作中没有祝福或药水。"); ImGui::PopStyleColor(); }
     if (camp_hint) {                                                /* on the map: the original's C, to camp in the wild */
         float sp = ImGui::GetStyle().ItemSpacing.y, lh = ImGui::GetTextLineHeight(), hh = lh * 1.4f + sp * 2;
         float foot = ImGui::GetWindowHeight() - ImGui::GetStyle().WindowPadding.y - hh;
@@ -742,18 +742,18 @@ static void right_panel(int size)
         ImVec2 p = ImGui::GetCursorScreenPos();
         campfire_icon(ImGui::GetWindowDrawList(), ImVec2(p.x + lh * 0.7f, p.y + lh * 0.7f), lh * 1.4f);
         ImGui::SetCursorScreenPos(ImVec2(p.x + lh * 1.6f, p.y + lh * 0.2f));
-        ImGui::TextDisabled("%s", ui_pad_prompts() ? "Camp here" : "C: camp here");
-        if (ImGui::IsItemHovered()) { ImGui::SetMouseCursor(ImGuiMouseCursor_Hand); margin_tip("Click (or press C) to make camp in the wild: rest, heal, brew potions, pray. Someone should guard the camp."); }
+        ImGui::TextDisabled("%s", ui_pad_prompts() ? "在此扎营" : "C：在此扎营");
+        if (ImGui::IsItemHovered()) { ImGui::SetMouseCursor(ImGuiMouseCursor_Hand); margin_tip("点击（或按 C）可在野外扎营：休息、治疗、炼制药水、祈祷。应有人看守营地。"); }
         if (ImGui::IsItemClicked()) plat_press_key(SDL_SCANCODE_C);
     }
     if (goto_hint) {                                                /* the foot, as the left margin's hints */
-        const char *h = ui_pad_prompts() ? "Go to a place here" : "G: go to a place here";
+        const char *h = ui_pad_prompts() ? "前往此处的某个地方" : "G：前往此处的某个地方";
         float sp = ImGui::GetStyle().ItemSpacing.y, hh = ImGui::GetTextLineHeight() + sp * 2;
         float foot = ImGui::GetWindowHeight() - ImGui::GetStyle().WindowPadding.y - hh;
         if (foot > ImGui::GetCursorPosY() + sp * 2) ImGui::SetCursorPosY(foot);
         ImGui::Separator();
         ImGui::TextDisabled("%s", h);
-        if (ImGui::IsItemHovered()) { ImGui::SetMouseCursor(ImGuiMouseCursor_Hand); margin_tip("Click (or press G) to open Go to: a list of the places in this town; pick one and the party walks there."); }
+        if (ImGui::IsItemHovered()) { ImGui::SetMouseCursor(ImGuiMouseCursor_Hand); margin_tip("点击（或按 G）打开“前往”界面：列出该城镇的所有地点；选择一处，队伍便会前往。"); }
         if (ImGui::IsItemClicked()) ui_open_goto();
     }
 }
@@ -791,7 +791,7 @@ static void tasks_section(bool tables)
     auto over = [&](ImVec2 a, ImVec2 b) { return mp.x >= a.x && mp.x < b.x && mp.y >= a.y && mp.y < b.y; };
     {   /* the heading, and the order at its right */
         ImVec2 h0 = ImGui::GetCursorScreenPos();
-        heading("Quests");
+        heading("任务");
         if (q.size() > 1) {
             std::string t = std::string("by ") + QSORT_NAME[sort];
             float tw = ImGui::CalcTextSize(t.c_str()).x;
@@ -802,7 +802,7 @@ static void tasks_section(bool tables)
             mclick(a, b, [&]() { sort = (sort + 1) % QSORT_N; config_set_int("quests.sort", sort); config_save(); quest_sort(q, sort); });
         }
     }
-    if (q.empty()) { ImGui::TextDisabled("None taken on."); return; }
+    if (q.empty()) { ImGui::TextDisabled("未携带任何物品。"); return; }
     for (size_t i = 0; i < q.size() && i < 10; i++) {
         const QuestRow &r = q[i];
         bool is_open = open.count(r.id) != 0;
@@ -834,7 +834,7 @@ static void tasks_section(bool tables)
             ImGui::PopStyleColor();
             if (r.dist >= 0) { ImGui::Dummy(ImVec2(0, 0)); quest_way_inline(r); }
             if (r.loc >= 0 && r.dist >= 1.5 && travel_enabled && game_mode() == GM_MAP) {     /* (on the travel map: go there) */
-                const char *t = "Travel there";
+                const char *t = "前往那里";
                 ImVec2 tp = ImGui::GetCursorScreenPos(), tsz = ImGui::CalcTextSize(t);
                 bool h = over(tp, ImVec2(tp.x + tsz.x, tp.y + tsz.y));
                 ImU32 tc = h ? IM_COL32(250, 220, 150, 255) : IM_COL32(220, 186, 120, 255);
@@ -851,7 +851,7 @@ static void tasks_section(bool tables)
         std::string id = r.id;
         mclick(a, ImVec2(b.x, ty1), [id]() { if (open.count(id)) open.erase(id); else open.insert(id); });
     }
-    if (q.size() > 10) ImGui::TextDisabled("... %d more on the world map (M)", (int)q.size() - 10);
+    if (q.size() > 10) ImGui::TextDisabled("…在世界地图上还有 %d 个地方（M）", (int)q.size() - 10);
 }
 
 /* in a town at night: the streets' dangers (mods/travel.c has the rolls: the night watch at each
@@ -867,16 +867,16 @@ static void night_streets(bool night)
     int t = (st / n + sw / n) / 2;
     t = t < 0 ? 0 : t > 99 ? 99 : t;
     int pct = config_get_int("travel.street_encounters", 100), slip = 100 - (100 - t) * pct / 100;
-    ImGui::TextColored(ImVec4(0.92f, 0.70f, 0.42f, 1), "Night in the streets");
+    ImGui::TextColored(ImVec4(0.92f, 0.70f, 0.42f, 1), "街头的夜晚");
     if (item_hovered()) {
         char b[460], often[40]; int k = (slip + 5) / 10;
-        if (k <= 0) snprintf(often, sizeof often, "hardly ever");
-        else if (k >= 10) snprintf(often, sizeof often, "almost always");
-        else snprintf(often, sizeof often, "about %d time%s in 10", k, k == 1 ? "" : "s");
-        snprintf(b, sizeof b, "From 19:00 to 5:00 the town is dark. Each move through its streets may run into the night watch (more often on the main street, "
-                 "and where the town is on its guard). When leaving a side street, the party slips past cutthroats %s "
-                 "(depending on the party's {Stealth} and {Streetwise})%s. An inn is the safe place to wait for morning.",
-                 often, pct != 100 ? ", as set in F12 > Mods (Night encounters in the streets)" : "");
+        if (k <= 0) snprintf(often, sizeof often, "几乎从不");
+        else if (k >= 10) snprintf(often, sizeof often, "几乎总是");
+        else snprintf(often, sizeof often, "关于 %d 次%s 在 10 中", k, k == 1 ? "" : "s");
+        snprintf(b, sizeof b, "从 19:00 到 5:00，城镇一片漆黑。每次穿行于街道，都可能遇到夜巡者（主街更常见，"
+                 "而且城镇也处于戒备状态）。离开小巷时，队伍会悄悄绕过歹徒 %s"
+                 "（取决于队伍的 {潜行} 和 {街头智慧}%s。旅店是等待黎明的安全之所。",
+                 often, pct != 100 ? "，如 F12 > 模组中所设定（街头的夜间遭遇）" : "");
         margin_tip(b);
     }
 }
@@ -913,11 +913,11 @@ extern "C" void ui_margins(void)
                 ui_draw_daynight(ImGui::GetWindowDrawList(), ImVec2(p.x + r + 1, p.y + lh * 0.5f), r, (float)hour, true);
                 ImGui::Dummy(ImVec2(2 * r + 2, lh)); ImGui::SameLine(0, lh * 0.45f);
             }
-            ImGui::TextDisabled("%d:00, %s", hour, bell);
+            ImGui::TextDisabled("%d:00，%s", hour, bell);
             if (item_hovered()) {
-                std::string t = std::string("The canonical hours, as people in the game tell the time: Matins 0-2, Lauds 3-5, Prime 6-8, Terce 9-11, "
-                                            "Sexts 12-14, Nones 15-17, Vespers 18-20, Compline 21-23. ") +
-                                (night ? "It is night (from 19:00 to 5:00): town gates may be shut, and the streets have the watch and cutthroats." : "It is day (from 5:00 to 19:00).");
+                std::string t = std::string("正统的时辰划分，游戏中人们以此报时：晨祷 0-2，晨礼 3-5，晨课 6-8，第三时 9-11，"
+                                            "第六时 12-14，第九时 15-17，晚祷 18-20，完谷祷 21-23。") +
+                                (night ? "夜间（19:00 至 5:00）：城门可能关闭，街道上有巡逻和歹徒。" : "白天（5:00 至 19:00）。");
                 margin_tip(t.c_str());
             }
         }
@@ -944,7 +944,7 @@ extern "C" void ui_margins(void)
             }
         }
         { long pf = (long)f * 240 + g * 12 + p; if (pf >= 12 && item_hovered()) margin_tip(money_total(pf).c_str()); }
-        if (bn > 0) ImGui::TextDisabled("%s in bank notes", money_fgp(bn, 0, 0).c_str());
+        if (bn > 0) ImGui::TextDisabled("银行券中的 %s", money_fgp(bn, 0, 0).c_str());
         /* the place and the tasks come from the location and event tables, which battles and their
            loot reuse: read while a card or the map is up, meanwhile the last reading stands */
         const int gm = game_mode();
@@ -956,9 +956,9 @@ extern "C" void ui_margins(void)
         tasks_section(tables);
         {   /* the hints, at the foot of the margin (always in the same place) */
             const bool pad = ui_pad_prompts();             /* (a controller in use: its buttons, padglyphs.h) */
-            char h1[96]; snprintf(h1, sizeof h1, pad ? "{B} the menus (save, load, party%s)." : "Right-click or F10: the menus (save, load, party%s).", menuview_is_on() && !config_get_int("original", 0) ? ", Darklands+" : "");
+            char h1[96]; snprintf(h1, sizeof h1, pad ? "{B} 菜单（存档、载入、队伍%s）。" : "右键或 F10：菜单（存档、载入、队伍%s）。", menuview_is_on() && !config_get_int("original", 0) ? ", Darklands+" : "");
             const char *h2 = nullptr;                      /* (the hint to the New Player Guide: withdrawn with it) */
-            const char *h3 = pad ? nullptr : "F11: the keys and clicks of this screen.";
+            const char *h3 = pad ? nullptr : "F11：本屏幕的按键与点击操作。";
             float ww = ImGui::GetContentRegionAvail().x, sp = ImGui::GetStyle().ItemSpacing.y;
             float hh = ImGui::CalcTextSize(h1, nullptr, false, ww).y + (h2 ? sp + ImGui::CalcTextSize(h2, nullptr, false, ww).y : 0)
                      + (h3 ? sp + ImGui::CalcTextSize(h3, nullptr, false, ww).y : 0) + sp * 2;

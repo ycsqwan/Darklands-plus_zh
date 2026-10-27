@@ -82,10 +82,10 @@ static int logon;
 
 /* ------------------------------------------------------------------ the figures */
 static const struct { const char *code, *title; } KNOWN[] = {
-    { "E05", "Gray-haired fighter" }, { "E07", "Brown-haired woman" }, { "E12", "Blond fighter" },
-    { "E00", "Sergeant" }, { "E02", "Town guard" }, { "E04", "Mercenary" }, { "E03", "Bandit" },
-    { "E10", "Knight" }, { "E11", "Knight in plate" }, { "E13", "Templar" }, { "E09", "Monk" },
-    { "E06", "Alchemist" }, { "E08", "Witch" }, { "E17", "Cultist" },
+    { "E05", "白发战士" }, { "E07", "棕发女子" }, { "E12", "金发战士" },
+    { "E00", "军士" }, { "E02", "城镇守卫" }, { "E04", "雇佣兵" }, { "E03", "匪徒" },
+    { "E10", "骑士" }, { "E11", "盔甲骑士" }, { "E13", "圣殿骑士" }, { "E09", "和尚" },
+    { "E06", "炼金术士" }, { "E08", "巫师" }, { "E17", "邪教徒" },
 };
 #define NKNOWN ((int)(sizeof KNOWN / sizeof KNOWN[0]))
 #define MAXLOOK 32
@@ -619,7 +619,7 @@ int looks_weapons(const char *code, char out[][3], int max)
 int looks_is_extra(const char *code) { return look_find(code) != 0; }
 const char *looks_title_of(const char *code)
 {
-    static const struct { const char *c, *t; } ORIG[] = { { "F01", "Tall man" }, { "F60", "Woman" }, { "C00", "Stout priest" }, { "A00", "Hooded man" } };
+    static const struct { const char *c, *t; } ORIG[] = { { "F01", "高个男子" }, { "F60", "女性" }, { "C00", "粗壮牧师" }, { "A00", "戴兜帽男子" } };
     for (int i = 0; i < 4; i++) if (!strncasecmp(code, ORIG[i].c, 3)) return ORIG[i].t;
     Look *L = look_find(code);
     return L ? L->title : "";
@@ -818,10 +818,10 @@ static void key_hook(int ovl)
                 for (int i = 0; i < nlooks; i++) if (look_find(looks[i].code)) { n++; if (!strncasecmp(looks[i].code, now, 3)) k = n; }
                 Look *L = look_find(now);
                 char msg[160];
-                if (L) snprintf(msg, sizeof msg, "Sprite %d of %d: %s (an enemy's sprite, added by Darklands+%s)", k, n, L->title,
-                                L->npart > 2 ? "; the 1st, 2nd and 3rd color buttons recolor it" : L->npart > 1 ? "; the 1st and 2nd color buttons recolor it" :
-                                L->npart ? "; the 1st color button recolors it" : "");
-                else snprintf(msg, sizeof msg, "Sprite %d of %d: %s", k, n, looks_title_of(now)[0] ? looks_title_of(now) : now);
+                if (L) snprintf(msg, sizeof msg, "英雄精灵%d of %d: %s（敌方英雄精灵，由Darklands+%s添加）", k, n, L->title,
+                                L->npart > 2 ? "; 第1、第2和第3个颜色按钮可为其重新上色" : L->npart > 1 ? "; 第1和第2个颜色按钮可为其重新上色" :
+                                L->npart ? "; 第1个颜色按钮可为其重新上色" : "");
+                else snprintf(msg, sizeof msg, "英雄精灵%d of %d: %s", k, n, looks_title_of(now)[0] ? looks_title_of(now) : now);
                 figure_notice(msg);
             }
         }
@@ -836,10 +836,10 @@ static void key_hook(int ovl)
         int m = slot_of((s16)g_rw(D_SELCHAR));
         if (m >= 0) {
             const char *d = dye_next(m, part, 1);
-            if (d) { char msg[80]; snprintf(msg, sizeof msg, "%s color: %s", part == 0 ? "1st" : part == 1 ? "2nd" : "3rd", d); figure_notice(msg); }
+            if (d) { char msg[80]; snprintf(msg, sizeof msg, "%s颜色：%s", part == 0 ? "1st" : part == 1 ? "2nd" : "3rd", d); figure_notice(msg); }
             else {
                 char code[4]; looks_member_figure(m, code);
-                if (look_find(code)) figure_notice(part ? "This sprite has no more colors that can be changed." : "This sprite's colors are fixed: they cannot be changed.");
+                if (look_find(code)) figure_notice(part ? "此英雄精灵已无更多可更改的颜色。" : "此英雄精灵的颜色已固定：无法更改。");
             }
         }
         AX = ax;

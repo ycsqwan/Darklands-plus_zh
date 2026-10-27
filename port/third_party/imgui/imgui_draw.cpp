@@ -3857,6 +3857,28 @@ static inline const char* CalcWordWrapNextLineStartA(const char* text, const cha
     return text;
 }
 
+// Darklands+ (CJK patch): the Han glyphs of the translated interface live in one pixel font
+// (ui/ui.cpp, ui_font_cjk); the other faces carry none, and ImGui draws a codepoint a font
+// lacks as '?' (FallbackGlyph). When a font has no glyph for a codepoint and the fallback
+// font has one, that glyph is drawn instead: every font here shares one atlas texture, so
+// this needs no extra draw call and no texture switch.
+ImFont* ImFontFallback = NULL;
+static const ImFontGlyph* ImFontFallbackGlyph(unsigned int c)
+{
+    if (!ImFontFallback || c >= (size_t)ImFontFallback->IndexLookup.Size)
+        return NULL;
+    const ImWchar i = ImFontFallback->IndexLookup.Data[c];
+    return i == (ImWchar)-1 ? NULL : &ImFontFallback->Glyphs.Data[i];
+}
+// the advance of c at this font's baked size, taken from the fallback font when this one lacks it
+static float ImFontAdvanceX(const ImFont* f, unsigned int c)
+{
+    if (c < (size_t)f->IndexLookup.Size && f->IndexLookup.Data[c] != (ImWchar)-1)
+        return c < (size_t)f->IndexAdvanceX.Size ? f->IndexAdvanceX.Data[c] : f->FallbackAdvanceX;
+    const ImFontGlyph* g = ImFontFallbackGlyph(c);
+    return g ? g->AdvanceX * (f->FontSize / ImFontFallback->FontSize) : f->FallbackAdvanceX;
+}
+
 #define ImFontGetCharAdvanceX(_FONT, _CH)  ((int)(_CH) < (_FONT)->IndexAdvanceX.Size ? (_FONT)->IndexAdvanceX.Data[_CH] : (_FONT)->FallbackAdvanceX)
 
 // Simple word-wrapping for English, not full-featured. Please submit failing cases!
@@ -3911,7 +3933,7 @@ const char* ImFont::CalcWordWrapPositionA(float scale, const char* text, const c
             }
         }
 
-        const float char_width = ImFontGetCharAdvanceX(this, c);
+        const float char_width = ImFontAdvanceX(this, c);
         if (ImCharIsBlankW(c))
         {
             if (inside_word)
@@ -4016,7 +4038,7 @@ ImVec2 ImFont::CalcTextSizeA(float size, float max_width, float wrap_width, cons
                 continue;
         }
 
-        const float char_width = ImFontGetCharAdvanceX(this, c) * scale;
+        const float char_width = ImFontAdvanceX(this, c) * scale;
         if (line_width + char_width >= max_width)
         {
             s = prev_s;
@@ -4161,18 +4183,23 @@ void ImFont::RenderText(ImDrawList* draw_list, float size, const ImVec2& pos, Im
                 continue;
         }
 
-        const ImFontGlyph* glyph = FindGlyph((ImWchar)c);
+        const ImFontGlyph* glyph = FindGlyphNoFallback((ImWchar)c);
+        float gscale = scale;
+        if (glyph == NULL && (glyph = ImFontFallbackGlyph(c)) != NULL)
+            gscale = size / ImFontFallback->FontSize;   /* (the Han face is baked at another size) */
+        if (glyph == NULL)
+            glyph = FallbackGlyph;
         if (glyph == NULL)
             continue;
 
-        float char_width = glyph->AdvanceX * scale;
+        float char_width = glyph->AdvanceX * gscale;
         if (glyph->Visible)
         {
             // We don't do a second finer clipping test on the Y axis as we've already skipped anything before clip_rect.y and exit once we pass clip_rect.w
-            float x1 = x + glyph->X0 * scale;
-            float x2 = x + glyph->X1 * scale;
-            float y1 = y + glyph->Y0 * scale;
-            float y2 = y + glyph->Y1 * scale;
+            float x1 = x + glyph->X0 * gscale;
+            float x2 = x + glyph->X1 * gscale;
+            float y1 = y + glyph->Y0 * gscale;
+            float y2 = y + glyph->Y1 * gscale;
             if (x1 <= clip_rect.z && x2 >= clip_rect.x)
             {
                 // Render a character

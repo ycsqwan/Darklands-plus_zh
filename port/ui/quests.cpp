@@ -53,7 +53,7 @@ static std::vector<Ev> read_events(void)
 
 static std::string date(const int d[4])
 {
-    if (d[2] >= 12 || d[3] >= 1499) return "no time limit";
+    if (d[2] >= 12 || d[3] >= 1499) return "无时间限制";
     char b[48]; snprintf(b, sizeof b, "%d %s %d", d[1], gm_month_name(d[2] % 12), d[3]);
     return b;
 }
@@ -90,7 +90,7 @@ static std::string where(int loc)
     static const char *DIR[8] = { "east", "north-east", "north", "north-west", "west", "south-west", "south", "south-east" };
     int k = (int)floor((ang + 22.5 + 360) / 45) % 8;
     std::string rel = (bd < 3 ? "near " : std::string(DIR[k]) + " of ") + loc_name(best);
-    static const char *KIND[] = { "Cave", "Tomb", "Lair", "Spring", "Lake", "Shrine", "Pagan Altar" };   /* a place with no name of its own: */
+    static const char *KIND[] = { "洞穴", "墓穴", "老巢", "春天", "湖泊", "祭坛", "异教祭坛" };   /* a place with no name of its own: */
     for (const char *kd : KIND)                                                                          /* "the pagan altar north-west of Hall" */
         if (n == kd) { std::string l = n; for (char &c : l) c = (char)tolower((unsigned char)c); return "the " + l + " " + rel; }
     return n + ", " + rel;
@@ -115,7 +115,7 @@ static std::string nearest_town(int loc)
 static std::string site(int loc)
 {
     std::string n = loc_name(loc);
-    static const char *KIND[] = { "Cave", "Tomb", "Lair", "Spring", "Lake", "Shrine", "Pagan Altar" };
+    static const char *KIND[] = { "洞穴", "墓穴", "老巢", "春天", "湖泊", "祭坛", "异教祭坛" };
     for (const char *k : KIND)
         if (n == k) {
             std::string l = n;
@@ -153,9 +153,9 @@ static std::string person(int seed)
 static const char *giver(int id)
 {
     switch (id) {
-    case 0: return "a merchant"; case 3: return "the bishop"; case 4: return "a foreign trader"; case 5: return "a pharmacist";
-    case 6: return "the Medici"; case 7: return "the Hanse"; case 8: return "the Fugger"; case 9: return "the villagers";
-    case 10: return "the city's lord"; default: return "a townsman";
+    case 0: return "商人"; case 3: return "主教"; case 4: return "外国商人"; case 5: return "药剂师";
+    case 6: return "美第奇家族"; case 7: return "汉萨同盟"; case 8: return "富格尔家族"; case 9: return "村民";
+    case 10: return "城市领主"; default: return "城镇居民";
     }
 }
 
@@ -163,7 +163,7 @@ static std::string item_name(int id)
 {
     id &= 0xfff;
     if (id >= 0 && id < (int)gamedata.items.size()) return game_text(gamedata.items[id].name.c_str(), 64);
-    return "an item";
+    return "物品";
 }
 
 struct Line { std::string text, when; int group; int loc = -1; std::string title, id; long end = -1; int ed = 0, em = 0, ey = 0; int order = 0; int cat = QC_NONE; int town = -1; int giver = -1, office = -1; };
@@ -191,7 +191,7 @@ static int papers_office(const Ev &e)
 }
 static std::string papers_holder(const Ev &e)
 {
-    static const char *OFFICE[4] = { "the leading merchant", "the Medici", "the Fugger", "the Hanseatic League" };
+    static const char *OFFICE[4] = { "首席商人", "美第奇家族", "富格尔家族", "汉萨同盟" };
     return OFFICE[papers_office(e)];
 }
 
@@ -274,10 +274,10 @@ static int side_at(const std::vector<Ev> &evs, int loc)        /* the party's si
    potion used there or a party caught sneaking in, for four weeks by a rising (conflict_outcome) */
 std::string town_alert_text(int loc)
 {
-    std::string t = "The watch of " + loc_name(loc) + " is on alert, after trouble with its guards at the gates or walls (or a rising). "
-                    "Two times in five, the guards stop a party that simply walks out of the gate, and attack; sneaking out, "
-                    "or talking your way in, is harder.";
-    if (fix_is_on("cityalert")) t += " With its opinion of the party at -10 or worse, the town counts as hostile.";
+    std::string t = "The watch of " + loc_name(loc) + "五次中有两次，守卫会拦下直接走出城门的队伍并发动攻击；悄悄溜出去，"
+                    "或者通过交谈混进去，则要困难得多。"
+                    "当其对队伍的看法为 -10 或更差时，该城镇被视为敌对。";
+    if (fix_is_on("cityalert")) t += "守卫会拦下队伍并发动攻击：";
     return t;
 }
 /* $Selec00's "simply walk out" (s058 191a:0470): the guards stop the party when the town counts as
@@ -300,12 +300,12 @@ std::string town_gate_risk(int loc, bool *certain)
     std::string town = loc_name(loc);
     char op[16]; snprintf(op, sizeof op, "%d", rep);
     *certain = true;
-    if (unwel >= 0) return "The guards will stop the party and attack: " + town + " counts the party as unwelcome, until " + unwel_d + ".";
-    if (rep <= -75) return "The guards will stop the party and attack: " + town + "'s opinion of the party is " + op + " (-75 or worse: hostile).";
+    if (unwel >= 0) return "将队伍视为不受欢迎，直到" + town + "认为队伍不受欢迎，直到" + unwel_d + ".";
+    if (rep <= -75) return "将队伍视为不受欢迎，直到" + town + "对队伍的看法为" + op + "（-75 或更差：敌对）。";
     if (alert >= 0 && rep <= -10 && fix_is_on("cityalert"))
-        return "The guards will stop the party and attack: " + town + "'s watch is on alert, until " + alert_d + ", and its opinion of the party is " + op + " (-10 or worse: hostile).";
+        return "将队伍视为不受欢迎，直到" + town + "的守卫处于警戒状态，直到" + alert_d + "，而其对队伍的看法为" + op + "（-10 或更差：敌对）。";
     *certain = false;
-    if (alert >= 0) return "Two times in five, the guards stop the party and attack: " + town + "'s watch is on alert, until " + alert_d + ".";
+    if (alert >= 0) return "五次中有两次，守卫会拦下队伍并发动攻击：" + town + "的守卫处于警戒状态，直到" + alert_d + ".";
     return "";
 }
 
@@ -335,64 +335,64 @@ static std::vector<Line> build_lines(void)
         };
         bool limit = date(e.end) != "no time limit";
         if (e.kind == 8 && e.tag == 3)
-            add("Robber knight @ " + place, "Kill the robber knight " + (person(e.loc + 0x44c).empty() ? std::string("") : person(e.loc + 0x44c) + " ") + "at " + where(e.loc)
-                + ", for " + by + " of " + loc_name(e.value) + "." + (e.owner == 9 ? " A village pays no bounty: its reward is the village's good opinion of the party when he falls." : ""),
+            add("强盗骑士 @" + place, "杀死强盗骑士" + (person(e.loc + 0x44c).empty() ? std::string("") : person(e.loc + 0x44c) + " ") + "at " + where(e.loc)
+                + "，因为" + by + " of " + loc_name(e.value) + "." + (e.owner == 9 ? "一个村庄不支付赏金：它的奖励是当强盗骑士倒下时，村庄对队伍的好感。" : ""),
                 "by " + date(e.end), 0, e.loc, limit, QC_ROBBER);
         else if (e.kind == 0x24 && e.tag == 3 && e.owner == 9)
             ;                                                   /* (a village's: the game never pays it, $Villa01/02 never look for it) */
         else if (e.kind == 0x24 && e.tag == 3)
-            add("Bounty to collect @ " + place, "The robber knight is dead: collect the bounty from " + by + " in " + place + (e.owner == 3 ? " (at the cathedral, by day: at night it holds no audience)" : "") + ".",
+            add("需要领取的赏金 @" + place, "强盗骑士已死：从……领取赏金" + by + " in " + place + (e.owner == 3 ? "（在大教堂内，白天：夜晚不接待）" : "") + ".",
                 "by " + date(e.end), 1, e.loc, limit, QC_REWARD), v.back().giver = e.owner;
         else if (e.kind == 8 && e.tag == 10 && e.loc >= 0 && e.loc < (int)gamedata.cities.size())    /* (a town: papers, or a thing kept in an office) */
-            add(item_name(e.item) + " from " + site(e.loc), "Get the " + item_name(e.item) + " from " + papers_holder(e) + " in " + place + " for " + by + " of " + loc_name(e.value) + ". "
-                + "The offices of the merchants and bankers are above " + place + "'s marketplace; at night the party can sneak up to them.",
+            add(item_name(e.item) + " from " + site(e.loc), "获得" + item_name(e.item) + " from " + papers_holder(e) + " in " + place + " for " + by + " of " + loc_name(e.value) + ". "
+                + "商人和银行家的办公室位于" + place + "的集市上方；夜晚队伍可以悄悄接近它们。",
                 limit ? "by " + date(e.end) : "", 0, e.loc, limit, fetch_cat(e)), v.back().office = papers_office(e);
         else if (e.kind == 8 && e.tag == 10)
-            add(item_name(e.item) + " from " + site(e.loc), "Get the " + item_name(e.item) + " from " + where(e.loc) + " for " + by + " of " + loc_name(e.value) + ".",
+            add(item_name(e.item) + " from " + site(e.loc), "获得" + item_name(e.item) + " from " + where(e.loc) + " for " + by + " of " + loc_name(e.value) + ".",
                 limit ? "by " + date(e.end) : "", 0, e.loc, limit, fetch_cat(e));
         else if (e.kind == 0x24 && e.tag == 10)
-            add(item_name(e.item) + " to " + place, "Bring the " + item_name(e.item) + " to " + by + " in " + place + ".", "by " + date(e.end), 1, e.loc, limit, QC_REWARD), v.back().giver = e.owner;
+            add(item_name(e.item) + " to " + place, "带来" + item_name(e.item) + " to " + by + " in " + place + ".", "by " + date(e.end), 1, e.loc, limit, QC_REWARD), v.back().giver = e.owner;
         else if (e.kind == 8 && e.tag == 4)
-            add("Dragon near " + nearest_town(e.loc), "A dragon terrorizes the land around " + where(e.loc) + ".", "", 2, -1, false, QC_DRAGON);
+            add("龙靠近" + nearest_town(e.loc), "一条龙正在恐吓……周边的土地" + where(e.loc) + ".", "", 2, -1, false, QC_DRAGON);
         else if (e.kind == 8 && e.tag == 12)
-            add("Mine @ " + place, "Trouble at the mine: " + where(e.loc) + ".", "", 2, e.loc, false, QC_MINE);
+            add("我的矿井 @" + place, "矿井出了问题：" + where(e.loc) + ".", "", 2, e.loc, false, QC_MINE);
         else if (e.kind == 8 && e.tag == 7)
-            add("The Wild Hunt", "The Wild Hunt pursues the party.", "", 2, -1, false, QC_HUNT);
+            add("野性狩猎", "野性狩猎正在追捕队伍。", "", 2, -1, false, QC_HUNT);
         else if (e.kind == 0x11 && e.loc >= 0 && e.loc < (int)gamedata.cities.size())
-            { add("Unwelcome @ " + place, "Not welcome in " + place + ": the town counts as hostile to the party (its gates and people turn it away).", "until " + date(e.end), 3, -1, true, QC_UNWELCOME); v.back().town = e.loc; }
+            { add("不受欢迎 @" + place, "在……不受欢迎" + place + "：该城镇将队伍视为敌对（城门和居民都将其拒之门外）。", "until " + date(e.end), 3, -1, true, QC_UNWELCOME); v.back().town = e.loc; }
         else if (e.kind == 0x13 && e.loc >= 0 && e.loc < (int)gamedata.cities.size())
-            { add("On alert @ " + place, town_alert_text(e.loc), "until " + date(e.end), 3, -1, true, QC_ALERT); v.back().town = e.loc; }
+            { add("处于警戒状态 @" + place, town_alert_text(e.loc), "until " + date(e.end), 3, -1, true, QC_ALERT); v.back().town = e.loc; }
         else if (e.kind == 0x12 && e.loc >= 0 && e.loc < (int)gamedata.cities.size())
-            { add("Wanted @ " + place, "Wanted by the watch in " + place + ": guards who recognize the party try to arrest it, and talking or bribing your way out is harder.", "until " + date(e.end), 3, -1, true, QC_WANTED); v.back().town = e.loc; }
+            { add("被通缉 @" + place, "被……的守卫通缉" + place + "：认出队伍的守卫会试图逮捕它，而通过交谈或贿赂脱身则更加困难。", "until " + date(e.end), 3, -1, true, QC_WANTED); v.back().town = e.loc; }
         else if (e.kind == 0x1c && e.tag == 1 && e.type0 == 4 && (spoilers || sab_what(e))) {
             int known = sab_what(e), w = spoilers ? 3 : known, g = known ? 0 : 4;    /* (learned: among the tasks; else a secret) */
-            if (w == 3) add("Sabbat @ " + loc_name(e.aux), "Witches' Sabbat at " + where(e.aux) + ".", "on " + date(e.end), g, e.aux, true, QC_SABBAT);
-            else if (w == 1) add("Sabbat @ " + loc_name(e.aux), "Witches gather at " + where(e.aux) + " (the night is not known).", "", g, e.aux, false, QC_SABBAT);
-            else add("Sabbat on " + date(e.end), "Witches gather on the night of " + date(e.end) + " (the place is not known).", "on " + date(e.end), g, -1, true, QC_SABBAT);
+            if (w == 3) add("萨巴特 @" + loc_name(e.aux), "巫师的萨巴特在" + where(e.aux) + ".", "on " + date(e.end), g, e.aux, true, QC_SABBAT);
+            else if (w == 1) add("萨巴特 @" + loc_name(e.aux), "巫师们聚集在" + where(e.aux) + "（夜晚尚不为人所知）。", "", g, e.aux, false, QC_SABBAT);
+            else add("萨巴特在" + date(e.end), "巫师们于……之夜聚集" + date(e.end) + "（地点尚不为人所知）。", "on " + date(e.end), g, -1, true, QC_SABBAT);
         }
         else if (e.kind == 8 && e.tag == 2 && (e.value == -1 || e.value == 1) && politics && e.loc >= 0 && e.loc < (int)gamedata.cities.size()) {
             if (e.value == -1)                                  /* (a season of city politics, mods/politics.c: the party took a side) */
-                add("Rebels @ " + place, "You have joined the rebels of " + place + ". Post their handbills, win the guilds over (ask about their "
-                    "leaders and politics, meet their masters), and when the cause is strong ask your leader for a war council: it sets the day of "
-                    "the march. You reach the leader through the agitators' guild or the side streets (other locations you remember).", "", 0, e.loc, false, QC_POLITICS);
+                add("叛军 @" + place, "你已加入……的叛军" + place + "。张贴他们的传单，争取各公会的支持（打听他们的"
+                    "领导人与政治立场，会见他们的大师），待大业渐成，再向你的领袖请求召开战争会议：这将确定……的行军日期。"
+                    "你可通过煽动者公会或小巷找到领袖（其他地点你记得）。", "", 0, e.loc, false, QC_POLITICS);
             else
-                add("For the government @ " + place, "You serve the government of " + place + " against the rebels. Post its handbills, win "
-                    "the guilds over, and when the time is right ask your patron for a war council: it sets the day of the arrests. Your patron's "
-                    "house is in the side streets (other locations you remember).", "", 0, e.loc, false, QC_POLITICS);
+                add("对于政府 @" + place, "你为……政府效力" + place + "与叛军对抗。张贴其传单，争取"
+                    "各公会的支持，时机成熟时再向你的赞助人请求召开战争会议：这将决定逮捕行动的日期。你的赞助人的"
+                    "家位于小巷之中（其他地点你记得）。", "", 0, e.loc, false, QC_POLITICS);
         }
         else if (e.kind == 0x1c && e.tag == 2 && (e.type0 == 0x15 || e.type0 == 0x16) && politics && side_at(evs, e.loc) == e.value) {
             bool march = e.type0 == 0x16;                       /* (the party's own side's day; the other side's is learnt from the gossip) */
             bool hall = e.loc >= 0 && e.loc < (int)gamedata.cities.size() && (gamedata.cities[e.loc].buildings & 2);
             char at[64]; gm_hour_name(e.start[0], at, sizeof at);
-            add(std::string(march ? "The march" : "The arrests") + " @ " + place,
-                march ? "Your side marches on the " + std::string(hall ? "town hall" : "fortress") + " of " + place + " at " + at + " on " + date(e.start)
-                        + ". Be in " + place + " that day: if you are at the leader's house, the rally starts there; if you are in the streets, the march finds you."
-                      : "The city guard arrests the rebel leaders at " + std::string(at) + " on " + date(e.start) + ". Be in " + place
-                        + " that day: if you are at your patron's house, the arrest starts there; if you are in the streets, the escort finds you.",
+            add(std::string(march ? "行军" : "逮捕") + " @ " + place,
+                march ? "你的阵营将于……行军" + std::string(hall ? "市政厅" : "fortress") + " of " + place + " at " + at + " on " + date(e.start)
+                        + ". Be in " + place + "城市守卫将于……当天逮捕叛军首领：若你在赞助人家中，逮捕即在那儿展开；若你在街头，护送队伍便会找到你。"
+                      : "萨巴特现在 @" + std::string(at) + " on " + date(e.start) + ". Be in " + place
+                        + "现正于……举行巫师萨巴特",
                 "on " + date(e.start), 0, e.loc, false, QC_POLITICS);
         }
         else if (e.kind == 0x1c && e.tag == 1 && e.type0 == 5 && (spoilers || [&] { sab_load(); for (const SabbatKnown &k : sab_known) if (k.loc == e.aux && (k.what & 1)) return true; return false; }()))
-            add("Sabbat now @ " + loc_name(e.aux), "A witches' Sabbat is being held now at " + where(e.aux) + ".", "", spoilers ? 4 : 0, e.aux, false, QC_SABBAT);
+            add("日期已定" + loc_name(e.aux), "（同一施法者两次提问）" + where(e.aux) + ".", "", spoilers ? 4 : 0, e.aux, false, QC_SABBAT);
     }
     return v;
 }
@@ -416,7 +416,7 @@ void town_marks(std::vector<TownMark> &out)
         if (l.town >= 0) out.push_back({ l.town, l.cat, l.when });
 }
 
-const char *QSORT_NAME[QSORT_N] = { "deadline", "nearest", "date taken" };
+const char *QSORT_NAME[QSORT_N] = { "deadline", "nearest", "由……提出" };
 
 static int day_number(int day, int month, int year)          /* days since a fixed day (the real month lengths) */
 {
@@ -494,8 +494,8 @@ void quest_merge(std::vector<QuestRow> &rows)
             std::string first = out[i].text.substr(0, out[i].text.find('\n'));
             bool same = true; size_t p = 0;
             while ((p = out[i].text.find('\n', p)) != std::string::npos) { p++; if (out[i].text.compare(p, first.size(), first) != 0) same = false; }
-            if (same) { out[i].text = first + " (The same giver asked twice.)"; continue; }
-            out[i].title += " \xc3\x97" + std::to_string(n[i]); out[i].text = "Asked by " + std::to_string(n[i]) + " givers:\n" + out[i].text;
+            if (same) { out[i].text = first + "上次提问"; continue; }
+            out[i].title += " \xc3\x97" + std::to_string(n[i]); out[i].text = "最后一天" + std::to_string(n[i]) + " givers:\n" + out[i].text;
         }
     rows.swap(out);
 }
@@ -517,7 +517,7 @@ void quest_sort(std::vector<QuestRow> &out, int sort)
 std::string quest_days(const QuestRow &r)
 {
     if (r.days_left < 0) return "";
-    if (r.days_left == 0) return "last day";
+    if (r.days_left == 0) return "最后一天";
     return std::to_string(r.days_left) + (r.days_left == 1 ? " day" : " days");
 }
 
@@ -527,8 +527,8 @@ std::string quest_distance(const QuestRow &r)
     if (r.dist < 1.5) return "here";
     double days = r.dist / 10.0;                              /* (on foot, about ten map columns a day) */
     char b[64];
-    if (days < 0.6) snprintf(b, sizeof b, "%s, under a day away", r.dir.c_str());
-    else snprintf(b, sizeof b, "%s, about %d day%s away", r.dir.c_str(), (int)(days + 0.5), (int)(days + 0.5) == 1 ? "" : "s");
+    if (days < 0.6) snprintf(b, sizeof b, "%s，距离还有一天", r.dir.c_str());
+    else snprintf(b, sizeof b, "%s，距离约%d天%s", r.dir.c_str(), (int)(days + 0.5), (int)(days + 0.5) == 1 ? "" : "s");
     return b;
 }
 
@@ -573,7 +573,7 @@ void quest_way_inline(const QuestRow &r)
     ui_compass_icon(dl, ImVec2(p.x + h * 0.5f, p.y + h * 0.52f), h * 0.92f, r.ang);
     ui_boot_icon(dl, ImVec2(p.x + h * 1.6f, p.y + h * 0.52f), h * 0.82f, IM_COL32(120, 80, 44, 255));
     dl->AddText(ImVec2(p.x + h * 2.15f, p.y), ImGui::GetColorU32(ImGuiCol_TextDisabled), b);
-    if (hov) ImGui::SetTooltip("%s", (std::string(r.dir) + ", " + (days < 0.6 ? std::string("under a day") : "about " + std::to_string(d) + (d == 1 ? " day" : " days")) + " on foot as the crow flies (roads and rivers make it longer)").c_str());
+    if (hov) ImGui::SetTooltip("%s", (std::string(r.dir) + ", " + (days < 0.6 ? std::string("一天之内") : "about " + std::to_string(d) + (d == 1 ? " day" : " days")) + "奖励待领").c_str());
 }
 
 /* the tasks and rewards waiting (text, when): kept for anything that wants the plain list */
@@ -585,20 +585,20 @@ void quest_brief(std::vector<std::pair<std::string, std::string>> &out)
 
 extern "C" void journal_quests(void)
 {
-    if (game_mode() == GM_OTHER) { ImGui::TextWrapped("Start or load a game first."); return; }
+    if (game_mode() == GM_OTHER) { ImGui::TextWrapped("请先开始或加载游戏。"); return; }
     static int sort = -1;
     if (sort < 0) sort = config_get_int("quests.sort", QSORT_DEADLINE) % QSORT_N;
     static std::vector<QuestRow> v;                     /* (read while a card or the map is up: battles and their loot reuse the tables) */
     if (game_mode() == GM_CARD || game_mode() == GM_MAP) { quest_rows(v, config_get_int("quests.sort", sort) % QSORT_N, true); quest_merge(v); }
     else quest_sort(v, config_get_int("quests.sort", sort) % QSORT_N);
     sort = config_get_int("quests.sort", sort) % QSORT_N;
-    static const char *HEAD[5] = { "Quests", "Rewards waiting", "Rumors", "Unwelcome or wanted", "Secrets" };
-    ImGui::TextDisabled("In order of:"); ImGui::SameLine();
+    static const char *HEAD[5] = { "任务", "谣言", "不受欢迎或通缉", "秘密", "按以下顺序：" };
+    ImGui::TextDisabled("（点击任务以打开）"); ImGui::SameLine();
     for (int k = 0; k < QSORT_N; k++) {
         if (k) ImGui::SameLine();
         if (ImGui::RadioButton(QSORT_NAME[k], sort == k)) { sort = k; config_set_int("quests.sort", k); config_save(); }
     }
-    ImGui::SameLine(); ImGui::TextDisabled("  (click a quest to open it)");
+    ImGui::SameLine(); ImGui::TextDisabled("目前暂无任务。此处列出了强盗骑士悬赏、差事与配送等队伍承接的任务及其截止期限。");
     bool any = false;
     for (int g = 0; g < 5; g++) {
         bool head = false;
@@ -624,7 +624,7 @@ extern "C" void journal_quests(void)
                 ImGui::TextWrapped("%s", l.text.c_str());
                 if (!l.when.empty()) ImGui::TextDisabled("%s", l.when.c_str());
                 if (l.loc >= 0 && travel_enabled && game_mode() == GM_MAP) {
-                    if (ImGui::SmallButton("Travel there") && travel_to_loc(l.loc, loc_name(l.loc).c_str())) ui_toggle();
+                    if (ImGui::SmallButton("前往那里") && travel_to_loc(l.loc, loc_name(l.loc).c_str())) ui_toggle();
                 }
                 ImGui::TreePop();
             }
@@ -632,9 +632,9 @@ extern "C" void journal_quests(void)
             any = true;
         }
     }
-    if (!any) ImGui::TextWrapped("No quests at the moment. Robber-knight bounties, errands and deliveries the party takes on are listed here with their deadlines.");
+    if (!any) ImGui::TextWrapped("目前没有任务。强盗骑士的悬赏、差事和送货任务都会在此列出，并标明截止期限。");
     ImGui::Spacing();
-    ImGui::Checkbox("Show secrets (Sabbat dates and places, even before the party learns them)", &spoilers);
+    ImGui::Checkbox("显示秘密（撒巴特的日期与地点，即使在队伍知晓之前）", &spoilers);
 }
 extern "C" void quests_test_dump(void)      /* test (uquests): the tasks as the journal lists them, with their ids */
 {

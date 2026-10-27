@@ -339,16 +339,16 @@ void ui_key_icon(ImDrawList *dl, ImVec2 c, float s, int key)
 }
 const char *ui_key_name(int key)
 {
-    return key >= 0 && key < UI_KEY_SKILL ? gm_attr_name(key) : key < UI_KEY_REP ? gm_skill_name(key - UI_KEY_SKILL) : key == UI_KEY_REP ? "Reputation" : key == UI_KEY_FAME ? "Fame" : key == UI_KEY_AGE ? "Age" : "?";
+    return key >= 0 && key < UI_KEY_SKILL ? gm_attr_name(key) : key < UI_KEY_REP ? gm_skill_name(key - UI_KEY_SKILL) : key == UI_KEY_REP ? "声望" : key == UI_KEY_FAME ? "名声" : key == UI_KEY_AGE ? "年龄" : "?";
 }
 int ui_key_of(const char *name, int len)
 {
     auto is = [&](const char *t) { return (int)strlen(t) == len && !strncmp(t, name, (size_t)len); };
     for (int k = 0; k < UI_KEYS; k++) if (is(ui_key_name(k))) return k;
     for (int k = 0; k < 7; k++) if (is(gm_skill_short(k))) return UI_KEY_SKILL + k;
-    if (is("Latin")) return UI_KEY_SKILL + 11;
-    if (is("Missile Device") || is("Missile Weapons")) return UI_KEY_SKILL + 6;
-    static const char *const ONE[6] = { "Edged Weapon", "Impact Weapon", "Flail", "Polearm", "Thrown Weapon", "Bow" };   /* (the game's "Flail Wpns" less " Wpns") */
+    if (is("拉丁文")) return UI_KEY_SKILL + 11;
+    if (is("弹射装置") || is("弹射武器")) return UI_KEY_SKILL + 6;
+    static const char *const ONE[6] = { "刀剑类武器", "冲击类武器", "链枷", "棍棒类武器", "投掷武器", "弓" };   /* (the game's "Flail Wpns" less " Wpns") */
     for (int k = 0; k < 6; k++) if (is(ONE[k])) return UI_KEY_SKILL + k;
     return -1;
 }
@@ -461,69 +461,69 @@ void ui_section_icon(ImDrawList *dl, ImVec2 c, float s, const char *name)
     auto C = [](int r, int g, int b, int a = 255) { return IM_COL32(r, g, b, a); };
     ImU32 ink = C(40, 26, 14), gold = C(226, 182, 64), parch = C(238, 226, 196), red = C(170, 40, 30), steel = C(176, 182, 194), wood = C(150, 100, 52), stone = C(168, 158, 140);
     auto is = [&](const char *n) { return !strcmp(name, n); };
-    if (is("Preset")) {                 /* a lever on its dial, three marks: one setting of many */
+    if (is("预设")) {                 /* a lever on its dial, three marks: one setting of many */
         dl->AddCircleFilled(P(0, 2), 8 * u, parch, 20); dl->AddCircle(P(0, 2), 8 * u, ink, 20, 0.9f * u);
         for (int i = 0; i < 3; i++) { float a = 3.1416f * (1.15f + i * 0.35f); dl->AddCircleFilled(P(cosf(a) * 6, 2 + sinf(a) * 6), 1.1f * u, red, 8); }
         dl->AddLine(P(0, 2), P(3.5f, -4.5f), ink, 1.6f * u); dl->AddCircleFilled(P(0, 2), 1.8f * u, gold, 10);
-    } else if (is("New screens")) {      /* an arched window, its panes leaded */
+    } else if (is("新屏幕")) {      /* an arched window, its panes leaded */
         dl->AddRectFilled(P(-6, -2), P(6, 9), C(120, 170, 210)); dl->AddCircleFilled(P(0, -2), 6 * u, C(120, 170, 210), 20);
         dl->AddLine(P(0, -8), P(0, 9), ink, 0.9f * u); dl->AddLine(P(-6, 2), P(6, 2), ink, 0.9f * u);
         dl->AddRect(P(-6, -2), P(6, 9), stone, 0, 0, 1.6f * u); dl->PathArcTo(P(0, -2), 6 * u, 3.1416f, 6.2832f, 16); dl->PathStroke(stone, 0, 1.6f * u);
-    } else if (is("Text")) {             /* an illuminated capital */
+    } else if (is("文本")) {             /* an illuminated capital */
         dl->AddRectFilled(P(-8, -8), P(8, 8), red, 1.2f * u); dl->AddRect(P(-8, -8), P(8, 8), gold, 1.2f * u, 0, 1.0f * u);
         ImFont *f = ImGui::GetFont(); const char *t = "A"; ImVec2 ts = f->CalcTextSizeA(14 * u, FLT_MAX, 0, t);
         dl->AddText(f, 14 * u, ImVec2(c.x - ts.x * 0.5f, c.y - ts.y * 0.5f), gold, t);
-    } else if (is("Frames and clock")) { /* a gilt frame's corner with its rosette */
+    } else if (is("框架与时钟")) { /* a gilt frame's corner with its rosette */
         dl->AddRectFilled(P(-8, -8), P(8, 8), parch); dl->AddRect(P(-8, -8), P(8, 8), gold, 0, 0, 2.2f * u);
         dl->AddRect(P(-5, -5), P(5, 5), C(170, 130, 50), 0, 0, 0.8f * u);
         for (int i = 0; i < 4; i++) dl->AddCircleFilled(P(i & 1 ? 8 : -8, i & 2 ? 8 : -8), 2.0f * u, gold, 10);
-    } else if (is("Cards and towns")) {  /* a town gate between two towers */
+    } else if (is("卡牌与城镇")) {  /* a town gate between two towers */
         dl->AddRectFilled(P(-9, -4), P(-4, 9), stone); dl->AddRectFilled(P(4, -4), P(9, 9), stone); dl->AddRectFilled(P(-4, 0), P(4, 9), C(150, 140, 122));
         dl->AddTriangleFilled(P(-10, -4), P(-3, -4), P(-6.5f, -10), red); dl->AddTriangleFilled(P(3, -4), P(10, -4), P(6.5f, -10), red);
         dl->AddRectFilled(P(-2.2f, 3), P(2.2f, 9), C(60, 40, 24)); dl->AddCircleFilled(P(0, 3), 2.2f * u, C(60, 40, 24), 10);
         dl->AddRect(P(-9, -4), P(9, 9), ink, 0, 0, 0.7f * u);
-    } else if (is("The party and its items")) {   /* a traveller's pack, its flap buckled */
+    } else if (is("队伍及其物品")) {   /* a traveller's pack, its flap buckled */
         dl->AddRectFilled(P(-7, -4), P(7, 9), wood, 2 * u); dl->AddRect(P(-7, -4), P(7, 9), ink, 2 * u, 0, 0.8f * u);
         dl->AddRectFilled(P(-7, -4), P(7, 2), C(120, 76, 36), 2 * u);
         dl->AddRectFilled(P(-1.4f, 0), P(1.4f, 4), gold);
         dl->PathArcTo(P(0, -4), 4 * u, 3.1416f, 6.2832f, 12); dl->PathStroke(C(90, 56, 26), 0, 1.4f * u);
-    } else if (is("Battles")) {          /* a war drum and its sticks (not a helm: the robber knights' quest has it) */
+    } else if (is("战斗")) {          /* a war drum and its sticks (not a helm: the robber knights' quest has it) */
         dl->AddRectFilled(P(-7, -3), P(7, 8), red); dl->AddEllipseFilled(P(0, 8), ImVec2(7.0f * u, 2.2f * u), red);
         for (int i = 0; i < 4; i++) dl->AddLine(P(-7 + i * 4.6f, -3), P(-4.7f + i * 4.6f, 8), gold, 0.8f * u);   /* the cords */
         dl->AddEllipseFilled(P(0, -3), ImVec2(7.0f * u, 2.4f * u), parch); dl->AddEllipse(P(0, -3), ImVec2(7.0f * u, 2.4f * u), ink, 0, 0, 0.8f * u);
         dl->AddLine(P(-9, -10), P(-2, -4), wood, 1.4f * u); dl->AddLine(P(9, -10), P(2, -4), wood, 1.4f * u);
         dl->AddCircleFilled(P(-9, -10), 1.3f * u, parch); dl->AddCircleFilled(P(9, -10), 1.3f * u, parch);
-    } else if (is("Travel")) {           /* a signpost, two arms */
+    } else if (is("旅行")) {           /* a signpost, two arms */
         dl->AddRectFilled(P(-1, -8), P(1, 10), wood);
         ImVec2 a1[5] = { P(-1, -7), P(7, -7), P(9.5f, -5), P(7, -3), P(-1, -3) }; dl->AddConvexPolyFilled(a1, 5, parch); dl->AddPolyline(a1, 5, ink, ImDrawFlags_Closed, 0.7f * u);
         ImVec2 a2[5] = { P(1, -1), P(-7, -1), P(-9.5f, 1), P(-7, 3), P(1, 3) }; dl->AddPolyline(a2, 5, ink, ImDrawFlags_Closed, 0.7f * u);
         ImVec2 a3[5] = { P(1, -1), P(1, 3), P(-7, 3), P(-9.5f, 1), P(-7, -1) }; dl->AddConvexPolyFilled(a3, 5, parch); dl->AddPolyline(a2, 5, ink, ImDrawFlags_Closed, 0.7f * u);
-    } else if (is("Fixes for bugs of the original")) {   /* a mallet mending */
+    } else if (is("修复原版漏洞")) {   /* a mallet mending */
         ImVec2 h[4] = { P(-8, -3), P(-2, -9), P(1, -6), P(-5, 0) }; dl->AddConvexPolyFilled(h, 4, wood); dl->AddPolyline(h, 4, ink, ImDrawFlags_Closed, 0.7f * u);
         dl->AddLine(P(-2, -3), P(8, 8), C(110, 76, 40), 2.0f * u);
         dl->AddLine(P(3, 9), P(9, 9), steel, 1.4f * u);
-    } else if (is("Screen")) {           /* spectacles: how the picture looks (not a lens: Artifice's key reads as one) */
+    } else if (is("屏幕")) {           /* spectacles: how the picture looks (not a lens: Artifice's key reads as one) */
         dl->AddCircleFilled(P(-5, 1), 4.4f * u, C(200, 226, 240)); dl->AddCircleFilled(P(5, 1), 4.4f * u, C(200, 226, 240));
         dl->AddCircle(P(-5, 1), 4.4f * u, ink, 18, 1.3f * u); dl->AddCircle(P(5, 1), 4.4f * u, ink, 18, 1.3f * u);
         dl->AddBezierQuadratic(P(-1, -0.5f), P(0, -2.5f), P(1, -0.5f), ink, 1.1f * u);
         dl->AddLine(P(-6.6f, -0.6f), P(-5.2f, -1.6f), C(255, 255, 255), 0.8f * u); dl->AddLine(P(3.4f, -0.6f), P(4.8f, -1.6f), C(255, 255, 255), 0.8f * u);
-    } else if (is("Intro")) {            /* a stage's curtains drawn apart */
+    } else if (is("开场")) {            /* a stage's curtains drawn apart */
         dl->AddRectFilled(P(-9, -8), P(9, 9), C(250, 222, 150)); dl->AddRectFilled(P(-9, -9), P(9, -6), red);   /* (the lit stage behind) */
         ImVec2 l[3] = { P(-9, -6), P(-2, -6), P(-9, 9) }, r[3] = { P(9, -6), P(2, -6), P(9, 9) };
         dl->AddTriangleFilled(l[0], l[1], l[2], red); dl->AddTriangleFilled(r[0], r[2], r[1], red);
         dl->AddRect(P(-9, -9), P(9, 9), gold, 0, 0, 0.8f * u);
-    } else if (is("Sound")) {            /* a lute: the music (its pear-shaped body, the rose, the bent neck) */
+    } else if (is("音效")) {            /* a lute: the music (its pear-shaped body, the rose, the bent neck) */
         dl->AddEllipseFilled(P(-2.0f, 3.0f), ImVec2(6.4f * u, 7.4f * u), C(170, 110, 50), -0.6f);
         dl->AddEllipse(P(-2.0f, 3.0f), ImVec2(6.4f * u, 7.4f * u), ink, -0.6f, 0, 0.8f * u);
         dl->AddCircleFilled(P(-1.4f, 1.6f), 1.8f * u, C(60, 36, 16)); dl->AddCircle(P(-1.4f, 1.6f), 2.4f * u, gold, 12, 0.6f * u);
         dl->AddLine(P(2.0f, -2.6f), P(8.0f, -9.0f), C(110, 70, 30), 2.2f * u);                       /* the neck */
         dl->AddLine(P(8.0f, -9.0f), P(10.6f, -7.2f), C(110, 70, 30), 2.2f * u);                      /* its bent head */
         dl->AddLine(P(-4.6f, 6.4f), P(8.0f, -9.0f), parch, 0.5f * u);                                /* the strings */
-    } else if (is("Controller")) {       /* a game controller (an object of today: drawn plain) */
+    } else if (is("控制器")) {       /* a game controller (an object of today: drawn plain) */
         dl->AddRectFilled(P(-8, -4), P(8, 4), C(70, 70, 80), 4 * u); dl->AddCircleFilled(P(-6, 3), 3.5f * u, C(70, 70, 80), 12); dl->AddCircleFilled(P(6, 3), 3.5f * u, C(70, 70, 80), 12);
         dl->AddRectFilled(P(-6.5f, -0.6f), P(-2.5f, 0.6f), parch); dl->AddRectFilled(P(-5.1f, -2), P(-3.9f, 2), parch);
         dl->AddCircleFilled(P(4, -1), 1.0f * u, C(88, 170, 60), 8); dl->AddCircleFilled(P(6, 1), 1.0f * u, C(214, 52, 54), 8);
-    } else if (is("Saves")) {            /* a page kept with a ribbon */
+    } else if (is("保存次数")) {            /* a page kept with a ribbon */
         dl->AddRectFilled(P(-6, -8), P(6, 8), parch); dl->AddRect(P(-6, -8), P(6, 8), ink, 0, 0, 0.7f * u);
         for (int i = 0; i < 4; i++) dl->AddLine(P(-4, -4 + i * 3.0f), P(3, -4 + i * 3.0f), C(150, 130, 100), 0.6f * u);
         ImVec2 rb[5] = { P(2, -9), P(5, -9), P(5, 3), P(3.5f, 1.5f), P(2, 3) }; dl->AddConvexPolyFilled(rb, 5, red);

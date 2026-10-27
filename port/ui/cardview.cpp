@@ -37,6 +37,7 @@
 
 extern ImFont *ui_font_text, *ui_font_overlay;
 extern ImFont *ui_font_game[UI_GAME_FONTS], *ui_font_game_hi[UI_GAME_FONTS];
+extern ImFont *ui_font_cjk, *ui_font_cjk_hi;   /* the translated text (ui/ui.cpp) */
 extern int ui_game_font;
 extern "C" void plat_game_to_win(float gx, float gy, float *wx, float *wy);
 extern "C" int cardview_dialog, game_dialog_kind;
@@ -172,6 +173,19 @@ extern "C" void cardview_draw(void)
     ImVec2 top = g2w(0, 0), bot = g2w(0, 200);
     float k = (bot.y - top.y) / 200.0f;                         /* window pixels per game row */
     if (k * 6 * 1.18f > 44 && ui_font_game_hi[ui_game_font]) f = ui_font_game_hi[ui_game_font];
+    /* the translated text is Han: it lives in the pixel font, not the game's own
+       typefaces.  ImGui has no fallback between fonts, so the Han glyphs have to
+       sit in whichever font the run is drawn with; gamedata.cpp game_text()
+       passes the UTF-8 through and leaves the colour codes as bytes no font has */
+    if (ui_font_cjk) {
+        bool han = false;
+        for (int j = 0; j < c.npieces && !han; j++) {
+            const char *t = c.piece[j].text;
+            for (size_t q = 0; t[q] && !han; q++) if ((unsigned char)t[q] >= 0xe0) han = true;
+        }
+        if (han) f = (k * 6 * 1.18f > 44 && ui_font_cjk_hi) ? ui_font_cjk_hi : ui_font_cjk;
+    }
+
     ImFont *fs = ui_font_overlay ? ui_font_overlay : f;
     ImDrawList *dl = ImGui::GetBackgroundDrawList();
     if (orn_on()) orn_braid_frame_knotted(dl, g2w(60, 0), g2w(320, 200), 7.0f * k);   /* the card's border: the plaited copper band, over the game's */
@@ -369,8 +383,8 @@ extern "C" void cardview_draw(void)
                 std::string who = game_text(nm, strlen(nm));
                 ui_tip_beside(q0, q1);
                 ImGui::BeginTooltip(); ImGui::PushTextWrapPos(ImGui::GetFontSize() * 22);
-                ImGui::TextUnformatted((who + " speaks for the party" + (m == leader ? " (the leader)" : "") + (formula ? ". A formula traded is " + who + "'s to know." : ".")).c_str());
-                ImGui::TextDisabled("Click to choose this with %s speaking.", who.c_str());
+                ImGui::TextUnformatted((who + "代表整个队伍发言" + (m == leader ? "（首领）" : "") + (formula ? "交易的配方是" + who + "的知识。" : ".")).c_str());
+                ImGui::TextDisabled("点击选择由 %s 发言的这一项。", who.c_str());
                 ImGui::PopTextWrapPos(); ImGui::EndTooltip();
             }
             if (t > 0.9f && n_chips < 25) { chip_r[n_chips][0] = q0.x; chip_r[n_chips][1] = q0.y; chip_r[n_chips][2] = q1.x; chip_r[n_chips][3] = q1.y; chip_opt[n_chips] = opt; chip_m[n_chips] = m; n_chips++; }
@@ -532,7 +546,7 @@ extern "C" void cardview_draw(void)
             float ey = y1 + 0.15f * L;
             float ex = X0 + pad + 0.8f * size;
             if (!c.nentries) {
-                const char *none = p.type == 2 ? "Nobody in the party knows a saint who can help here." : "Nobody in the party carries anything that helps here.";
+                const char *none = p.type == 2 ? "队伍里没有人知道能在这里提供帮助的圣人。" : "队伍里没有人携带任何能在这里提供帮助的东西。";
                 dl->AddText(fs, size * 0.86f, ImVec2(ex, ey), ink_dim, none);
             }
             /* a list of saints to learn (a library, a teacher), not to call on: some member is offered one it
@@ -559,7 +573,7 @@ extern "C" void cardview_draw(void)
                     ui_item_icon_tier(dl, ImVec2(ex + namew + 0.9f * size + isz * 0.5f, ey + 0.46f * h), isz, 95 + ef / 3, ef % 3 + 1);
                     float tx = ex + namew + 0.9f * size + isz * 1.15f;
                     dl->AddText(f, size * 0.95f, ImVec2(tx, ey), ec, et.c_str());
-                    if (knows) dl->AddText(fs, size * 0.78f, ImVec2(tx + f->CalcTextSizeA(size * 0.95f, FLT_MAX, 0, et.c_str()).x + 0.6f * size, ey + 0.12f * h), ink_soft, "knows it already");
+                    if (knows) dl->AddText(fs, size * 0.78f, ImVec2(tx + f->CalcTextSizeA(size * 0.95f, FLT_MAX, 0, et.c_str()).x + 0.6f * size, ey + 0.12f * h), ink_soft, "已经知道了");
                 } else {
                     float tx = ex + namew + 0.9f * size;
                     bool knows_saint = c.popup_kind == 2 && en.id >= 0 && en.member >= 0 && en.member < 5 && saint_learning && gm_knows_saint(en.member, en.id);
@@ -567,9 +581,9 @@ extern "C" void cardview_draw(void)
                     if (isz > 0 && en.id >= 0) { ui_item_icon_q(dl, ImVec2(tx + isz * 0.5f, ey + 0.46f * h), isz, en.id, best_quality(en.member, en.id)); tx += isz * 1.15f; }
                     dl->AddText(f, size * 0.95f, ImVec2(tx, ey), ec, et.c_str());
                     /* why a line is there that cannot be chosen, or can without the thing (the game's colour codes) */
-                    const char *why = en.code == 0x84 ? "knows the formula but carries none" :
-                                      en.code == 0x87 ? (c.popup_kind == 2 ? "at the easiest difficulty, the leader need not know the saint" : "at the easiest difficulty, the leader needs none") : nullptr;
-                    if (knows_saint) why = "knows this saint already";
+                    const char *why = en.code == 0x84 ? "知道配方但没有携带" :
+                                      en.code == 0x87 ? (c.popup_kind == 2 ? "在最简单难度下，首领不必知道圣人" : "在最简单难度下，首领不需要任何东西") : nullptr;
+                    if (knows_saint) why = "已经认识这位圣人";
                     if (why) dl->AddText(fs, size * 0.78f, ImVec2(tx + f->CalcTextSizeA(size * 0.95f, FLT_MAX, 0, et.c_str()).x + 0.6f * size, ey + 0.12f * h), ink_soft, why);
                     /* a saint to call on: the Virtue it asks of the one who prays, at the row's end - Virtue's shield and
                        the number, greyed when this member's is below it (more Divine Favor does not help then), as on the
@@ -586,10 +600,10 @@ extern "C" void cardview_draw(void)
                         if (ImGui::IsMouseHoveringRect(m0, m1, false) && !ui_is_open()) {
                             ui_tip_beside(m0, m1);
                             ImGui::BeginTooltip(); ImGui::PushTextWrapPos(ImGui::GetFontSize() * 22);
-                            ui_rich_textf("This saint asks a {Virtue} of %d of the one who prays.", en.vmin);
+                            ui_rich_textf("这位圣人向祈祷者索取 %d 的 {美德}。", en.vmin);
                             if (low) { char nm[24]; g_str(G_DGROUP, (u16)(G_MEMBER(en.member) + G_M_SHORTNAME), nm, sizeof nm);
                                        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_TextDisabled));
-                                       ui_rich_textf("%s has %d: too low to call on this saint, however much {Divine Favor} is spent.", game_text(nm, strlen(nm)).c_str(), en.virtue);
+                                       ui_rich_textf("%s 拥有 %d：无论花费多少 {神恩}，都低到无法召唤这位圣人。", game_text(nm, strlen(nm)).c_str(), en.virtue);
                                        ImGui::PopStyleColor(); }
                             ImGui::PopTextWrapPos(); ImGui::EndTooltip();
                         }
@@ -631,22 +645,22 @@ extern "C" void cardview_draw(void)
         const CvPiece &p = c.piece[chance_tip];
         int who = cc.line[p.line].who; u32 reads = cc.line[p.line].reads;
         std::string w;
-        if (who >= 0 && who < 5) { char nm[24]; g_str(G_DGROUP, (u16)(G_MEMBER(who) + G_M_SHORTNAME), nm, sizeof nm); w = game_text(nm, strlen(nm)) + " tries it"; }
-        else if (who == -2) w = "Each member tries it";
+        if (who >= 0 && who < 5) { char nm[24]; g_str(G_DGROUP, (u16)(G_MEMBER(who) + G_M_SHORTNAME), nm, sizeof nm); w = game_text(nm, strlen(nm)) + "试着使用它"; }
+        else if (who == -2) w = "队伍中的每位成员都试着使用它";
         /* what it rests on: each its shield and its name (the skills, the attributes, the town's opinion, fame) */
         struct Rest { int kind, k; std::string name; };
         std::vector<Rest> rest;
         for (int q = 0; q < 19; q++) if (reads & CC_SKILL(q)) rest.push_back({ 1, q, game_text(gm_skill_name(q), 40) });
         for (int q = 0; q < 7; q++) if (reads & CC_ATTR(q)) rest.push_back({ 0, q, game_text(gm_attr_name(q), 40) });
-        if (reads & CC_REP) rest.push_back({ 2, 0, "the town's opinion of the party (its reputation here)" });
-        if (reads & CC_FAME) rest.push_back({ 2, 1, "the party's fame" });
+        if (reads & CC_REP) rest.push_back({ 2, 0, "城镇对队伍的看法（此处的声望）" });
+        if (reads & CC_FAME) rest.push_back({ 2, 1, "队伍的名声" });
         if (!w.empty() || !rest.empty()) {
             ui_tip_beside(chance_tip_a0, chance_tip_a1);
             ImGui::BeginTooltip();
             ImGui::PushTextWrapPos(ImGui::GetFontSize() * 22);
             if (!w.empty()) ImGui::TextUnformatted((w + ".").c_str());
             if (!rest.empty()) {
-                ImGui::TextUnformatted("It rests on:");
+                ImGui::TextUnformatted("它取决于：");
                 float lh = ImGui::GetTextLineHeight(), is = lh * 1.2f;
                 for (const Rest &x : rest) {
                     ImVec2 a = ImGui::GetCursorScreenPos();
@@ -658,9 +672,9 @@ extern "C" void cardview_draw(void)
                     ImGui::TextUnformatted(x.name.c_str());
                 }
             }
-            if (cc.line[p.line].pick) ImGui::TextDisabled("The leader speaks for the party, and what is traded is the speaker's to know, unless you pick another (the arrow at the end shows each member's chance).");
-            else if (cc.line[p.line].dep) ImGui::TextDisabled(assist_best_leader ? "Whoever speaks for the party tries it: the best at it, unless you pick another (the arrow at the end shows each member's chance)."
-                                                                           : "Whoever speaks for the party tries it: the leader, unless you pick another (the arrow at the end shows each member's chance).");
+            if (cc.line[p.line].pick) ImGui::TextDisabled("领队代表队伍发言，所交易的是发言者的知识，除非你选择其他人（末端的箭头显示每位成员的机会）。");
+            else if (cc.line[p.line].dep) ImGui::TextDisabled(assist_best_leader ? "代表队伍发言的人尝试使用：最擅长此技能的人，除非你选择其他人（末端的箭头显示每位成员的机会）。"
+                                                                           : "代表队伍发言的人尝试使用：领队，除非你选择其他人（末端的箭头显示每位成员的机会）。");
             ImGui::PopTextWrapPos();
             ImGui::EndTooltip();
         }
@@ -671,29 +685,29 @@ extern "C" void cardview_draw(void)
         /* a teacher: what, how well, for how much, and what it takes (and why it is greyed, if known) */
         float ww = tip_place(23);
         ImGui::BeginTooltip();
-        ImGui::TextDisabled("Brings a teacher to the inn");
+        ImGui::TextDisabled("带来一位老师到旅店");
         ImGui::PushTextWrapPos(ww);
         ui_rich_text(ui_teacher_text(teach[c.hover]).c_str());
         std::string hired = ui_teachers_hired_line((s16)g_rw(GV_cur_loc));
-        if (!hired.empty()) ui_rich_textf_dim("Hired here now: %s.", hired.c_str());
-        if (const char *why = greyed_hint(c.piece[c.hover])) { ImGui::Separator(); ImGui::TextDisabled("Not possible now"); ImGui::TextUnformatted(why); }
+        if (!hired.empty()) ui_rich_textf_dim("此刻在此雇佣：%s。", hired.c_str());
+        if (const char *why = greyed_hint(c.piece[c.hover])) { ImGui::Separator(); ImGui::TextDisabled("目前无法实现"); ImGui::TextUnformatted(why); }
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
     }
     else if (tipmenu && c.hover >= 0 && c.hover == stone_piece && stone_offer > 0 && c.piece[c.hover].state == 1) {
         float ww = tip_place(21);                                  /* the stone on offer, against the party's */
         ImGui::BeginTooltip();
-        ImGui::TextDisabled("%s", no_gain(c.hover) ? "Nothing to gain here" : "A better Philosopher's Stone");
+        ImGui::TextDisabled("%s", no_gain(c.hover) ? "此处无利可图" : "更好的炼金术石");
         ImGui::PushTextWrapPos(ww);
         char b[400];
-        if (!no_gain(c.hover) && stone_have > 0) snprintf(b, sizeof b, "The stone %s offers is of quality %d; the party's is %d. A batch's chance of success would rise by %d.",
-                                                          stone_uni ? "the university" : "this alchemist", stone_offer, stone_have, stone_offer - stone_have);
-        else if (!no_gain(c.hover)) snprintf(b, sizeof b, "The stone %s offers is of quality %d; the party has none. It would add %d to a batch's chance of success.",
-                                             stone_uni ? "the university" : "this alchemist", stone_offer, stone_offer);
-        else if (stone_uni) snprintf(b, sizeof b, "The university's best stone is of quality %d, no better than the party's %d. Asking gains nothing, and if it goes wrong it costs "
-                                                  "two hours, a point of the party's reputation here and the question for a week.", stone_offer, stone_have);
-        else snprintf(b, sizeof b, "This alchemist's best stone is of quality %d, no better than the party's %d. Asking gains nothing, and if the alchemist "
-                                   "will not talk the party is turned away for 60 hours.", stone_offer, stone_have);
+        if (!no_gain(c.hover) && stone_have > 0) snprintf(b, sizeof b, "%s 提供的石头品质为 %d；队伍的为 %d。一批的成功几率将提升 %d。",
+                                                          stone_uni ? "大学" : "这位炼金术师", stone_offer, stone_have, stone_offer - stone_have);
+        else if (!no_gain(c.hover)) snprintf(b, sizeof b, "%s 提供的石头品质为 %d；队伍没有。这将使一批的成功几率提升 %d。",
+                                             stone_uni ? "大学" : "这位炼金术师", stone_offer, stone_offer);
+        else if (stone_uni) snprintf(b, sizeof b, "大学最好的石头品质为 %d，不比队伍的 %d 更好。询问毫无收获，若失败则需付出代价"
+                                                  "两小时、队伍在此地的一点声望，以及一周的疑问。", stone_offer, stone_have);
+        else snprintf(b, sizeof b, "这位炼金术师最好的石头品质为 %d，不比队伍的 %d 更好。询问毫无收获，若炼金术师"
+                                   "不愿交谈，队伍将被拒绝进入 60 小时。", stone_offer, stone_have);
         ImGui::TextUnformatted(b);
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
@@ -701,7 +715,7 @@ extern "C" void cardview_draw(void)
     else if (tipmenu && c.hover >= 0 && c.hover == gate_piece) {
         float ww = tip_place(21);
         ImGui::BeginTooltip();
-        ImGui::TextDisabled("%s", gate_certain ? "A fight" : "Perhaps a fight");
+        ImGui::TextDisabled("%s", gate_certain ? "一场战斗" : "或许会有一场战斗");
         ImGui::PushTextWrapPos(ww);
         ImGui::TextUnformatted(gate_why.c_str());
         ImGui::PopTextWrapPos();
@@ -711,7 +725,7 @@ extern "C" void cardview_draw(void)
         float ww = tip_place(22);                                  /* the task this way leads to */
         int n = 0; for (const CardTask &t : tasks) n += t.opt == c.piece[c.hover].opt;
         ImGui::BeginTooltip();
-        ImGui::TextDisabled("%s", n > 1 ? "Your tasks" : "Your task");
+        ImGui::TextDisabled("%s", n > 1 ? "你的任务" : "你的任务");
         ImGui::PushTextWrapPos(ww);
         for (const CardTask &t : tasks)
             if (t.opt == c.piece[c.hover].opt) { ImGui::TextUnformatted(t.title.c_str()); ImGui::TextDisabled("%s", t.text.c_str()); }
@@ -721,10 +735,10 @@ extern "C" void cardview_draw(void)
     else if (tipmenu && c.hover >= 0 && c.hover < c.npieces && c.piece[c.hover].type != 1 && c.piece[c.hover].type != 2 && greyed_hint(c.piece[c.hover])) {
         float ww = tip_place(21);                                  /* beside the option (the pointer may be the game's only) */
         ImGui::BeginTooltip();
-        ImGui::TextDisabled("Not possible now");
+        ImGui::TextDisabled("目前无法实现");
         ImGui::PushTextWrapPos(ww);
         ImGui::TextUnformatted(greyed_hint(c.piece[c.hover]));
-        if (no_gain(c.hover)) ImGui::TextDisabled("Nor would it gain anything: the stone sold here is of quality %d, the party's %d.", stone_offer, stone_have);
+        if (no_gain(c.hover)) ImGui::TextDisabled("同样毫无收获：此处出售的石头品质为 %d，队伍的为 %d。", stone_offer, stone_have);
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
     }
@@ -751,7 +765,7 @@ extern "C" void cardview_draw(void)
                 what = gamedata.formula_names[fo] + " (" + cv_formula_price(j) + ")";
                 for (int m = 0; m < npar && m < 5; m++)
                     if (alive(m) && gm_knows_formula(m, fo)) { if (!who.empty()) who += ", "; who += name_of(m); }
-                rows.push_back({ what, who.empty() ? "nobody knows it yet" : "known to " + who });
+                rows.push_back({ what, who.empty() ? "尚无人知晓" : "为……所知" + who });
                 formulas = true;
                 continue;
             } else {
@@ -764,22 +778,22 @@ extern "C" void cardview_draw(void)
                     if (n) { if (!who.empty()) who += ", "; who += name_of(m) + (n > 1 ? " (" + std::to_string(n) + ")" : ""); }
                 }
             }
-            rows.push_back({ what, who.empty() ? (p.type == 2 ? "nobody knows this saint" : "nobody carries one") : who });
+            rows.push_back({ what, who.empty() ? (p.type == 2 ? "尚无人知晓这位圣人" : "尚无人携带") : who });
         }
         if (!rows.empty()) {
             float ww = tip_place(30);                              /* beside the option (the pointer may be the game's only) */
             ImGui::BeginTooltip();
-            ImGui::TextDisabled("%s", p.type == 2 ? "Saints who help here" : formulas ? "Formulae for sale" : "Items that help here");
+            ImGui::TextDisabled("%s", p.type == 2 ? "在此提供帮助的圣人" : formulas ? "出售的配方" : "在此提供帮助的物品");
             for (auto &r : rows) { ImGui::TextUnformatted(r.first.c_str()); ImGui::SameLine(); ImGui::TextDisabled("  %s", r.second.c_str()); }
             if (const char *why = greyed_hint(p)) {                 /* greyed for a reason of the card's own */
                 ImGui::Separator();
                 ImGui::PushTextWrapPos(fminf(ww, ImGui::GetFontSize() * 21));
-                ImGui::TextDisabled("Not possible now");
+                ImGui::TextDisabled("目前无法实现");
                 ImGui::TextUnformatted(why);
                 ImGui::PopTextWrapPos();
             }
-            if (formulas) ImGui::TextDisabled("(click to choose who learns one; point at a formula there for its details)");
-            else if (p.state == 1) ImGui::TextDisabled("(click to choose who)");
+            if (formulas) ImGui::TextDisabled("（点击选择学习某项的人；指向配方以查看其详情）");
+            else if (p.state == 1) ImGui::TextDisabled("（点击选择学习的人）");
             ImGui::EndTooltip();
         }
     }

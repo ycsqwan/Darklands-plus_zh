@@ -35,11 +35,11 @@ static void load(void)
     loaded = true; enm.clear();
     char p[1300]; dos_host_path_read("DARKLAND.ENM", p, sizeof p);
     FILE *f = fopen(p, "rb");
-    if (!f) { msg = "Could not read DARKLAND.ENM."; return; }
+    if (!f) { msg = "无法读取 DARKLAND.ENM。"; return; }
     unsigned char b[65536]; size_t n;
     while ((n = fread(b, 1, sizeof b, f)) > 0) enm.insert(enm.end(), b, b + n);
     fclose(f);
-    if (enm.size() != (size_t)(NT * TSZ + NE * ESZ)) { msg = "DARKLAND.ENM has an unexpected size."; enm.clear(); return; }
+    if (enm.size() != (size_t)(NT * TSZ + NE * ESZ)) { msg = "DARKLAND.ENM 的大小不符合预期。"; enm.clear(); return; }
     orig = enm;
 }
 static unsigned char *type_rec(int t) { return &enm[(size_t)t * TSZ]; }
@@ -87,7 +87,7 @@ static std::string weapons_of(const unsigned char *t)
     std::string s;
     for (int k = 0; k < 6; k++) {
         int ty = t[0xa0 + k], co = t[0xa6 + k];
-        std::string n = item_name(ty, co, "natural weapons");
+        std::string n = item_name(ty, co, "自然武器");
         if (n.empty() || s.find(n) != std::string::npos) continue;
         s += (s.empty() ? "" : ", ") + n;
     }
@@ -97,14 +97,14 @@ static std::string weapons_of(const unsigned char *t)
 static void details(int ti)
 {
     const unsigned char *t = type_rec(ti);
-    ImGui::Text("Kind: %s (picture group %s)", str_at(t + 4, 10).c_str(), str_at(t, 4).c_str());
+    ImGui::Text("种类：%s（图片组 %s）", str_at(t + 4, 10).c_str(), str_at(t, 4).c_str());
     std::string names;
     for (int e = 0; e < NE; e++) { const unsigned char *r = foe_rec(e); if ((r[0] | r[1] << 8) == ti) names += (names.empty() ? "" : ", ") + game_text((const char *)r + 2, strnlen((const char *)r + 2, 12)); }
-    if (!names.empty()) ImGui::TextWrapped("Enemies of this kind: %s", names.c_str());
+    if (!names.empty()) ImGui::TextWrapped("此类敌人：%s", names.c_str());
     int hv = hardness(t[0x92]), hl = hardness(t[0x93]);
     static const char *HN[6] = { "none", "soft", "stiff", "scale", "mail", "plate" };
-    std::string va = item_name(t[0x92], t[0x94], "natural armor"), la = item_name(t[0x93], t[0x95], "natural armor");
-    ImGui::Text("Body: %s, hardness %d (%s); legs: %s, hardness %d (%s); armor quality %d",
+    std::string va = item_name(t[0x92], t[0x94], "自然护甲"), la = item_name(t[0x93], t[0x95], "自然护甲");
+    ImGui::Text("身体：%s，硬度 %d（%s）；腿部：%s，硬度 %d（%s）；护甲品质 %d",
                 va.empty() ? "nothing" : va.c_str(), hv, hv >= 0 && hv < 6 ? HN[hv] : "?",
                 la.empty() ? "nothing" : la.c_str(), hl, hl >= 0 && hl < 6 ? HN[hl] : "?", t[0x96]);
     std::string through;
@@ -114,37 +114,37 @@ static void details(int ti)
         for (const ItemDef &d : gamedata.items)
             if (d.type == w && !d.name.empty() && (d.kind == K_WEAPON || d.kind == K_MISSILE)) { through += (through.empty() ? "" : ", ") + game_text(d.name.c_str(), d.name.size()); break; }
     }
-    ImGui::TextWrapped("Weapons that pierce its body armor: %s", through.empty() ? "none" : through.c_str());
-    std::string sh = item_name(t[0x97], t[0x98], "a natural shield");
-    if (!sh.empty()) ImGui::Text("Shield: %s, quality %d", sh.c_str(), t[0x99]);
-    std::string mw = item_name(t[0x9a], t[0x9b], "a natural missile");
-    if (!mw.empty()) { std::string am = item_name(t[0x9d], t[0x9e], "ammunition"); ImGui::Text("Missile: %s, quality %d, %d %s", mw.c_str(), t[0x9c], t[0x9f], am.c_str()); }
-    ImGui::TextWrapped("Melee: %s, quality %d", weapons_of(t).c_str(), t[0xac]);
+    ImGui::TextWrapped("能穿透其身体护甲的武器：%s", through.empty() ? "none" : through.c_str());
+    std::string sh = item_name(t[0x97], t[0x98], "一道天然屏障");
+    if (!sh.empty()) ImGui::Text("盾牌：%s，品质 %d", sh.c_str(), t[0x99]);
+    std::string mw = item_name(t[0x9a], t[0x9b], "一枚天然飞弹");
+    if (!mw.empty()) { std::string am = item_name(t[0x9d], t[0x9e], "ammunition"); ImGui::Text("飞弹：%s，品质 %d，%d %s", mw.c_str(), t[0x9c], t[0x9f], am.c_str()); }
+    ImGui::TextWrapped("近战：%s，品质 %d", weapons_of(t).c_str(), t[0xac]);
 }
 
 void bestiary_tab(void)
 {
-    if (!gamedata.loaded) { ImGui::TextUnformatted("The item list (DARKLAND.LST) could not be read."); return; }
+    if (!gamedata.loaded) { ImGui::TextUnformatted("无法读取物品列表（DARKLAND.LST）。"); return; }
     { static int gen = -1; if (gen != datamods_generation()) { gen = datamods_generation(); if (loaded && enm_or_lst_unchanged()) loaded = false; } }
     if (!loaded) load();
     if (enm.empty()) { ImGui::TextWrapped("%s", msg.c_str()); return; }
     const bool edit = ui_modding();
-    ImGui::TextWrapped(edit ? "Every enemy in the game, with its numbers as the game's data file has them (in a fight, dice rolls and the difficulty level also count). Click a name to see its armor and weapons. The numbers can be changed and saved into a mod folder; enemies of one kind share their numbers, so a change applies to every enemy of that kind."
-                            : "Every enemy in the game, with its numbers as the game's data file has them (in a fight, dice rolls and the difficulty level also count). Point at a name to see its picture; click it to see its armor and weapons.");
-    ImGui::SetNextItemWidth(UIS(220)); ImGui::InputTextWithHint("##eflt", "find an enemy", filter, sizeof filter);
+    ImGui::TextWrapped(edit ? "游戏中的每个敌人，其数值均按游戏数据文件所载（战斗中还计入骰子点数与难度等级）。点击名称可查看其护甲与武器。数值可修改并保存至模组文件夹；同类敌人共享同一组数值，因此修改将影响该类所有敌人。"
+                            : "游戏中的每个敌人，其数值均按游戏数据文件所载（战斗中还计入骰子点数与难度等级）。指向名称可查看其图片；点击可查看其护甲与武器。");
+    ImGui::SetNextItemWidth(UIS(220)); ImGui::InputTextWithHint("##eflt", "寻找敌人", filter, sizeof filter);
     int changed = 0; for (int i = 0; i < NT; i++) if (memcmp(type_rec(i), &orig[(size_t)i * TSZ], TSZ)) changed++;
-    if (edit) { ImGui::SameLine(); ImGui::TextDisabled("%d kind%s changed", changed, changed == 1 ? "" : "s"); }
+    if (edit) { ImGui::SameLine(); ImGui::TextDisabled("%d 类型%s已更改", changed, changed == 1 ? "" : "s"); }
     float namew = 0;                                          /* the name column as wide as the longest name */
     for (int e = 0; e < NE; e++) { const unsigned char *r = foe_rec(e); namew = fmaxf(namew, ImGui::CalcTextSize(game_text((const char *)r + 2, strnlen((const char *)r + 2, 12)).c_str()).x); }
     const float numw = edit ? UIS(40) : ImGui::CalcTextSize("99").x + UIS(10);
     if (ImGui::BeginTable("foes", 17, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_Sortable | ImGuiTableFlags_SortMulti,
                           ImVec2(0, ImGui::GetContentRegionAvail().y - (open_type >= 0 ? UIS(270) : edit ? UIS(80) : UIS(10))))) {
         /* the numbers' headings at a slant, so that the columns can be narrow and the names whole */
-        ImGui::TableSetupColumn("Enemy", ImGuiTableColumnFlags_WidthFixed, namew + UIS(16));
+        ImGui::TableSetupColumn("敌人", ImGuiTableColumnFlags_WidthFixed, namew + UIS(16));
         for (int a = 0; a < 7; a++) ImGui::TableSetupColumn(gm_attr_name(a), ImGuiTableColumnFlags_AngledHeader | ImGuiTableColumnFlags_WidthFixed, numw);
         for (int k = 0; k < 7; k++) ImGui::TableSetupColumn(gm_skill_short(k), ImGuiTableColumnFlags_AngledHeader | ImGuiTableColumnFlags_WidthFixed, numw);
-        ImGui::TableSetupColumn("Armor quality", ImGuiTableColumnFlags_AngledHeader | ImGuiTableColumnFlags_WidthFixed, numw);
-        ImGui::TableSetupColumn("Weapons", ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_NoSort);
+        ImGui::TableSetupColumn("护甲品质", ImGuiTableColumnFlags_AngledHeader | ImGuiTableColumnFlags_WidthFixed, numw);
+        ImGui::TableSetupColumn("武器", ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_NoSort);
         ImGui::TableSetupScrollFreeze(1, 2);
         ImGui::TableAngledHeadersRow();
         ImGui::TableHeadersRow();
@@ -188,7 +188,7 @@ void bestiary_tab(void)
                 ImGui::BeginTooltip();
                 ImGui::TextUnformatted(name.c_str());
                 if (g && g->tex) { float s = UIS(3); ImGui::Image((ImTextureID)(intptr_t)g->tex, ImVec2(g->w * s, g->h * s * 1.2f)); }
-                else ImGui::TextDisabled("(no picture)");
+                else ImGui::TextDisabled("（无图片）");
                 ImGui::EndTooltip();
             }
             if (!edit) {                                          /* the reference: the numbers as text */
@@ -225,14 +225,14 @@ void bestiary_tab(void)
         ImGui::EndChild();
     }
     if (!edit) return;
-    static char modname[64] = "My foes";
+    static char modname[64] = "我的敌人";
     ImGui::SetNextItemWidth(UIS(220)); ImGui::InputText("##enmmod", modname, sizeof modname); ImGui::SameLine();
-    if (ImGui::Button("Save the enemies into this mod folder") && modname[0]) {
+    if (ImGui::Button("将敌人保存到此模组文件夹中") && modname[0]) {
         char w[1300]; int r = datamods_new(modname, w, sizeof w);
         std::string p = std::string(w) + "/DARKLAND.ENM";
         FILE *f = r < 0 ? nullptr : fopen(p.c_str(), "wb");
-        if (!f) msg = "Could not write " + p + ".";
-        else { fwrite(enm.data(), 1, enm.size(), f); fclose(f); msg = "Saved " + p + ". Tick the mod (F12 > Mods) and start the game again."; }
+        if (!f) msg = "无法写入" + p + ".";
+        else { fwrite(enm.data(), 1, enm.size(), f); fclose(f); msg = "已保存" + p + "勾选该模组（F12 > 模组），然后重新开始游戏。"; }
     }
     ImGui::SameLine();
     if (ImGui::Button("Undo all changes##enm")) { enm = orig; msg.clear(); }

@@ -637,7 +637,7 @@ static void sweep(int i, int n)
     }
     g_ww((u16)(c + CB_TO_X), stx); g_ww((u16)(c + CB_TO_Y), sty); g_wb((u16)(c + CB_TARGET), star);
     if (far) {
-        static const char *BN[4] = { "1-5 cells", "6-10 cells", "11-20 cells", "over 20 cells" };
+        static const char *BN[4] = { "1-5 格", "6-10 格", "11-20 格", "超过 20 格" };
         for (int b = 0; b < 4; b++) if (bv[b]) fprintf(stderr, "pathfix sweep: %s away: %d destinations, new planner %d, original %d\n", BN[b], bv[b], bn[b], bo[b]);
     }
     fprintf(stderr, "pathfix sweep: %d reachable-looking destinations: native %d, original %d, only native %d, only original %d; "

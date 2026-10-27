@@ -454,7 +454,7 @@ static void cursor_read(const u32 *lut)
     if (!drvseg_mgraphic) return;
     u16 ds = (u16)(drvseg_mgraphic + 0x140);
     { static int lg = -1; if (lg < 0) lg = getenv("DL_CUR_LOG") != 0;
-      if (lg) { static char last[200]; char b[200]; snprintf(b, sizeof b, "cursor: shown %d page %d save %d,%d %dx%d at %d,%d", rw(ds, 0x212), rw(ds, 0x214), (s16)rw(ds, 0x20a), (s16)rw(ds, 0x20c), (s16)rw(ds, 0x20e), (s16)rw(ds, 0x210), (s16)rw(ds, 0x202), (s16)rw(ds, 0x204));
+      if (lg) { static char last[200]; char b[200]; snprintf(b, sizeof b, "光标：显示 %d 页 %d 保存 %d,%d %dx%d 于 %d,%d", rw(ds, 0x212), rw(ds, 0x214), (s16)rw(ds, 0x20a), (s16)rw(ds, 0x20c), (s16)rw(ds, 0x20e), (s16)rw(ds, 0x210), (s16)rw(ds, 0x202), (s16)rw(ds, 0x204));
                 if (strcmp(b, last)) { strcpy(last, b); fprintf(stderr, "%s\n", b); } } }
     if (!rw(ds, 0x212) || rw(ds, 0x214) != 0) return;
     int bx = (s16)rw(ds, 0x20a), by = (s16)rw(ds, 0x20c), bw = (s16)rw(ds, 0x20e), bh = (s16)rw(ds, 0x210);

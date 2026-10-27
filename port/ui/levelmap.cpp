@@ -77,7 +77,7 @@ extern "C" void levelmap_draw(void)
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(io.DisplaySize);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-    ImGui::Begin("Level map", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
+    ImGui::Begin("层级地图", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
                  ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBringToFrontOnFocus);
     ImGui::PopStyleVar();
     ImDrawList *dl = ImGui::GetWindowDrawList();
@@ -186,7 +186,7 @@ extern "C" void levelmap_draw(void)
             dl->AddQuadFilled(a, b, c2, d, STAIRS);
             dl->AddQuad(a, b, c2, d, IM_COL32(250, 240, 200, 255), 2.0f);
             char lab[24];
-            if (to >= 0 && to < NFLOORS && to != fl) snprintf(lab, sizeof lab, "to floor %d", to + 1); else snprintf(lab, sizeof lab, "way out");
+            if (to >= 0 && to < NFLOORS && to != fl) snprintf(lab, sizeof lab, "到第%d层", to + 1); else snprintf(lab, sizeof lab, "出口方向");
             ImVec2 m = P((X0 + X1) * 0.5f, (Y0 + Y1) * 0.5f);
             ImVec2 ts = (ui_font_small ? ui_font_small : ImGui::GetFont())->CalcTextSizeA(UIS(17), FLT_MAX, 0, lab);
             ImVec2 l0(m.x - ts.x * 0.5f - 3, m.y - s * 0.5f - ts.y - 2), l1(m.x + ts.x * 0.5f + 3, m.y - s * 0.5f);
@@ -292,7 +292,7 @@ extern "C" void levelmap_draw(void)
     }
     /* title and legend */
     char t[160];
-    snprintf(t, sizeof t, all ? "The whole level  (floor %d)" : "The level, as far as the party has seen it  (floor %d)", fl + 1);
+    snprintf(t, sizeof t, all ? "整个层级（第%d层）" : "队伍已探索过的层级（第%d层）", fl + 1);
     dl->AddText(f, UIS(22), ImVec2(o.x + 16, o.y + 14), IM_COL32(230, 214, 180, 255), t);
     float lx = o.x + 16, ly = o.y + sz.y - UIS(30);
     auto legend = [&](ImU32 c, const char *txt, bool circle) {
@@ -301,13 +301,13 @@ extern "C" void levelmap_draw(void)
         lx += UIS(30) + f->CalcTextSizeA(UIS(18), FLT_MAX, 0, txt).x;
     };
     legend(IM_COL32(70, 150, 230, 255), "party", true);
-    legend(IM_COL32(210, 60, 50, 255), "enemies seen", true);
-    legend(FLOOR_NOW, "in view now", false);
-    legend(IM_COL32(90, 170, 250, 220), "arrows: who targets whom", false);
+    legend(IM_COL32(210, 60, 50, 255), "已发现的敌人", true);
+    legend(FLOOR_NOW, "当前可见", false);
+    legend(IM_COL32(90, 170, 250, 220), "箭矢：谁瞄准了谁", false);
     legend(DOOR, "door", false);
     legend(FURN, "furniture", false);
-    legend(STAIRS, "stairs, ways out", false);
-    if (all) legend(HIDDEN, "not yet revealed", false);
-    dl->AddText(f, UIS(18), ImVec2(lx + 10, ly), IM_COL32(170, 155, 125, 255), walk ? "Click the floor to walk the party there. Tab or Esc closes the level map; the game is paused until then." : "Tab or Esc closes the level map; the game is paused until then.");
+    legend(STAIRS, "楼梯，出口", false);
+    if (all) legend(HIDDEN, "尚未揭示", false);
+    dl->AddText(f, UIS(18), ImVec2(lx + 10, ly), IM_COL32(170, 155, 125, 255), walk ? "点击地面即可让队伍前往该处。按 Tab 键或 Esc 键可关闭关卡地图；在此期间游戏将暂停。" : "按 Tab 键或 Esc 键可关闭关卡地图；在此期间游戏将暂停。");
     ImGui::End();
 }

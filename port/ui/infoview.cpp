@@ -57,49 +57,49 @@ extern "C" void infoview_draw(void)
             }
         });
     }
-    P.text(f, NsDraw::FS_TITLE, 70, 8, IM_COL32(120, 30, 18, 255), "The party");
-    if (P.button(284, 196 - 12, 315, 196 - 1, "Close", IM_COL32(112, 40, 22, 235), NsDraw::FS_HEADBTN, PB_Y)) ns_push(IV_CLOSE, 0, 0, 0);
+    P.text(f, NsDraw::FS_TITLE, 70, 8, IM_COL32(120, 30, 18, 255), "队伍");
+    if (P.button(284, 196 - 12, 315, 196 - 1, "关闭", IM_COL32(112, 40, 22, 235), NsDraw::FS_HEADBTN, PB_Y)) ns_push(IV_CLOSE, 0, 0, 0);
 
     /* the party */
     const float LX0 = 66, LX1 = 166;
     float x = LX0 + 3, y = 20, w = LX1 - LX0 - 6;
     auto head = [&](const char *t) { P.text(fo, 4.2f, x, y, dim, t); y += 6; };
-    head("Fame");
+    head("名声");
     y += P.para(f, NsDraw::FS_HEAD, x, y, w, ink, ns_gtext(m.fame_word)) + 0.5f;
     int lv = m.fame / 50;
-    if (lv < 10) snprintf(b, sizeof b, "%d (the next title at %d)", m.fame, (lv + 1) * 50); else snprintf(b, sizeof b, "%d", m.fame);
+    if (lv < 10) snprintf(b, sizeof b, "%d（下一项标题为%d）", m.fame, (lv + 1) * 50); else snprintf(b, sizeof b, "%d", m.fame);
     P.text(fo, NsDraw::FS_BODY, x, y, ink, b); y += 10;
-    head("Time");
-    snprintf(b, sizeof b, "%d:00, %s", m.hour, ns_gtext(m.bell).c_str());
+    head("时间");
+    snprintf(b, sizeof b, "%d:00，%s", m.hour, ns_gtext(m.bell).c_str());
     P.text(fo, NsDraw::FS_BODY, x, y, ink, b); y += 6.5f;
     snprintf(b, sizeof b, "%d %s %d", m.day, ns_gtext(m.month_name).c_str(), m.year);   /* (as the original and the margin show it) */
     P.text(fo, NsDraw::FS_BODY, x, y, ink, b); y += 10;
-    head(m.in_city ? "In" : "Where");
+    head(m.in_city ? "在" : "在哪里");
     y += P.para(f, NsDraw::FS_NAME, x, y, w, ink, ns_gtext(m.where)) + 0.5f;
     if (m.in_city && m.here >= 0) {
-        snprintf(b, sizeof b, "Reputation here: %s (%d)", ns_gtext(m.city[m.here].band_word).c_str(), m.city[m.here].rep);
+        snprintf(b, sizeof b, "此地声望：%s（%d）", ns_gtext(m.city[m.here].band_word).c_str(), m.city[m.here].rep);
         y += P.para(fo, NsDraw::FS_BODY, x, y, w, ink, b);
     }
     y += 4;
-    head("Wealth");
+    head("财富");
     y += P.para(fo, NsDraw::FS_BODY, x, y, w, ink, money_fgp(m.money[0], m.money[1], m.money[2])) + 0.5f;
-    snprintf(b, sizeof b, "%s in all", money_str(m.total_pf).c_str());
+    snprintf(b, sizeof b, "全部%s", money_str(m.total_pf).c_str());
     P.text(fo, NsDraw::FS_SMALL, x, y, soft, b); y += 7.5f;
     if (m.notes > 0) {                                      /* (none: nothing to say) */
-        snprintf(b, sizeof b, "Bank notes: %s", money_fgp(m.notes, 0, 0).c_str());
+        snprintf(b, sizeof b, "银票：%s", money_fgp(m.notes, 0, 0).c_str());
         P.text(fo, NsDraw::FS_BODY, x, y, ink, b); y += 6.5f;
     }
     y += 3;
-    head("Philosopher's Stone");
+    head("哲学家之石");
     ui_pstone_draw(P.dl, NsDraw::w(x + 6, y + 6), 13 * P.k, ui_pstone_look(), m.phstone, (float)ImGui::GetTime());
-    if (m.phstone) snprintf(b, sizeof b, "Quality %d: +%d to every batch", m.phstone, m.phstone); else snprintf(b, sizeof b, "None yet: an alchemist or a university makes one");
+    if (m.phstone) snprintf(b, sizeof b, "品质%d：每批+ %d", m.phstone, m.phstone); else snprintf(b, sizeof b, "尚无：炼金术士或大学可制造一件");
     P.para(fo, NsDraw::FS_BODY, x + 15, y + 1, w - 15, m.phstone ? ink : soft, b);
 
     /* every city */
     const float RX0 = 177, RX1 = 314, RY0 = 12, RY1 = 182;
-    P.text(f, NsDraw::FS_HEAD, RX0 + 3, RY0 + 2, ink, "Reputation in the cities");
+    P.text(f, NsDraw::FS_HEAD, RX0 + 3, RY0 + 2, ink, "城市中的声望");
     float sy = RY0 + 11;
-    const char *SORT[2] = { "by reputation", "by name" };
+    const char *SORT[2] = { "按声望", "按姓名" };
     for (int k = 0; k < 2; k++) {
         float sx = RX0 + 3 + k * 36;
         bool on = by_name == k;
@@ -138,8 +138,8 @@ extern "C" void infoview_draw(void)
             snprintf(b, sizeof b, "%+d", rc->delta);
             P.text(fo, 3.6f, 0, ry + 1.6f, rc->delta < 0 ? NsDraw::RED : NsDraw::GREEN, b, RX1 - 13);
             if (P.over(RX0 + 1, ry, RX1 - 1, ry + RH)) {
-                std::string t = std::string("Last change: ") + b + " on " + std::to_string(rc->day) + "." + std::to_string(rc->month + 1) + "." + std::to_string(rc->year);
-                if (!rc->choice.empty()) t += ", after choosing \"" + rc->choice + "\"";
+                std::string t = std::string("最后修改：") + b + " on " + std::to_string(rc->day) + "." + std::to_string(rc->month + 1) + "." + std::to_string(rc->year);
+                if (!rc->choice.empty()) t += "，选择“之后" + rc->choice + "\"";
                 ns_tip(t.c_str());
             }
         }

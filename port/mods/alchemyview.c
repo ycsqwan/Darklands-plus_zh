@@ -203,9 +203,9 @@ static void screen_hook(void)                /* alchemy_screen(who, hours), s033
             case AV_SET: set_batches(a.a); break;
             case AV_START: {
                 int r = (s16)g_rw(GV_alchemy_row);
-                if ((s16)g_rw(GV_alchemy_page) != 1 || row_count(r) <= 0) { note("Choose a formula and at least one batch first."); break; }
+                if ((s16)g_rw(GV_alchemy_page) != 1 || row_count(r) <= 0) { note("先选择一个配方，并至少准备一批。"); break; }
                 char nm[32]; gm_member_name(who, nm, sizeof nm);
-                char t[120]; snprintf(t, sizeof t, "%s starts %d batch%s.", nm, row_count(r), row_count(r) == 1 ? "" : "es");
+                char t[120]; snprintf(t, sizeof t, "%s启动了%d批%s。", nm, row_count(r), row_count(r) == 1 ? "" : "es");
                 ns_call(GF_alchemy_brew, 1, hours);
                 if (!ns_unwinding) { note(t); started = 1; leave = 1; }
                 break; }

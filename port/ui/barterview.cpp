@@ -90,17 +90,17 @@ extern "C" void barterview_draw(void)
     {   /* the subtitle: the wares' quality and who haggles (or pays); the purse beside Leave, no label */
         std::string purse = money(b.total_pf), who = b.payer >= 0 && b.payer < 5 ? gt(b.names[b.payer]) : "";
         int barg = assist_bargainer();                         /* (the best charisma bargains: mods/assist.c) */
-        std::string sub = "Wares " + std::to_string(shop_wares_q(b.quality)) + "q";
+        std::string sub = "商品" + std::to_string(shop_wares_q(b.quality)) + "q";
         if (assist_best_leader && barg >= 0 && barg < 5) sub += "  -  " + gt(b.names[barg]) + " bargains";
         else if (!who.empty()) sub += "  -  " + who + " pays";
         T(fo, NsDraw::FS_BODY, 65, 12.5f, cream_soft, sub);
         T(f, NsDraw::FS_HEAD, 0, 6.0f, cream, purse, 280);
-        if (P.button(284, 4, 315, 15, "Leave", IM_COL32(112, 40, 22, 235), NsDraw::FS_HEADBTN, PB_Y)) ns_push(BV_LEAVE, 0, 0, 0);
+        if (P.button(284, 4, 315, 15, "离开", IM_COL32(112, 40, 22, 235), NsDraw::FS_HEADBTN, PB_Y)) ns_push(BV_LEAVE, 0, 0, 0);
     }
 
     /* the member tabs (right column); the coin (or a right click): holds the purse */
     const float LX0 = 63, LX1 = 180, RX0 = 184, RX1 = 317, LY0 = 31, ROWH = 9;
-    T(f, NsDraw::FS_HEAD, LX0 + 1, 21, cream, "For sale");
+    T(f, NsDraw::FS_HEAD, LX0 + 1, 21, cream, "出售中");
     /* a shop with ingredients and a party that knows formulae: the formulae, their ingredients carried and sold here */
     bool can_formulae = false;
     for (int i = 0; i < b.nwares && !can_formulae; i++) { const ItemDef *d = def(b.ware[i].id); if (d && d->kind == K_INGREDIENT) can_formulae = true; }
@@ -111,7 +111,7 @@ extern "C" void barterview_draw(void)
     }
     if (!can_formulae) V.formulae = false;
     else {
-        const char *lab = V.formulae ? "Your items" : "Formulae";
+        const char *lab = V.formulae ? "你的物品" : "配方";
         float bx1 = LX1, bx0 = bx1 - W(fo, NsDraw::FS_SMALL, lab) - 6;
         if (P.button(bx0, 20.5f, bx1, 28.5f, lab, IM_COL32(120, 84, 40, 235))) { V.formulae = !V.formulae; V.fscroll = 0; }
     }
@@ -134,7 +134,7 @@ extern "C" void barterview_draw(void)
             if (m == b.payer) dl->AddCircleFilled(g2w(x + 3.5f, 24), 1.8f * k, IM_COL32(214, 172, 60, 255));
             else dl->AddCircle(g2w(x + 3.5f, 24), 1.8f * k, coin_h ? IM_COL32(214, 172, 60, 255) : sel ? IM_COL32(250, 236, 200, 110) : IM_COL32(120, 90, 40, 110), 0, fmaxf(1.0f, 0.4f * k));
             if (coin_h && m != b.payer) ui_hit_area(g2w(x, 19), g2w(x + 7, 29));
-            if (coin_h && m != b.payer) ImGui::SetTooltip("Click to have %s pay from now on", nm.c_str());
+            if (coin_h && m != b.payer) ImGui::SetTooltip("点击以让%s从现在起支付", nm.c_str());
             if (click && in(cx, cy, x, 19, x + 7, 29)) ns_push(BV_PAYER, m, 0, 0);
             else if (click && in(cx, cy, x, 19, x + tw - 1, 29)) ns_push(BV_WHO, m, 0, 0);
             if (P.rclick && in(mx, my, x, 19, x + tw - 1, 29)) ns_push(BV_PAYER, m, 0, 0);
@@ -190,7 +190,7 @@ extern "C" void barterview_draw(void)
         int maxs = n - NROWS; if (maxs < 0) maxs = 0;
         if (V.scroll[L] > maxs) V.scroll[L] = maxs;
         if (V.scroll[L] < 0) V.scroll[L] = 0;
-        if (!n) T(fo, NsDraw::FS_BODY, x0 + 4, LY0 + 3, ink_dim, L ? "Nothing to sell." : "Nothing for sale today.");
+        if (!n) T(fo, NsDraw::FS_BODY, x0 + 4, LY0 + 3, ink_dim, L ? "没有可出售的物品。" : "今天没有商品出售。");
         for (int r = 0; r < NROWS && V.scroll[L] + r < n; r++) {
             int i = order[V.scroll[L] + r];
             float y = LY0 + r * ROWH;
@@ -241,8 +241,8 @@ extern "C" void barterview_draw(void)
             }
             if (eq) R(x0 + 0.5f, y + 1, x0 + 1.8f, y + ROWH - 1, NsDraw::RED);     /* equipped: a red mark at its left (said in the strip) */
             char haves[24] = "";
-            if (!L && ingredient(id)) snprintf(haves, sizeof haves, "have %d", have_n.count(id) ? have_n[id] : 0);
-            const char *tag = eq == 2 ? "rides it" : kept ? "kept" : haves[0] ? haves : nullptr;
+            if (!L && ingredient(id)) snprintf(haves, sizeof haves, "有%d个", have_n.count(id) ? have_n[id] : 0);
+            const char *tag = eq == 2 ? "骑乘它" : kept ? "kept" : haves[0] ? haves : nullptr;
             float tagw = tag ? P.tag_width(tag) : 0;
             T(f, NsDraw::FS_NAME, x0 + 12, y + 1.3f, ink, nm, -1, name_end - tagw);
             if (tag) {
@@ -254,7 +254,7 @@ extern "C" void barterview_draw(void)
             T(fo, NsDraw::FS_BODY, 0, y + 2.0f, price <= 0 ? ink_dim : cant ? red : ink, ps, x1 - 2);
             /* the action on the row under the pointer */
             if (h) {
-                const char *lab = L ? "Sell" : "Buy";
+                const char *lab = L ? "出售" : "购买";
                 bool ten = !L && ingredient(id);                      /* (an ingredient: ten at once) */
                 bool two = (L && count > 1) || ten;
                 float bw = 15, bx1 = x1 - 2 - pw - 2, bx0 = bx1 - bw, ax0 = bx0 - (two ? 13 : 0);
@@ -271,7 +271,7 @@ extern "C" void barterview_draw(void)
                         bool ha = in(mx, my, ax0, y, bx0 - 1, y + ROWH);
                         R(ax0, y + 1, bx0 - 1, y + ROWH - 1, ha ? IM_COL32(150, 56, 30, 255) : IM_COL32(120, 44, 24, 200), 1.5f);
                         if (ten) R(ax0, y + 1, bx0 - 1, y + ROWH - 1, ha ? IM_COL32(52, 112, 44, 255) : IM_COL32(40, 92, 34, 200), 1.5f);
-                        T(fo, NsDraw::FS_BODY, ax0 + 1.5f, y + 2.2f, IM_COL32(250, 240, 214, 255), ten ? "x10" : "All");
+                        T(fo, NsDraw::FS_BODY, ax0 + 1.5f, y + 2.2f, IM_COL32(250, 240, 214, 255), ten ? "x10" : "全部");
                         if (hit(ax0, y, bx0 - 1, y + ROWH)) { if (ten) ns_push(BV_BUY, i, 10, 0); else if (pack) ns_push(BV_PSELL, id, qual, 255); else ns_push(BV_SELL, b.item[i].idx, 255, 0); }
                     }
                 }
@@ -307,25 +307,25 @@ extern "C" void barterview_draw(void)
         if (in(mx, my, RX0, LY0, RX1, LY1) && ns_in.wheel != 0) { V.fscroll -= (int)ns_in.wheel; ns_in.wheel = 0; }
         if (V.fscroll > maxs) V.fscroll = maxs;
         if (V.fscroll < 0) V.fscroll = 0;
-        if (rows.empty()) P.para(fo, NsDraw::FS_BODY, RX0 + 3, LY0 + 2, RX1 - RX0 - 6, ink_dim, "None of the party's formulae uses what this shop sells.");
+        if (rows.empty()) P.para(fo, NsDraw::FS_BODY, RX0 + 3, LY0 + 2, RX1 - RX0 - 6, ink_dim, "队伍中的任何配方都不使用本店出售的商品。");
         for (int r = 0; r < vis && V.fscroll + r < (int)rows.size(); r++) {
             const FRow &fr = rows[V.fscroll + r];
             const Formula &F = gamedata.formulas[fr.f];
             float y = LY0 + r * FH;
             if (r & 1) R(RX0 + 0.5f, y, RX1 - 0.5f, y + FH, IM_COL32(240, 230, 204, 255));
             P.icon(RX0 + 4.5f, y + 4.6f, 7.0f, 95 + fr.f / 3, -1, fr.f % 3 + 1);
-            std::string pt = fr.potions ? std::to_string(fr.potions) + (fr.potions == 1 ? " potion" : " potions") : "no potion yet";
+            std::string pt = fr.potions ? std::to_string(fr.potions) + (fr.potions == 1 ? " potion" : " potions") : "尚无药剂";
             float pw = W(fo, NsDraw::FS_SMALL, pt);
             T(fo, NsDraw::FS_SMALL, 0, y + 1.6f, fr.potions ? green : red, pt, RX1 - 2.5f);
             T(f, NsDraw::FS_NAME * 0.9f, RX0 + 9.5f, y + 1.2f, ink, gamedata.formula_names[fr.f], -1, RX1 - 4 - pw);
             if (in(mx, my, RX0 + 0.5f, y, RX1 - 0.5f, y + 8.5f))
-                V.fnote = "Known by " + fr.who + ". The ingredients the party carries make " + pt + " (a batch makes one). Below, each ingredient: what the party carries / what a batch needs, and its price here.";
+                V.fnote = "由…所知" + fr.who + "。队伍携带的原料可以制作" + pt + "（一批可制作一件）。下方，每种原料：队伍携带的/一批所需，以及此处的价格。";
             /* the ingredients */
             float x = RX0 + 3, cy = y + 13.2f;
             for (const FormulaIngr &g : F.ingr) {
                 int have = carried(g.item), w = ware_of(g.item);
                 char hv[24]; snprintf(hv, sizeof hv, "%d/%d", have, g.count);
-                std::string pr = w >= 0 ? money(b.ware[w].price) : "not here";
+                std::string pr = w >= 0 ? money(b.ware[w].price) : "不在此处";
                 float tw = fmaxf(W(fo, 4.0f, hv), W(fo, 3.8f, pr)), cw = 7.4f + tw + 3.2f;
                 if (x + cw > RX1 - 1) break;
                 bool hov = in(mx, my, x - 0.5f, y + 8.8f, x + cw - 1, y + FH);
@@ -335,8 +335,8 @@ extern "C" void barterview_draw(void)
                 T(fo, 4.0f, x + 7.4f, y + 9.2f, have >= g.count ? green : red, hv);
                 T(fo, 3.8f, x + 7.4f, y + 13.4f, w >= 0 ? (b.ware[w].price > b.total_pf ? red : ink_soft) : ink_dim, pr);
                 if (hov) {
-                    V.fnote = item_name(g.item) + ": the party carries " + std::to_string(have) + ", a batch needs " + std::to_string(g.count) +
-                              (w >= 0 ? "; " + money(b.ware[w].price) + " each here. Click: find it in For sale, to buy it there." : "; not sold here.");
+                    V.fnote = item_name(g.item) + "：队伍携带的" + std::to_string(have) + "，一批需要" + std::to_string(g.count) +
+                              (w >= 0 ? "; " + money(b.ware[w].price) + "每批在此处的价格。点击：在“出售中”查找，即可在那里购买。" : "；此处不销售。");
                     if (w >= 0 && hit(x - 0.5f, y + 8.8f, x + cw - 1, y + FH)) { V.flash_ware = w; V.flash_t = plat_ticks_ms(); V.scroll[0] = w - NROWS / 2; }
                 }
                 x += cw;
@@ -362,21 +362,21 @@ extern "C" void barterview_draw(void)
         spare.push_back(b.shared ? i : it.idx); spare_pf += (long)it.price * it.count; spare_n += it.count;
     }
     bool asking = ask_who == b.who && plat_ticks_ms() - ask_t < 5000;
-    std::string slab = asking ? "Click again to sell them" : "Sell spare gear";
+    std::string slab = asking ? "再次点击以出售它们" : "出售多余装备";
     float sbx1 = 314, sbx0 = sbx1 - W(fo, NsDraw::FS_SMALL, slab) - 6;
     bool show_spare = !spare.empty() && !V.formulae;
     bool spare_h = show_spare && (asking || in(mx, my, sbx0, SY1 - 9.5f, sbx1, SY1 - 1.5f));
     spare_lit = spare_h;
     if (spare_h && V.fnote.empty()) {
         char t[320];
-        snprintf(t, sizeof t, "%d item%s not equipped (weapons, armor, shields; not ammunition or throwing weapons; and whatever is marked Sell on the character sheet), for about %s in all: the ones pulsing in the list.%s",
-                 spare_n, spare_n == 1 ? "" : "s", money(spare_pf).c_str(), asking ? " Click again to sell them all." : "");
-        V.fnote = t; V.fhead = "Spare gear";
+        snprintf(t, sizeof t, "%d 物品%s 未装备（武器、护甲、盾牌；不包括弹药或投掷武器；以及角色面板上标有“出售”的物品），总计约 %s：即列表中闪烁的那些。%s",
+                 spare_n, spare_n == 1 ? "" : "s", money(spare_pf).c_str(), asking ? "再次点击以全部出售。" : "");
+        V.fnote = t; V.fhead = "备用装备";
     }
     ns_sheet(P, 63, SY0, 317, SY1, IM_COL32(236, 222, 188, 255));
     float strip_end = 0;
     if (!V.fnote.empty()) {
-        T(f, NsDraw::FS_HEAD, 68, SY0 + 1.5f, ink, V.fhead.empty() ? "The formula" : V.fhead);
+        T(f, NsDraw::FS_HEAD, 68, SY0 + 1.5f, ink, V.fhead.empty() ? "配方" : V.fhead);
         P.para(fo, NsDraw::FS_BODY, 68, SY0 + 10, 245, ink_soft, V.fnote);
     } else if (V.hover_list >= 0) {
         int L = V.hover_list, i = V.hover_row;
@@ -386,15 +386,15 @@ extern "C" void barterview_draw(void)
             int price = L ? b.item[i].price : b.ware[i].price, wt = L ? b.item[i].weight : b.ware[i].weight;
             NsStripThing t;
             t.id = id; t.qual = qual; t.weight = wt; t.count = L ? b.item[i].count : 1;
-            t.status = L && b.item[i].equipped == 2 ? "the mount this member rides" : L && b.item[i].equipped ? "equipped" : "";
+            t.status = L && b.item[i].equipped == 2 ? "该成员所骑乘的坐骑" : L && b.item[i].equipped ? "equipped" : "";
             t.cmp_who = L ? -1 : b.who;
-            t.right = L ? (price > 0 ? "The merchant pays " + money_with_total(price) : "The merchant will not buy this")
-                        : "Costs " + money_with_total(price) + (price > b.total_pf ? " - more than the purse holds" : "");
+            t.right = L ? (price > 0 ? "商人支付" + money_with_total(price) : "商人不会购买此物")
+                        : "花费" + money_with_total(price) + (price > b.total_pf ? "—— 超过了钱包所能承受的金额" : "");
             t.right_col = L ? (price > 0 ? green : red) : (price > b.total_pf ? red : ink);
             t.y_max = SY1 - 9.5f;                                  /* (the hint line and the Sell spare gear button below) */
             strip_end = ns_item_strip(P, SY0, t);
         }
-    } else T(fo, NsDraw::FS_BODY, 68, SY0 + 3, ink_dim, "Point at a ware or one of your items to see it here; F11 shows what you can do.");
+    } else T(fo, NsDraw::FS_BODY, 68, SY0 + 3, ink_dim, "将鼠标指向某件商品或你的某件物品，即可在此查看；按F11可显示你能进行的操作。");
     if (show_spare) {
         if (P.button(sbx0, SY1 - 9.5f, sbx1, SY1 - 1.5f, slab, asking ? IM_COL32(140, 60, 40, 235) : IM_COL32(120, 84, 40, 235))) {
             if (asking) {
@@ -409,7 +409,7 @@ extern "C" void barterview_draw(void)
         sbx0 -= 3;
     } else sbx0 = 316;
     if (b.note[0] && plat_ticks_ms() - b.note_t < 6000) T(fo, NsDraw::FS_BODY, 68, SY1 - 8.5f, IM_COL32(112, 40, 22, 255), gt(b.note), -1, sbx0);
-    else if (strip_end <= SY1 - 8.5f) T(fo, NsDraw::FS_SMALL, 68, SY1 - 7.5f, ink_dim, b.shared ? "Shift+Buy: ten  -  Shift+Sell or All: the whole stack  -  purchases go to the member picked above"
-                                              : assist_best_leader ? "Shift+Buy: ten  -  Shift+Sell or All: the whole stack  -  click a name to see their items"
-                                              : "Shift+Buy: ten  -  Shift+Sell or All: the whole stack  -  click a name's coin to make that member pay", -1, sbx0);
+    else if (strip_end <= SY1 - 8.5f) T(fo, NsDraw::FS_SMALL, 68, SY1 - 7.5f, ink_dim, b.shared ? "Shift+购买：十件——Shift+出售或全部：整叠——购买将归于上方选定的成员"
+                                              : assist_best_leader ? "Shift+购买：十件——Shift+出售或全部：整叠——点击某人的名字以查看其物品"
+                                              : "Shift+购买：十件——Shift+出售或全部：整叠——点击某人的金币以让该成员付款", -1, sbx0);
 }

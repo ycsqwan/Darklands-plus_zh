@@ -265,15 +265,15 @@ static void battle_intro(void)
 {
     if (config_get_int("battle.intro_seen", 0) || !config_get_int("battle.quick_orders", 1)) return;
     config_set_int("battle.intro_seen", 1); config_save();
-    ui_alert("Battles need fewer clicks",
-             "Click a member (on the field, or their box at the left), then an enemy to attack or a spot to walk to: that click gives the order. "
-             "Space pauses and resumes the battle; while it is paused, the next member without an order is chosen for you.\n\n"
-             "A member with a bow, crossbow, gun or thrown weapon shoots when you click an enemy and keeps shooting: at the next enemy when theirs falls, "
-             "moving for a clear line when a wall, a tree or someone stands in the way, and drawing their melee weapon only when an enemy is beside them. "
-             "A click on the bow or sword on their box at the left has them fight hand to hand instead.\n\n"
-             "Against armor their weapon cannot pierce, members choose Vulnerable (aimed at the gaps in the armor) by themselves when that can get through.\n\n"
-             "While a member is selected, their orders are buttons at the foot of the field, grouped by what they do; point at one to see what it does.",
-             "All this is Darklands+; each part can be switched off, for the game's own ways, in F12 > Settings > Battles. F11 lists the battle's keys and clicks.");
+    ui_alert("战斗需要更少的点击",
+             "点击一名队员（在战场上或左侧的栏位），再点击一名敌人进行攻击，或点击一处地点移动：该次点击即下达指令。"
+             "空格键可暂停并恢复战斗；暂停时，系统会自动选择下一位尚未下达指令的队员。"
+             "持有弓、弩、枪或投掷武器的队员，在点击敌人后会持续射击：当其目标敌人倒下时，"
+             "若前方有墙、树或他人阻挡，则会调整位置以确保射线畅通，并仅在敌人近身时才拔出近战武器。"
+             "点击左侧栏位上的弓或剑，即可切换为近战模式。"
+             "面对无法穿透的盔甲，队员会在能够突破时自行选择“易伤”（瞄准盔甲缝隙）。"
+             "选中某名队员后，其指令将显示在战场底部，按功能分组；指向其中一项即可查看其作用。",
+             "以上均为Darklands+功能；各部分均可通过F12 > 设置 > 战斗选项单独关闭。F11则列出战斗相关的按键与操作。");
 }
 
 /* battle.foe_arrow: no enemy of the fight on the screen, but some on this floor - an arrow at the
@@ -325,7 +325,7 @@ static void foe_arrow(void)
     ImVec2 tip2(tip.x - bdx * 2 * k, tip.y - bdy * 2 * k), a2(base.x + nrm.x * (W - 2 * k) - bdx * k, base.y + nrm.y * (W - 2 * k) - bdy * k), b3(base.x - nrm.x * (W - 2 * k) - bdx * k, base.y - nrm.y * (W - 2 * k) - bdy * k);
     dl->AddTriangleFilled(tip2, a2, b3, IM_COL32(230, 80, 50, (int)(255 * pulse)));
     ImFont *fo = ui_font_overlay ? ui_font_overlay : ImGui::GetFont();
-    const char *lab = "Enemies";
+    const char *lab = "敌人";
     float fs = 6.5f * k; ImVec2 ts = fo->CalcTextSizeA(fs, FLT_MAX, 0, lab);
     ImVec2 lp(base.x - bdx * (ts.x * 0.5f + 4 * k) - ts.x * 0.5f, base.y - bdy * (ts.y * 0.5f + 4 * k) - ts.y * 0.5f);
     dl->AddRectFilled(ImVec2(lp.x - 3, lp.y - 1), ImVec2(lp.x + ts.x + 3, lp.y + ts.y + 1), IM_COL32(20, 10, 4, 190), 3);
@@ -336,7 +336,7 @@ static void foe_arrow(void)
     if (ImGui::GetIO().MousePos.x >= arrow_box[0] && ImGui::GetIO().MousePos.x <= arrow_box[2] && ImGui::GetIO().MousePos.y >= arrow_box[1] && ImGui::GetIO().MousePos.y <= arrow_box[3])
     {
         ui_tip_beside(ImVec2(arrow_box[0], arrow_box[1]), ImVec2(arrow_box[2], arrow_box[3]));
-        ImGui::SetTooltip("The nearest enemy is this way: click to look");
+        ImGui::SetTooltip("最近的敌人在此：点击查看");
     }
 }
 
@@ -378,9 +378,9 @@ void ui_draw_battle_info(void)
     std::string name;
     if (best < 5) { char nm[26]; g_str(G_DGROUP, (u16)(b + CB_NAME), nm, sizeof nm); name = game_text(nm, sizeof nm); }
     else name = enemy_name(g_rb((u16)(GV_cbt_floor + best)), b);
-    if (name.empty()) name = best < 5 ? "?" : "Enemy";
-    const char *cond = st == 3 ? "dead" : st == 2 ? "unconscious" : endm <= 0 ? "" : end * 4 <= endm ? "badly hurt" : end * 2 <= endm ? "hurt" : end < endm ? "a little hurt" : "unhurt";
-    if (st == 1 && strm > 0 && str * 2 <= strm) cond = "gravely wounded";
+    if (name.empty()) name = best < 5 ? "?" : "敌人";
+    const char *cond = st == 3 ? "dead" : st == 2 ? "unconscious" : endm <= 0 ? "" : end * 4 <= endm ? "重伤" : end * 2 <= endm ? "hurt" : end < endm ? "轻伤" : "unhurt";
+    if (st == 1 && strm > 0 && str * 2 <= strm) cond = "重伤";
     place_by_pointer(g2w((float)gx, (float)gy));
     if (ImGui::Begin("##battleinfo", nullptr, INFO_FLAGS)) {
         ImGui::PushFont(ui_font_overlay);
@@ -388,11 +388,11 @@ void ui_draw_battle_info(void)
         if (hint) hint_line(hint);
         ImGui::TextColored(best < 5 ? ImVec4(0.18f, 0.32f, 0.55f, 1) : ImVec4(0.55f, 0.15f, 0.10f, 1), "%s", name.c_str());
         if (*cond) { ImGui::SameLine(); ImGui::TextDisabled("- %s", cond); }
-        if (best < 5 || ui_battle_numbers) ui_rich_textf("{Endurance:%d/%d}   {Strength:%d/%d}", end, endm, str, strm);
-        if (wm >= 0 && wm <= 33) ImGui::Text("Melee rating %d, aim %d", def, atk);   /* (+0x20 both ways hand to hand, +0x21 shooting: mods/gamemodel.h) */
-        else ImGui::Text("Melee rating %d", def);
+        if (best < 5 || ui_battle_numbers) ui_rich_textf("{耐力:%d/%d}   {力量:%d/%d}", end, endm, str, strm);
+        if (wm >= 0 && wm <= 33) ImGui::Text("近战等级 %d，瞄准 %d", def, atk);   /* (+0x20 both ways hand to hand, +0x21 shooting: mods/gamemodel.h) */
+        else ImGui::Text("近战等级 %d", def);
         if (best >= 5 && st == 1 && g_rb((u16)(GV_cbt_ends_battle + best)) == 1)
-            ImGui::TextColored(ImVec4(0.55f, 0.15f, 0.10f, 1), "The master of this place: once this enemy has fallen and the fight is over, the place is won.");
+            ImGui::TextColored(ImVec4(0.55f, 0.15f, 0.10f, 1), "此地之主：一旦此敌倒下、战斗结束，此地即为我方所有。");
         auto wid = [](int t) -> int {                           /* a weapon type's item (its name, its picture); -1 none */
             if (t < 0 || t > 33) return -1;
             for (size_t i = 0; i < gamedata.items.size(); i++) { const ItemDef &d = gamedata.items[i]; if (d.type == t && (d.kind == K_WEAPON || d.kind == K_MISSILE)) return (int)i; }
@@ -402,17 +402,17 @@ void ui_draw_battle_info(void)
         if (human) {
             std::string a = wname(w), m = wname(wm);
             if (!a.empty() || !m.empty()) ImGui::TextDisabled("%s%s%s", a.c_str(), !a.empty() && !m.empty() ? ", " : "", m.c_str());
-        } else ImGui::TextDisabled("Natural weapons");
+        } else ImGui::TextDisabled("自然武器");
         if (best >= 5 && st == 1) {
             /* its body armour against the party's weapons (the game's rule, as in the armour
                tooltips: penetration below the hardness deflects most of the blow, equal halves it,
                above pierces and wounds strength) */
             int at = g_rb((u16)(b + CB_BODY_ARMOR)), h = at == 0xff ? 0 : rb(G_FAR20A5, (u16)(0x781e + at));
-            static const char *HN[6] = { "no armor", "soft armor", "stiff armor", "scale armor", "mail", "plate" };
+            static const char *HN[6] = { "无护甲", "软甲", "硬甲", "鳞甲", "mail", "plate" };
             if (h >= 0 && h < 6) {
-                if (human) ImGui::Text("%s (hardness %d)", HN[h], h);
-                else if (h > 0) ImGui::Text("Natural armor, hardness %d (as %s)", h, HN[h]);
-                else ImGui::Text("No armor (hardness 0)");
+                if (human) ImGui::Text("%s（硬度 %d）", HN[h], h);
+                else if (h > 0) ImGui::Text("自然护甲，硬度 %d（如 %s）", h, HN[h]);
+                else ImGui::Text("无护甲（硬度 0）");
                 int size = (s16)g_rw(G_PARTY_SIZE); if (size < 0 || size > 5) size = 0;
                 for (int m = 0; m < size; m++) {
                     u16 mb = (u16)(0x9c55 + m * 0x80);
@@ -427,7 +427,7 @@ void ui_draw_battle_info(void)
                         int id = wid(mw);
                         if (id < 0) continue;
                         int pen = rb(G_FAR20A5, (u16)(0x76a8 + mw)) & 15, r = pen > h ? 0 : pen == h ? 1 : 2;
-                        seg.push_back({ id, r == 0 ? "pierces" : r == 1 ? "half damage" : "mostly deflected",
+                        seg.push_back({ id, r == 0 ? "pierces" : r == 1 ? "减半伤害" : "大部分被弹开",
                                         r == 0 ? ImVec4(0.18f, 0.40f, 0.16f, 1) : r == 1 ? ImVec4(0.69f, 0.49f, 0.0f, 1) : ImVec4(0.62f, 0.20f, 0.12f, 1) });
                     }
                     if (seg.empty()) continue;
@@ -456,10 +456,10 @@ void ui_draw_battle_fast(void)
 {
     if (!battle_fast || game_mode() != GM_BATTLE || ns_showing()) return;
     ImDrawList *dl = ovl_list();
-    const char *t = "\xe2\x96\xb6\xe2\x96\xb6 fast forward  (Z)";
+    const char *t = "\\xe2\\x96\\xb6\\xe2\\x96\\xb6 快进  (Z)";
     ImFont *f = ImGui::GetFont(); float fs = ImGui::GetFontSize();
     ImVec2 ts = f->CalcTextSizeA(fs, 1e9f, 0, t), r = g2w(318, 2);
-    if (!f->FindGlyphNoFallback(0x25b6)) { t = ">> fast forward  (Z)"; ts = f->CalcTextSizeA(fs, 1e9f, 0, t); }
+    if (!f->FindGlyphNoFallback(0x25b6)) { t = ">> 快进  (Z)"; ts = f->CalcTextSizeA(fs, 1e9f, 0, t); }
     ImVec2 a(r.x - ts.x - fs * 0.8f, r.y), b(r.x, r.y + ts.y + fs * 0.35f);
     dl->AddRectFilled(a, b, IM_COL32(40, 24, 12, 210), fs * 0.25f);
     dl->AddText(f, fs, ImVec2(a.x + fs * 0.4f, a.y + fs * 0.17f), IM_COL32(250, 230, 180, 255), t);

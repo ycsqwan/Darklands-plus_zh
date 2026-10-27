@@ -193,13 +193,13 @@ static int run(void)
                     if (r->sel < 0 || r->sel >= r->n || r->ch[r->sel].slot < 0) break;
                     if (!r->ch[r->sel].can_leave) {
                         char t[200], nk[16]; snprintf(nk, sizeof nk, "%s", r->ch[r->sel].nick[0] ? r->ch[r->sel].nick : r->ch[r->sel].name);
-                        snprintf(t, sizeof t, "%s joined the party at another inn, so cannot be left at this one. To part with them: Done, then \"allow %s to retire\".", nk, nk);
+                        snprintf(t, sizeof t, "%s 在另一家客栈加入了队伍，因此不能留在这家。若要与他们分开：先完成操作，再选择“允许 %s 退休”。", nk, nk);
                         note(t); break;
                     }
                     a.a = 0x1e41; lo = 'A';
                 }
-                if (lo == 'B' && !r->party_n) { note("Add someone to the party first."); break; }
-                if (lo == 'A' && r->sel >= 0 && r->ch[r->sel].slot < 0 && r->party_n >= 4) { note("The party is full: up to four travel together. Drop someone first."); break; }
+                if (lo == 'B' && !r->party_n) { note("先将某人加入队伍。"); break; }
+                if (lo == 'A' && r->sel >= 0 && r->ch[r->sel].slot < 0 && r->party_n >= 4) { note("队伍已满：最多四人同行。请先移除一人。"); break; }
                 if (key(a.a) == 0x11b) result = 1;
                 break;
             }
@@ -213,7 +213,7 @@ static int run(void)
             }
             if (ns_unwinding) break;
             build();
-            if (a.type == RV_KEY && (a.a & 0xdf) == 'C' && r->n > nbefore) { choose(r->n - 1); build(); note("The new character is in the list: add them to the party."); }
+            if (a.type == RV_KEY && (a.a & 0xdf) == 'C' && r->n > nbefore) { choose(r->n - 1); build(); note("新角色已在列表中：将其加入队伍。"); }
             if (a.type == RV_KEY && (a.a & 0xdf) == 'A' && r->party_n > before) {
                 note("");
                 /* a look of their own (the game gives everyone added the first figure, the tall man, in the same

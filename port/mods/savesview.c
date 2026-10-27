@@ -48,7 +48,7 @@ static void default_comment(char *out, int n)
     if (r) g_str((u16)(r >> 16), (u16)((u16)r + 0x26), place, sizeof place);
     for (int i = 0; place[i]; i++) if ((unsigned char)place[i] < 32 || (unsigned char)place[i] > 126) place[i] = ' ';
     int day = (s16)g_rw(G_CUR_DAY), mon = (s16)g_rw(G_CUR_MONTH);
-    char b[64]; snprintf(b, sizeof b, "%.14s %d %.3s", place[0] ? place : "Travelling", day, gm_month_name((unsigned)mon % 12));
+    char b[64]; snprintf(b, sizeof b, "%.14s %d %.3s", place[0] ? place : "旅行", day, gm_month_name((unsigned)mon % 12));
     snprintf(out, (size_t)n, "%s", b);
 }
 

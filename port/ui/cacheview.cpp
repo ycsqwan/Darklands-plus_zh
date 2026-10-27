@@ -39,22 +39,22 @@ extern "C" void cacheview_draw(void)
     const ImU32 cream = IM_COL32(246, 232, 200, 255), cream_soft = IM_COL32(226, 212, 186, 235);
 
     /* the header */
-    P.text(f, NsDraw::FS_TITLE, 65, 3, cream, "The store room");
-    if (l.every_inn) P.text(fo, NsDraw::FS_BODY, 65, 12.5f, cream_soft, "The party's items: one store room shared by every inn (Darklands+).");
-    else if (l.place[0]) P.text(fo, NsDraw::FS_BODY, 65, 12.5f, cream_soft, "The party's items kept in " + ns_gtext(l.place) + ", for when it returns.");
+    P.text(f, NsDraw::FS_TITLE, 65, 3, cream, "仓库");
+    if (l.every_inn) P.text(fo, NsDraw::FS_BODY, 65, 12.5f, cream_soft, "队伍的物品：每家旅店共用一个仓库（Darklands+）。");
+    else if (l.place[0]) P.text(fo, NsDraw::FS_BODY, 65, 12.5f, cream_soft, "队伍的物品存放在" + ns_gtext(l.place) + "中，以便归队时取用。");
     float bx = 284;
-    if (P.button(bx, 4, 315, 15, "Leave", IM_COL32(112, 40, 22, 235), NsDraw::FS_HEADBTN, PB_Y)) ns_push(CV_LEAVE, 0, 0, 0);
-    if (l.nitems && P.button(bx - 46, 4, bx - 3, 15, "Put away", IM_COL32(40, 92, 34, 235), NsDraw::FS_HEADBTN)) ns_push(CV_PUTAWAY, 0, 0, 0);
+    if (P.button(bx, 4, 315, 15, "离开", IM_COL32(112, 40, 22, 235), NsDraw::FS_HEADBTN, PB_Y)) ns_push(CV_LEAVE, 0, 0, 0);
+    if (l.nitems && P.button(bx - 46, 4, bx - 3, 15, "收起", IM_COL32(40, 92, 34, 235), NsDraw::FS_HEADBTN)) ns_push(CV_PUTAWAY, 0, 0, 0);
     if (l.nitems && P.over(bx - 46, 4, bx - 3, 15)) {
-        if (l.shared) ImGui::SetTooltip("Everything in the party's pack goes into the store, except kept items (Keep on the character sheet) and potions.");
-        else ImGui::SetTooltip("Everything %s carries that is not equipped goes into the store.", ns_gtext(l.names[l.who]).c_str());
+        if (l.shared) ImGui::SetTooltip("队伍背包中的所有物品都会放入仓库，但保留物品（角色面板上标记为“保留”）和药水除外。");
+        else ImGui::SetTooltip("所有 %s 携带的未装备物品都会进入商店。", ns_gtext(l.names[l.who]).c_str());
     }
 
     /* the member tabs */
     const float LX0 = 63, LX1 = 180, RX0 = 184, RX1 = 317, LY0 = 31, ROWH = 9; const int NROWS = 13;
     const float LY1 = LY0 + NROWS * ROWH;
-    P.text(f, NsDraw::FS_HEAD, LX0 + 1, 21, cream, "In store");
-    if (l.shared) P.text(f, NsDraw::FS_HEAD, RX0 + 1, 21, cream, "The party's pack");   /* (one pack: no member to choose) */
+    P.text(f, NsDraw::FS_HEAD, LX0 + 1, 21, cream, "在仓库中");
+    if (l.shared) P.text(f, NsDraw::FS_HEAD, RX0 + 1, 21, cream, "队伍的背包");   /* (one pack: no member to choose) */
     else {
         int n = 0; for (int m = 0; m < 5; m++) if (l.present[m]) n++;
         float tw = n ? (RX1 - RX0) / n : 0, x = RX0;
@@ -81,7 +81,7 @@ extern "C" void cacheview_draw(void)
         int maxs = n - NROWS; if (maxs < 0) maxs = 0;
         if (V.scroll[L] > maxs) V.scroll[L] = maxs;
         if (V.scroll[L] < 0) V.scroll[L] = 0;
-        if (!n) P.text(fo, NsDraw::FS_BODY, x0 + 4, LY0 + 3, dim, L ? (l.shared ? "No potions or spare items in the pack." : "Carries nothing.") : "Nothing stored here.");
+        if (!n) P.text(fo, NsDraw::FS_BODY, x0 + 4, LY0 + 3, dim, L ? (l.shared ? "背包中没有药水或备用物品。" : "什么都没携带。") : "这里什么都没存放。");
         for (int r = 0; r < NROWS && V.scroll[L] + r < n; r++) {
             int i = V.scroll[L] + r;
             float y = LY0 + r * ROWH;
@@ -111,11 +111,11 @@ extern "C" void cacheview_draw(void)
             bool can = L || l.room;
             float b1 = x1 - 2;
             ImU32 bc = L ? IM_COL32(120, 44, 24, 235) : IM_COL32(40, 92, 34, 235);
-            if (!can) P.text(fo, NsDraw::FS_SMALL, 0, y + 2.4f, red, "no room", b1);
+            if (!can) P.text(fo, NsDraw::FS_SMALL, 0, y + 2.4f, red, "没有空间", b1);
             else if (count > 1) {                                   /* (the stack, or one of it: said so) */
-                if (P.button(b1 - 17, y + 1, b1, y + ROWH - 1, L ? "Put all" : "Take all", bc, 4.6f)) ns_push(L ? CV_PUT : CV_TAKE, i, 255, 0);
-                if (P.button(b1 - 32, y + 1, b1 - 18, y + ROWH - 1, L ? "Put 1" : "Take 1", IM_COL32(120, 84, 40, 235), 4.6f)) ns_push(L ? CV_PUT : CV_TAKE, i, 1, 0);
-            } else if (P.button(b1 - 20, y + 1, b1, y + ROWH - 1, L ? "Put" : "Take", bc, 4.6f)) ns_push(L ? CV_PUT : CV_TAKE, i, 255, 0);
+                if (P.button(b1 - 17, y + 1, b1, y + ROWH - 1, L ? "全部放入" : "全部取出", bc, 4.6f)) ns_push(L ? CV_PUT : CV_TAKE, i, 255, 0);
+                if (P.button(b1 - 32, y + 1, b1 - 18, y + ROWH - 1, L ? "放入1件" : "取出1件", IM_COL32(120, 84, 40, 235), 4.6f)) ns_push(L ? CV_PUT : CV_TAKE, i, 1, 0);
+            } else if (P.button(b1 - 20, y + 1, b1, y + ROWH - 1, L ? "放入" : "取出", bc, 4.6f)) ns_push(L ? CV_PUT : CV_TAKE, i, 255, 0);
         }
         if (n > NROWS) {
             float th = (LY1 - LY0) * NROWS / n, ty = LY0 + (LY1 - LY0 - th) * V.scroll[L] / (float)(n - NROWS);
@@ -137,7 +137,7 @@ extern "C" void cacheview_draw(void)
         t.cmp_who = L ? -1 : l.shared ? -2 : l.who;      /* (one pack: whom in the party it would suit) */
         t.y_max = SY1 - 1.5f;
         ns_item_strip(P, SY0, t);
-    } else P.text(fo, NsDraw::FS_BODY, 68, SY0 + 3, dim, l.shared ? "Point at an item to see it here; F11 shows what you can do."
-                                                         : "Point at an item to see it here. Click a name above the right list (or press C) for another member.");
+    } else P.text(fo, NsDraw::FS_BODY, 68, SY0 + 3, dim, l.shared ? "将鼠标指向某件物品即可在此查看；按F11可显示你能进行的操作。"
+                                                         : "将鼠标指向某件物品即可在此查看。点击右侧列表上方的姓名（或按C键）可切换至其他成员。");
     if (l.note[0] && plat_ticks_ms() - l.note_t < 6000) P.text(fo, NsDraw::FS_BODY, 68, SY1 - 8.5f, IM_COL32(112, 40, 22, 255), ns_gtext(l.note));
 }

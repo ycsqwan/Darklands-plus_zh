@@ -118,7 +118,7 @@ static int merge(int cur)
         for (int k = 0; k < G_NLOC; k++) if (loc_cache(k) == h) loc_set_cache(k, H);
         fprintf(stderr, "store: cache %d (%d kinds) joined the shared %d (%d kinds)\n", h, na, H, nt);
     }
-    if (stuck) { ui_notice("This inn's own store room holds too many kinds of items to join the store room shared by every inn (Darklands+): its items stay at this inn until some are taken out."); return mine; }
+    if (stuck) { ui_notice("这家旅店的独立储物间存放了太多种类的物品，无法加入所有旅店共享的储物间（Darklands+）：其物品将一直留在这家旅店，直到有人取出。"); return mine; }
     loc_set_cache(cur, H);
     return H;
 }

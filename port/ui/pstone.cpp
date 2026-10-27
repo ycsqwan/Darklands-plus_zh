@@ -209,10 +209,10 @@ void ui_pstone_draw(ImDrawList *dl, ImVec2 c, float s, int look, int quality, fl
     dl->AddLine(P(-6.5f, -6), P(-5.5f, 4), SHINE, 1.4f * u);
 }
 int ui_pstone_look(void) { int v = config_get_int("display.pstone_look", 2); return v >= 0 && v <= 2 ? v : 2; }
-const char *ui_pstone_look_name(int k) { static const char *N[3] = { "The philosophers' egg", "The stone itself", "The squared circle" }; return k >= 0 && k <= 2 ? N[k] : "?"; }
+const char *ui_pstone_look_name(int k) { static const char *N[3] = { "哲学家的蛋", "石头本身", "平方圆" }; return k >= 0 && k <= 2 ? N[k] : "?"; }
 const char *ui_pstone_stage_name(int q)
 {
-    static const char *N[5] = { "none yet", "black (nigredo), the raven", "white (albedo), the swan", "yellow (citrinitas), the peacock's colors", "red (rubedo), the phoenix" };
+    static const char *N[5] = { "尚无", "黑色（nigredo），乌鸦", "白色（albedo），天鹅", "黄色（citrinitas），孔雀的色彩", "红色（rubedo），凤凰" };
     return N[stage_of(q)];
 }
 
@@ -231,7 +231,7 @@ extern "C" void ui_pstone_sheet_draw(void)
         }
         return;
     }
-    static const char *SN[5] = { "none yet", "5 (1-7: black)", "12 (8-14: white)", "19 (15-21: yellow)", "29 (22-29: red)" };
+    static const char *SN[5] = { "尚无", "5（1-7：黑色）", "12（8-14：白色）", "19（15-21：黄色）", "29（22-29：红色）" };
     float colw = ds.x / 5.4f;
     for (int look = 0; look < 3; look++) {
         float y = ds.y * (0.02f + look * 0.32f);

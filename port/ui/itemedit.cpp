@@ -29,7 +29,7 @@ static void load(void)
     loaded = true; lst.clear();
     char p[1300]; dos_host_path_read("DARKLAND.LST", p, sizeof p);
     FILE *f = fopen(p, "rb");
-    if (!f) { msg = "Could not read DARKLAND.LST."; return; }
+    if (!f) { msg = "无法读取 DARKLAND.LST。"; return; }
     unsigned char b[65536]; size_t n;
     while ((n = fread(b, 1, sizeof b, f)) > 0) lst.insert(lst.end(), b, b + n);
     fclose(f);
@@ -46,15 +46,15 @@ void itemedit_tab(void)
     if (!loaded) load();
     if (lst.size() < 3) { ImGui::TextWrapped("%s", msg.c_str()); return; }
     const bool edit = ui_modding();
-    if (edit) ImGui::TextWrapped("Every item of the game. Change names, weight, quality, rarity and value here, then save the list "
-                                 "into a mod folder; it takes effect when the game is started again with that mod ticked.");
-    else ImGui::TextWrapped("Every item of the game, with its weight, usual quality, rarity and value (to change them for a mod, choose a preset other than Full Original in F12 > Settings).");
-    ImGui::SetNextItemWidth(UIS(220)); ImGui::InputTextWithHint("##flt", "find an item", filter, sizeof filter);
+    if (edit) ImGui::TextWrapped("游戏中的每件物品。在此修改名称、重量、品质、稀有度和价值，然后保存列表"
+                                 "到模组文件夹中；下次启动游戏并勾选该模组时生效。");
+    else ImGui::TextWrapped("游戏中的每件物品，包括其重量、常规品质、稀有度和价值（如需为模组修改这些属性，请在F12 > 设置中选择除“完全原版”外的预设）。");
+    ImGui::SetNextItemWidth(UIS(220)); ImGui::InputTextWithHint("##flt", "查找物品", filter, sizeof filter);
     int changed = 0; for (int i = 0; i < nitems(); i++) if (memcmp(rec(i), &orig[3 + (size_t)i * 46], 46)) changed++;
-    if (edit) { ImGui::SameLine(); ImGui::TextDisabled("%d changed", changed); }
+    if (edit) { ImGui::SameLine(); ImGui::TextDisabled("已修改%d项", changed); }
     if (ImGui::BeginTable("items", 8, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_Sortable | ImGuiTableFlags_SortMulti,
                           ImVec2(0, ImGui::GetContentRegionAvail().y - (edit ? UIS(80) : UIS(8))))) {
-        const char *H[8] = { "#", "Name", "Short name", "Kind", "Weight", "Quality", "Rarity", "Value (pf)" };
+        const char *H[8] = { "#", "姓名", "简称", "类别", "重量", "品质", "稀有度", "价值（芬尼）" };
         for (int c = 0; c < 8; c++) ImGui::TableSetupColumn(H[c], c == 1 ? ImGuiTableColumnFlags_WidthStretch : 0);
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableHeadersRow();
@@ -122,16 +122,16 @@ void itemedit_tab(void)
         ImGui::EndTable();
     }
     if (!edit) return;
-    static char modname[64] = "My items";
+    static char modname[64] = "我的物品";
     ImGui::SetNextItemWidth(UIS(220)); ImGui::InputText("##itemmod", modname, sizeof modname); ImGui::SameLine();
-    if (ImGui::Button("Save the list into this mod folder") && modname[0]) {
+    if (ImGui::Button("将列表保存到此模组文件夹") && modname[0]) {
         char w[1300]; int r = datamods_new(modname, w, sizeof w);
         std::string p = std::string(w) + "/DARKLAND.LST";
         FILE *f = r < 0 ? nullptr : fopen(p.c_str(), "wb");
-        if (!f) msg = "Could not write " + p + ".";
-        else { fwrite(lst.data(), 1, lst.size(), f); fclose(f); msg = "Saved " + p + ". Tick the mod (F12 > Mods) and start the game again."; }
+        if (!f) msg = "无法写入" + p + ".";
+        else { fwrite(lst.data(), 1, lst.size(), f); fclose(f); msg = "已保存" + p + "勾选该模组（F12 > 模组），然后重新开始游戏。"; }
     }
     ImGui::SameLine();
-    if (ImGui::Button("Undo all changes")) { lst = orig; msg.clear(); }
+    if (ImGui::Button("撤销所有修改")) { lst = orig; msg.clear(); }
     if (!msg.empty()) ImGui::TextWrapped("%s", msg.c_str());
 }

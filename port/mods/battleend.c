@@ -27,9 +27,9 @@ static void message_hook(void)          /* show_message (text, ticks) */
     u16 t = rw(SS, (u16)(SP + 4));
     char s[48]; g_str(G_DGROUP, t, s, sizeof s);
     static const char *const W[][2] = {
-        { "victory", "Victory! The battle is won." }, { "retreat", "The party has retreated." },
-        { "defeat", "The party is beaten." }, { "surrender", "The party has surrendered." },
-        { "all dead", "The whole party has fallen." }, { "leave", "The party has left the field." },
+        { "victory", "胜利！战斗已获胜。" }, { "retreat", "队伍已撤退。" },
+        { "defeat", "队伍已被击败。" }, { "surrender", "队伍已投降。" },
+        { "全员阵亡", "整个队伍已覆灭。" }, { "leave", "队伍已撤离战场。" },
     };
     if (on() && t == GV_msg_buf && !strncmp(s, "BattleResults - ", 16)) {
         for (unsigned k = 0; k < sizeof W / sizeof W[0]; k++) {

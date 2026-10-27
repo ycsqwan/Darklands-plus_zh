@@ -54,7 +54,7 @@ static std::string name_of(int i)
     std::string n;
     if (i < 5) { char b[16]; g_str(G_DGROUP, (u16)(G_MEMBER(i) + G_M_SHORTNAME), b, sizeof b); n = game_text(b, sizeof b); }
     else n = ui_enemy_name(g_rb((u16)(GV_cbt_floor + i)), CB(i));
-    if (n.empty()) n = i < 5 ? "?" : "Enemy";
+    if (n.empty()) n = i < 5 ? "?" : "敌人";
     if (i >= 5 && naming_start) {                   /* "Bandit 2" when there are several */
         int same = 0, nth = 0;
         for (int k = 5; k < 13; k++) {
@@ -103,8 +103,8 @@ static void start_battle(void)
 static std::string cost(int de, int ds)
 {
     std::string s;
-    if (de > 0) s = "-" + std::to_string(de) + " End";
-    if (ds > 0) s += (s.empty() ? "-" : ", -") + std::to_string(ds) + " Str";
+    if (de > 0) s = "-" + std::to_string(de) + "结束";
+    if (ds > 0) s += (s.empty() ? "-" : ", -") + std::to_string(ds) + "力量";
     return s;
 }
 
@@ -119,12 +119,12 @@ extern "C" void battlelog_blow(int i, int t, int anim, int e0, int e1, int s0, i
     if (anim == 1 || anim == 2) {
         int de = e0 - e1, ds = s0 - s1;
         bool back = g_rb((u16)(GV_cbt_anim + t)) == 3;       /* a heavy blow pushes the target back a step */
-        if (de <= 0 && ds <= 0) add(kind, a + " hits " + d + ", the armor holds" + (back ? "; knocked back" : ""));
-        else add(t < 5 ? 2 : kind, a + (ds > 0 ? " wounds " : " hits ") + d + " (" + cost(de, ds) + ")" + (back ? ", knocked back" : ""));
+        if (de <= 0 && ds <= 0) add(kind, a + " hits " + d + "，盔甲所能承受的" + (back ? "；被击退" : ""));
+        else add(t < 5 ? 2 : kind, a + (ds > 0 ? " wounds " : " hits ") + d + " (" + cost(de, ds) + ")" + (back ? "，被击退" : ""));
     }
     else if (anim == 6) add(kind, a + " misses " + d);
     else if (anim == 7) add(kind, d + " parries " + a);
-    else if (anim == 14) add(kind, a + ", knocked back, misses " + d);
+    else if (anim == 14) add(kind, a + "，被击退，未命中" + d);
     else add(kind, a + " misses " + d);
     known_end[t] = e1; known_str[t] = s1;
 }
@@ -155,7 +155,7 @@ static u32 shot_t[13];
 static std::string shot_word(int who)
 {
     int w = (s8)g_rb((u16)(CB(who) + 0x22));
-    return w >= 0x17 && w <= 0x1a ? "'s throw" : "'s shot";      /* throwing axe, javelin, dart, throwing knife */
+    return w >= 0x17 && w <= 0x1a ? "的投掷" : "的射击";      /* throwing axe, javelin, dart, throwing knife */
 }
 static void launch_hook(void)               /* s018 1ef8:0000 missile_launch(who, tgt, type, d, e) */
 {
@@ -164,7 +164,7 @@ static void launch_hook(void)               /* s018 1ef8:0000 missile_launch(who
     if (!unw_active && ui_battle_log && type == 6 && who >= 0 && who < 13) {       /* a potion thrown (s014 0e76: type 6, the potion 95 + kind, its quality) */
         if (!in_battle) start_battle();
         int id = 95 + kind;
-        std::string pn = id >= 95 && id <= 104 && id < (int)gamedata.items.size() ? game_text(gamedata.items[id].name.c_str(), gamedata.items[id].name.size()) : std::string("a potion");
+        std::string pn = id >= 95 && id <= 104 && id < (int)gamedata.items.size() ? game_text(gamedata.items[id].name.c_str(), gamedata.items[id].name.size()) : std::string("一瓶药水");
         add(who < 5 ? 0 : 1, name_of(who) + " throws " + pn + (tgt >= 0 && tgt < 13 && tgt != who ? " at " + name_of(tgt) : std::string()));
         return;
     }
@@ -191,15 +191,15 @@ static void sidemsg_hook(void)
     std::string t = game_text(b, strlen(b));
     {   /* "<skill> changed from X to Y" (skill_change_msg, s021 1ef8:0080): "Edged +3 (now 33)", and
            the gain rising over the member's head (battleoverlay.cpp) */
-        size_t at = t.find(" changed from ");
+        size_t at = t.find("已从……更改");
         int x, y;
-        if (at != std::string::npos && sscanf(t.c_str() + at, " changed from %d to %d", &x, &y) == 2 && x != y) {
+        if (at != std::string::npos && sscanf(t.c_str() + at, "已从%d更改为%d", &x, &y) == 2 && x != y) {
             std::string sk = t.substr(0, at);
-            if (sk.size() > 5 && sk.compare(sk.size() - 5, 5, " Wpns") == 0) sk.erase(sk.size() - 5);   /* ("Edged Wpns": Edged) */
+            if (sk.size() > 5 && sk.compare(sk.size() - 5, 5, "武器") == 0) sk.erase(sk.size() - 5);   /* ("Edged Wpns": Edged) */
             int key = ui_key_of(sk.c_str(), (int)sk.size());
             char nb[96];
-            if (key >= 0) snprintf(nb, sizeof nb, "{%s:%+d (now %d)}", ui_key_name(key), y - x, y);   /* (its shield: ui/richtext.h) */
-            else snprintf(nb, sizeof nb, "%s %+d (now %d)", sk.c_str(), y - x, y);
+            if (key >= 0) snprintf(nb, sizeof nb, "{%s:%+d（现为%d）}", ui_key_name(key), y - x, y);   /* (its shield: ui/richtext.h) */
+            else snprintf(nb, sizeof nb, "%s %+d（现为%d）", sk.c_str(), y - x, y);
             t = nb;
             char fl[64]; snprintf(fl, sizeof fl, key >= 0 ? "%+d" : "%+d %s", y - x, sk.c_str());
             if (game_mode() == GM_BATTLE) ui_battle_float(row, key, fl, y > x);
@@ -226,7 +226,7 @@ extern "C" void battlelog_frame(void)
                     if (i < 5) { if (last_st[i] == 1) up_party++; }
                     else if (last_st[i]) { foes++; if (last_st[i] == 1) up_foes++; }
                 }
-                add(4, !up_party ? "The battle is over: the party has fallen." : foes && !up_foes ? "The battle is over: the enemies are beaten." : "The battle is over.");
+                add(4, !up_party ? "战斗结束：队伍已倒下。" : foes && !up_foes ? "战斗结束：敌人已被击败。" : "战斗结束。");
             }
         }
         return;
@@ -245,18 +245,18 @@ extern "C" void battlelog_frame(void)
                 int by = shot_by[i] >= 0 ? shot_by[i] : shooter_at(i);
                 shot_by[i] = -1;
                 if (by >= 0) { met[by] = met[i] = true; add(i < 5 ? 2 : by < 5 ? 0 : 1, name_of(by) + shot_word(by) + (ds > 0 ? " wounds " : " hits ") + name_of(i) + " (" + cost(de, ds) + ")"); }
-                else { met[i] = true; add(i < 5 ? 2 : 4, name_of(i) + " is hurt (" + cost(de, ds) + ")"); }
+                else { met[i] = true; add(i < 5 ? 2 : 4, name_of(i) + "受伤（" + cost(de, ds) + ")"); }
             }
         }
         if (st != known_st[i]) {
-            if (st == 3) add(i < 5 ? 3 : 4, name_of(i) + (i < 5 ? " is killed!" : " is killed"));
-            else if (st == 2) add(i < 5 ? 3 : 4, name_of(i) + " falls unconscious" + (i < 5 ? "!" : ""));
-            else if (st == 1 && known_st[i] == 2) add(4, name_of(i) + " wakes up");
-            else if (st == 5) add(i < 5 ? 3 : 4, name_of(i) + " leaves the field");
+            if (st == 3) add(i < 5 ? 3 : 4, name_of(i) + (i < 5 ? "被杀死！" : "被杀死"));
+            else if (st == 2) add(i < 5 ? 3 : 4, name_of(i) + "昏迷不醒" + (i < 5 ? "!" : ""));
+            else if (st == 1 && known_st[i] == 2) add(4, name_of(i) + "醒来");
+            else if (st == 5) add(i < 5 ? 3 : 4, name_of(i) + "离开战场");
         }
         if (shot_by[i] >= 0 && plat_ticks_ms() - shot_t[i] > 2500) {      /* it struck, and nothing came through */
             int by = shot_by[i]; shot_by[i] = -1;
-            if (st == 1 && by < 13) add(by < 5 ? 0 : 1, name_of(by) + shot_word(by) + " hits " + name_of(i) + ", the armor holds");
+            if (st == 1 && by < 13) add(by < 5 ? 0 : 1, name_of(by) + shot_word(by) + " hits " + name_of(i) + "，盔甲所能承受的");
         }
         known_end[i] = e; known_str[i] = s; known_st[i] = st;
         if (st) last_st[i] = st;
@@ -288,9 +288,9 @@ extern "C" int battlelog_margin(float x, float w, float h, float fs)
         const ImGuiStyle &st = ImGui::GetStyle();
         if (st.WindowBorderSize > 0) dl->AddRect(ImVec2(x + 0.5f, 0.5f), ImVec2(x + w - 0.5f, h - 0.5f), ImGui::GetColorU32(ImGuiCol_Border), st.WindowRounding, 0, st.WindowBorderSize);
     }
-    dl->AddText(f, fs, ImVec2(x + pad, fs * 0.8f), IM_COL32(222, 178, 104, 255), "Battle");
+    dl->AddText(f, fs, ImVec2(x + pad, fs * 0.8f), IM_COL32(222, 178, 104, 255), "战斗");
     float top = pad + lh * 1.5f;
-    if (lines.empty()) dl->AddText(f, fs, ImVec2(x + pad, fs * 0.8f + lh), IM_COL32(170, 150, 120, 255), "Each blow will be listed here.", 0, w - 2 * pad);
+    if (lines.empty()) dl->AddText(f, fs, ImVec2(x + pad, fs * 0.8f + lh), IM_COL32(170, 150, 120, 255), "每一下攻击都将在此列出。", 0, w - 2 * pad);
     for (int k = (int)lines.size() - 1; k >= 0 && y > top + lh; k--) {
         /* wrapped to the margin's width, so a long line takes two rows */
         const char *t = lines[k].text.c_str();
@@ -335,14 +335,14 @@ extern "C" void battlelog_overlay(void)
 /* F12 > Journal: the whole of the last battle */
 extern "C" void battlelog_tab(void)
 {
-    if (lines.empty() && prev_lines.empty()) { ImGui::TextWrapped("No battle yet: the battle log shows here, blow by blow, during each battle and after it."); return; }
+    if (lines.empty() && prev_lines.empty()) { ImGui::TextWrapped("暂无战斗：战斗日志在此逐次记录每次战斗及战后情况。"); return; }
     static int which = 0;
     if (!prev_lines.empty()) {
-        ImGui::RadioButton("The last battle", &which, 0); ImGui::SameLine();
-        ImGui::RadioButton("The battle before", &which, 1);
+        ImGui::RadioButton("上一场战斗", &which, 0); ImGui::SameLine();
+        ImGui::RadioButton("前一场战斗", &which, 1);
     } else which = 0;
     const std::vector<BLine> &v = which ? prev_lines : lines;
-    ImGui::TextDisabled("%d lines.", (int)v.size());
+    ImGui::TextDisabled("共%d行。", (int)v.size());
     ImGui::BeginChild("blog", ImVec2(0, 0));
     static const ImVec4 C[5] = { ImVec4(0.12f, 0.24f, 0.50f, 1), ImVec4(0.45f, 0.25f, 0.08f, 1), ImVec4(0.62f, 0.18f, 0.10f, 1), ImVec4(0.75f, 0.08f, 0.05f, 1), ImVec4(0.30f, 0.26f, 0.20f, 1) };
     for (const BLine &l : v) { ImGui::PushStyleColor(ImGuiCol_Text, C[l.kind < 0 || l.kind > 4 ? 4 : l.kind]); ui_rich_text(l.text.c_str()); ImGui::PopStyleColor(); }

@@ -47,24 +47,24 @@ static void name_edit(const char *label, u16 off, int n)
 
 extern "C" void tab_editor(void)
 {
-    if (game_mode() == GM_OTHER) { ImGui::TextWrapped("Start or load a game first."); return; }
-    ImGui::TextColored(ImVec4(0.55f, 0.2f, 0.1f, 1), "Changes here apply to the running game at once. Save afterwards to keep them.");
+    if (game_mode() == GM_OTHER) { ImGui::TextWrapped("请先开始或加载游戏。"); return; }
+    ImGui::TextColored(ImVec4(0.55f, 0.2f, 0.1f, 1), "此处的更改会立即应用于当前游戏。之后请保存以保留这些设置。");
     {
         int f = (s16)g_rw(G_MONEY), g = (s16)g_rw(G_MONEY + 2), p = (s16)g_rw(G_MONEY + 4);
         ImGui::SetNextItemWidth(UIS(110)); if (ImGui::InputInt("florins", &f)) g_ww(G_MONEY, (u16)(f < 0 ? 0 : f));
         ImGui::SameLine(); ImGui::SetNextItemWidth(UIS(110)); if (ImGui::InputInt("groschen", &g)) g_ww(G_MONEY + 2, (u16)(g < 0 ? 0 : g));
         ImGui::SameLine(); ImGui::SetNextItemWidth(UIS(110)); if (ImGui::InputInt("pfennigs", &p)) g_ww(G_MONEY + 4, (u16)(p < 0 ? 0 : p));
         int bn = (s16)g_rw(GV_party_notes), fame = (s16)g_rw(GV_party_fame), ps = (s16)g_rw(GV_philosophers_stone);
-        ImGui::SetNextItemWidth(UIS(110)); if (ImGui::InputInt("florins in bank notes", &bn)) g_ww(GV_party_notes, (u16)(bn < 0 ? 0 : bn));
+        ImGui::SetNextItemWidth(UIS(110)); if (ImGui::InputInt("银行券中的弗罗林", &bn)) g_ww(GV_party_notes, (u16)(bn < 0 ? 0 : bn));
         ImGui::SameLine(); ImGui::SetNextItemWidth(UIS(110)); if (ImGui::InputInt("fame", &fame)) g_ww(GV_party_fame, (u16)fame);
-        ImGui::SameLine(); ImGui::SetNextItemWidth(UIS(110)); if (ImGui::InputInt("Philosopher's Stone quality", &ps)) g_ww(GV_philosophers_stone, (u16)(ps < 0 ? 0 : ps > 99 ? 99 : ps));
+        ImGui::SameLine(); ImGui::SetNextItemWidth(UIS(110)); if (ImGui::InputInt("哲学家之石的品质", &ps)) g_ww(GV_philosophers_stone, (u16)(ps < 0 ? 0 : ps > 99 ? 99 : ps));
         int loc = (s16)g_rw(G_CUR_LOC);
         u32 lr = loc >= 0 && loc < G_NLOC ? g_location(loc) : 0;
         if (lr) {
             u16 ls = (u16)(lr >> 16), lo = (u16)lr;
             char ln[24]; g_str(ls, (u16)(lo + 0x26), ln, sizeof ln);
             int rep = (s16)rw(ls, (u16)(lo + 0x12));
-            std::string lab = "reputation in " + game_text(ln, sizeof ln);
+            std::string lab = "在……中的声望" + game_text(ln, sizeof ln);
             ImGui::SetNextItemWidth(UIS(110)); if (ImGui::InputInt(lab.c_str(), &rep)) ww(ls, (u16)(lo + 0x12), (u16)rep);
         }
     }
@@ -77,14 +77,14 @@ extern "C" void tab_editor(void)
         if (!ui_subtab(tabname.c_str())) continue;
         ImGui::BeginChild("edm", ImVec2(0, 0));
         u16 r = rec(m);
-        if (ImGui::CollapsingHeader("Name, age, crest and sprite", ImGuiTreeNodeFlags_DefaultOpen)) {
-            name_edit("full name", (u16)(r + 0x25), 25);
+        if (ImGui::CollapsingHeader("姓名、年龄、徽章和精灵", ImGuiTreeNodeFlags_DefaultOpen)) {
+            name_edit("全名", (u16)(r + 0x25), 25);
             name_edit("nickname", (u16)(r + 0x3e), 11);
             int age = (s16)g_rw((u16)(r + 0x12));
             ImGui::SetNextItemWidth(UIS(110)); if (ImGui::InputInt("age", &age)) g_ww((u16)(r + 0x12), (u16)age);
             int sh = g_rb((u16)(r + 0x15)) - 'A';
             ImGui::SetNextItemWidth(UIS(110));
-            if (ImGui::SliderInt("crest (A..O)", &sh, 0, 14, "")) g_wb((u16)(r + 0x15), (u8)('A' + sh));
+            if (ImGui::SliderInt("徽章（A..O）", &sh, 0, 14, "")) g_wb((u16)(r + 0x15), (u8)('A' + sh));
             ImGui::SameLine(); ImGui::Text("%c", 'A' + sh);
             char fig[4]; g_str(G_DGROUP, (u16)(0xa668 + 4 * m), fig, sizeof fig);
             ImGui::SetNextItemWidth(UIS(110));
@@ -98,8 +98,8 @@ extern "C" void tab_editor(void)
                 for (int i = 0; i < looks_count(); i++) if (looks_usable(i)) item(looks_code(i));
                 ImGui::EndCombo();
             }
-            if (looks_is_extra(fig)) { ImGui::SameLine(); ImGui::TextDisabled("(an enemy's sprite: its colors below are its own shades)"); }
-            ImGui::TextDisabled("Colors of the sprite and its portrait (battles and the party panel):");
+            if (looks_is_extra(fig)) { ImGui::SameLine(); ImGui::TextDisabled("（敌人的精灵：下方的颜色是它自身的色调）"); }
+            ImGui::TextDisabled("精灵与肖像的颜色（战斗画面及队伍面板）：");
             for (int c = 0; c < 8; c++) {
                 u16 o = (u16)(0x33fc + m * 24 + c * 3);
                 float col[3] = { (rb(G_FAR20A5, o) & 63) / 63.0f, (rb(G_FAR20A5, (u16)(o + 1)) & 63) / 63.0f, (rb(G_FAR20A5, (u16)(o + 2)) & 63) / 63.0f };
@@ -109,7 +109,7 @@ extern "C" void tab_editor(void)
                 if (c != 7) ImGui::SameLine();
             }
         }
-        if (ImGui::CollapsingHeader("Attributes (current / maximum)", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (ImGui::CollapsingHeader("属性（当前/最大值）", ImGuiTreeNodeFlags_DefaultOpen)) {
             for (int a = 0; a < 7; a++) {
                 ImGui::PushID(a);
                 byte_slider("##cur", G_DGROUP, (u16)(r + 0x5d + a), 0, 99); ImGui::SameLine();
@@ -117,10 +117,10 @@ extern "C" void tab_editor(void)
                 ImGui::PopID();
             }
         }
-        if (ImGui::CollapsingHeader("Skills")) {
+        if (ImGui::CollapsingHeader("技能")) {
             for (int k = 0; k < 19; k++) { ImGui::PushID(100 + k); ui_skill_icon_inline(k); byte_slider(gm_skill_name(k), G_DGROUP, (u16)(r + 0x6b + k), 0, 99); ImGui::PopID(); }
         }
-        if (ImGui::CollapsingHeader("Saints known")) {
+        if (ImGui::CollapsingHeader("已知的圣人")) {
             for (int s = 0; s < (int)gamedata.saints.size(); s++) {
                 u16 o = (u16)(0x082c + m * 0x14 + (s >> 3)); u8 bit = (u8)(0x80 >> (s & 7));
                 bool k = (rb(G_FAR2E38, o) & bit) != 0;
@@ -131,7 +131,7 @@ extern "C" void tab_editor(void)
             }
             ImGui::NewLine();
         }
-        if (ImGui::CollapsingHeader("Formulae known (each potion has three)")) {
+        if (ImGui::CollapsingHeader("已知的配方（每种药剂都有三种）")) {
             for (int p = 0; p < 22; p++) {
                 u16 o = (u16)(0x07be + m * 0x16 + p);
                 const char *pn = 95 + p < (int)gamedata.items.size() ? gamedata.items[95 + p].name.c_str() : "?";
@@ -147,7 +147,7 @@ extern "C" void tab_editor(void)
                 ImGui::PopID();
             }
         }
-        if (ImGui::CollapsingHeader("Items: quality and count")) {
+        if (ImGui::CollapsingHeader("物品：品质与数量")) {
             int n = g_rb((u16)(G_MEMBER(m) + G_M_NITEMS));
             for (int i = 0; i < n && i < 64; i++) {
                 u16 o = G_ITEM(m, i);
@@ -155,7 +155,7 @@ extern "C" void tab_editor(void)
                 std::string nm = code < (int)gamedata.items.size() ? game_text(gamedata.items[code].name.c_str(), 64) : "#" + std::to_string(code);
                 ImGui::PushID(600 + i);
                 int q = rb(G_FAR2E38, (u16)(o + 3)), c = rb(G_FAR2E38, (u16)(o + 4));
-                ImGui::SetNextItemWidth(UIS(130)); if (ImGui::SliderInt("##q", &q, 1, 99, "quality %d")) wb(G_FAR2E38, (u16)(o + 3), (u8)q);
+                ImGui::SetNextItemWidth(UIS(130)); if (ImGui::SliderInt("##q", &q, 1, 99, "品质%d")) wb(G_FAR2E38, (u16)(o + 3), (u8)q);
                 ImGui::SameLine(); ImGui::SetNextItemWidth(UIS(110)); if (ImGui::InputInt("##n", &c)) wb(G_FAR2E38, (u16)(o + 4), (u8)(c < 1 ? 1 : c > 99 ? 99 : c));
                 ImGui::SameLine(); ImGui::TextUnformatted(nm.c_str());
                 ImGui::PopID();

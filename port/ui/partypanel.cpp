@@ -236,28 +236,28 @@ static const char *order_word(char c, int place, bool shortw)
 {
     #define W(s, l) return shortw ? s : l
     switch (c) {
-    case 'A': W("attacks", "attacks (Std Attack, a standard attack)");
-    case 'V': W("vulnerable", "attacks with Vulnerable: aims at the gaps in the armor (1 to 4 more penetration), slower and a little less likely to land");
-    case 'B': W("berserk", "is berserk: attacks without thought of defense");
+    case 'A': W("attacks", "攻击（Std Attack，标准攻击）");
+    case 'V': W("vulnerable", "使用易伤攻击：瞄准盔甲的缝隙（额外1至4点穿透力），速度较慢且命中率略低。");
+    case 'B': W("berserk", "进入狂暴状态：不顾防御地发起攻击。");
     case 'P':
-        if (place == 3) W("picks", "picks the lock of the door given");
-        if (place == 6) W("picks", "picks the lock of the chest given");
-        W("parries", "parries: mostly defends, hard to hit, striking back slower and less surely");
-    case 'M': W("shoots", "shoots at the target given");
-    case 'T': W("throws", "throws a potion at the target given");
-    case 'W': W("walks", "walks to the spot given");
-    case 'F': W("flees", "flees to the spot given: does not stop to fight or strike back");
-    case 'U': if (place == 2) W("stairs", "takes the stairs given"); W("door", "opens or shuts the door given");
-    case 'D': W("unlocks", "dissolves the lock given");
-    case 'O': W("opens", "opens the chest given");
-    case 'X': W("leaves", "leaves the battlefield by the chosen exit");
-    case 'H': W("halts", "halts and stands where they are");
+        if (place == 3) W("picks", "打开指定门的锁。");
+        if (place == 6) W("picks", "打开指定箱子的锁。");
+        W("parries", "挡招：多用于防御，难以击中，反击速度较慢且把握较小。");
+    case 'M': W("shoots", "向指定目标射击。");
+    case 'T': W("throws", "向指定目标投掷药剂。");
+    case 'W': W("walks", "行走到指定地点。");
+    case 'F': W("flees", "逃往指定地点：中途不会停下来战斗或反击。");
+    case 'U': if (place == 2) W("stairs", "沿指定楼梯上下。"); W("door", "打开或关闭指定的门。");
+    case 'D': W("unlocks", "解除指定的锁。");
+    case 'O': W("opens", "打开指定的箱子。");
+    case 'X': W("leaves", "从选定的出口撤离战场。");
+    case 'H': W("halts", "停下并原地站立。");
     case 'b':
         if (combat_improved())
-            W("no line", "has no clear line of fire to the target: steps aside or nearer until there is one");
-        W("no line", "has no clear line of fire to the target and waits for one (or give another order)");
-    case 'e': W("no shot", "has nothing left to shoot or throw: give another order");
-    case '-': W("waits", "waits for an order: click them here or on the battlefield, then an enemy, a spot or a choice from the Orders menu");
+            W("无行", "对目标没有清晰的射击路线：向一旁或更近处移动，直到出现一条路线");
+        W("无行", "对目标没有清晰的射击路线，正在等待出现（或下达其他指令）");
+    case 'e': W("无射击", "已无可用的武器或道具：请下达其他指令");
+    case '-': W("waits", "正在等待指令：在此处或战场上点击目标、位置，或从“指令”菜单中选择一项");
     }
     #undef W
     return nullptr;
@@ -437,9 +437,9 @@ extern "C" void partypanel_draw(void)
             if (P.over(wx - r, wy - r, wx + r, wy + r)) {
                 int e, em, s2, sm; gm_member_attr(m, 0, &e, &em); gm_member_attr(m, 1, &s2, &sm);
                 const char *ui_load_effect(int band);
-                char t[700]; snprintf(t, sizeof t, "%s carries %s: %d against %d ({Endurance} + {Strength}; only equipped items count).\n%s %s.",
-                                  name.c_str(), band == 3 ? "far too much" : "a heavy load", gm_member_load(m), e + s2, ui_load_effect(band),
-                                  battle && config_get_int("battle.panel_select", 1) ? "Right-click to open the sheet" : "Click to open the sheet");
+                char t[700]; snprintf(t, sizeof t, "%s 携带 %s：%d 对抗 %d（{耐力} + {力量}；仅计算已装备的物品）。\\n%s %s。",
+                                  name.c_str(), band == 3 ? "过于沉重" : "负重过重", gm_member_load(m), e + s2, ui_load_effect(band),
+                                  battle && config_get_int("battle.panel_select", 1) ? "右键打开属性面板" : "点击打开属性面板");
                 ImGui::BeginTooltip(); ImGui::PushTextWrapPos(ImGui::GetFontSize() * 30); ui_rich_text(t); ImGui::PopTextWrapPos(); ImGui::EndTooltip();
             }
         }
@@ -450,7 +450,7 @@ extern "C" void partypanel_draw(void)
             for (const Eff &x : eff) {
                 if (x.m != m || x.kind == 0x43) continue;            /* (not a companion's stay) */
                 if (x.amount >= 0) up = true;
-                char t[32]; if (x.left < 48) snprintf(t, sizeof t, "%ld hour%s", x.left, x.left == 1 ? "" : "s"); else snprintf(t, sizeof t, "%ld days", (x.left + 12) / 24);
+                char t[32]; if (x.left < 48) snprintf(t, sizeof t, "%ld 小时%s", x.left, x.left == 1 ? "" : "s"); else snprintf(t, sizeof t, "%ld 天", (x.left + 12) / 24);
                 tip += "\n" + x.what + " (" + t + ")";
             }
             if (!tip.empty()) {
@@ -460,7 +460,7 @@ extern "C" void partypanel_draw(void)
                 P.dl->AddEllipse(NsDraw::w(hx, hy - 0.5f), ImVec2(2.0f * P.k, 0.9f * P.k), ring, 0, 0, fmaxf(1.2f, 0.55f * P.k));   /* the halo */
                 P.dl->AddCircleFilled(NsDraw::w(hx, hy + 1.2f), 0.9f * P.k, ring);                                                /* a head under it */
                 if (P.over(hx - r - 0.5f, hy - r - 0.5f, hx + r + 0.5f, hy + r + 0.5f))
-                    ImGui::SetTooltip("In effect on %s:%s", name.c_str(), tip.c_str());
+                    ImGui::SetTooltip("在 %s:%s 生效", name.c_str(), tip.c_str());
             }
         }
         /* shoot or melee (battle.volley): a bow or a sword on the picture's lower left */
@@ -474,8 +474,8 @@ extern "C" void partypanel_draw(void)
                 ui_draw_order_icon(P.dl, NsDraw::w(bx, by), r * 1.9f * P.k, mode ? OI_MISSILE : OI_ATTACK);
                 if (mode_btns_frame != ImGui::GetFrameCount()) { mode_btns = 0; mode_btns_frame = ImGui::GetFrameCount(); }
                 if (mode_btns < 5) mode_btn[mode_btns++] = { bx - r, by - r, bx + r, by + r, m };
-                if (hov) ImGui::SetTooltip(mode ? "%s opens with the missile weapon: a click on an enemy makes %s shoot while the line is clear,\nthen fight hand to hand once the enemies close in. Click here: melee from the start."
-                                                : "%s opens with the melee weapon: a click on an enemy makes %s close in and fight hand to hand.\nClick here: shoot first, then fight hand to hand once the enemies close in.",
+                if (hov) ImGui::SetTooltip(mode ? "%s 以远程武器开局：点击敌人后，在射线上无阻碍时 %s 射击，\\n待敌人逼近后再近战。点击此处：从一开始就进行近战。"
+                                                : "%s 以近战武器开局：点击敌人后，%s 靠近并进入近战。\\n点击此处：先射击，待敌人逼近后再近战。",
                                            name.c_str(), name.c_str());
             }
         }
@@ -485,7 +485,7 @@ extern "C" void partypanel_draw(void)
             P.dl->AddLine(NsDraw::w(px1 - 2, py0 + 2), NsDraw::w(px0 + 2, py1 - 2), IM_COL32(170, 40, 30, 230), fmaxf(1.5f, 0.6f * P.k));
         }
         /* Endurance, Strength, Divine Favor */
-        static const char *LBL[3] = { "End", "Str", "DF" };
+        static const char *LBL[3] = { "结束", "力量", "DF" };
         static const int ATT[3] = { 0, 1, 6 };
         static const ImU32 COL[3] = { IM_COL32(104, 132, 244, 255), IM_COL32(96, 184, 76, 255), IM_COL32(230, 200, 76, 255) };
         for (int r = 0; r < 3; r++) {

@@ -165,7 +165,7 @@ extern "C" void lodgeview_draw(void)
     float tnow = ImGui::GetTime();
     backdrop(P, camp);
     std::string place = ns_gtext(m.place);
-    std::string title = camp ? "Camping in the wild" : m.mode == 0 ? (place.empty() ? std::string("At the inn") : "The inn at " + place) : "Staying here";
+    std::string title = camp ? "在野外露营" : m.mode == 0 ? (place.empty() ? std::string("在旅店") : "位于 的旅店" + place) : "住在这里";
     {   float tw = P.width(f, NsDraw::FS_TITLE, title), cx = camp ? 190 : 190;
         P.text(f, NsDraw::FS_TITLE, cx - tw * 0.5f, camp ? 4 : 3.6f, camp ? TABLE_INK : SIGN, title); }
     if (!camp) candle(P.dl, NsDraw::w(304, 13), P.k, tnow);
@@ -187,7 +187,7 @@ extern "C" void lodgeview_draw(void)
         }
     }
     if (!camp) {                                             /* (in camp the risk is told under Guard the camp) */
-        snprintf(b, sizeof b, "The room: %s a day.%s", money(m.lodging).c_str(), m.days ? ("   Days stayed: " + std::to_string(m.days)).c_str() : "");
+        snprintf(b, sizeof b, "房间：每天 %s。%s", money(m.lodging).c_str(), m.days ? ("已住天数：" + std::to_string(m.days)).c_str() : "");
         P.text(fo, NsDraw::FS_SMALL, 70, 23.5f, soft, b, -1, 186);
     }
 
@@ -212,24 +212,24 @@ extern "C" void lodgeview_draw(void)
         ImU32 mc = soft;
         if (act == 6 && p.skill >= 0 && p.skill < 19) {
             int ti = -1; for (int t = 0; t < m.nteach; t++) if (m.t[t].skill == p.skill && (m.t[t].used || ti < 0)) ti = t;
-            line = std::string("Studies {") + gm_skill_name(p.skill) + "}";
+            line = std::string("学习内容 {") + gm_skill_name(p.skill) + "}";
             if (ti >= 0) {
                 const auto &T = m.t[ti];
                 int now = gm_member_skill(i, p.skill), c = teach_chance(T.val);
-                snprintf(b, sizeof b, "%d now, %d%% a day for +1, up to %d; %s a day", now, c, T.val, money_str(T.fee).c_str());
+                snprintf(b, sizeof b, "目前为 %d，每增加 1 点需消耗 %d%% 的每日收益，最高可达 %d；每天 %s", now, c, T.val, money_str(T.fee).c_str());
                 more = b;
             }
         } else if (act == 3 && p.nbrew > 0) {                            /* the potions by name, not the game's "Make 3 potions" */
-            line = "Makes ";
+            line = "制作";
             for (int k = 0; k < p.nbrew; k++) {
                 int fm = p.brew_f[k];
                 line += (k ? ", " : "") + std::to_string(p.brew_n[k]) + " " + (fm >= 0 && fm < (int)gamedata.formula_names.size() ? gamedata.formula_names[fm] : std::string("?"));
             }
-        } else if (act == 0) { line = "Relaxes"; more = p.end < p.end_max ? "back to full: {Endurance:" + std::to_string(p.end) + " of " + std::to_string(p.end_max) + "}" : p.can[4] ? "Already rested: earning would be better" : "Already rested"; if (p.end >= p.end_max && p.can[4]) mc = IM_COL32(150, 70, 20, 255); }
+        } else if (act == 0) { line = "放松"; more = p.end < p.end_max ? "恢复至满值：{耐力：" + std::to_string(p.end) + " of " + std::to_string(p.end_max) + "}" : p.can[4] ? "已经休息过：此时赚取收益更为划算" : "已经休息过"; if (p.end >= p.end_max && p.can[4]) mc = IM_COL32(150, 70, 20, 255); }
         else if (act == 1) more = "{Strength:" + std::to_string(p.str) + " of " + std::to_string(p.str_max) + "}";
-        else if (act == 5) { line = "Keeps watch"; more = "{Woodwise:" + std::to_string(gm_member_skill(i, 18)) + "}  {Stealth:" + std::to_string(gm_member_skill(i, 15)) + "}"; }
-        else if (act == 2) more = "{Divine Favor:" + std::to_string(p.df) + " of " + std::to_string(p.df_max) + "}";
-        else if (act == 4) more = p.end < p.end_max ? "stays down: {Endurance:" + std::to_string(p.end) + " of " + std::to_string(p.end_max) + "}" : "";
+        else if (act == 5) { line = "守夜"; more = "{Woodwise:" + std::to_string(gm_member_skill(i, 18)) + "}  {潜行：" + std::to_string(gm_member_skill(i, 15)) + "}"; }
+        else if (act == 2) more = "{神恩：" + std::to_string(p.df) + " of " + std::to_string(p.df_max) + "}";
+        else if (act == 4) more = p.end < p.end_max ? "保持静止：{耐力：" + std::to_string(p.end) + " of " + std::to_string(p.end_max) + "}" : "";
         P.text(fo, NsDraw::FS_BODY, nx, y + 8.6f, IM_COL32(92, 40, 12, 255), line, -1, LX1 - 1);
         if (!more.empty() && rh >= 20) P.text(fo, NsDraw::FS_SMALL, nx, y + 15.0f, mc, more, -1, LX1 - 1);
         /* the wounded: End / Str short, on the right of the name */
@@ -245,14 +245,14 @@ extern "C" void lodgeview_draw(void)
     int hover_act = -1;
     if (m.sel >= 0 && m.sel < 5 && m.m[m.sel].present) {
         const LodgeMember &p = m.m[m.sel];
-        snprintf(b, sizeof b, "%s's day", ns_gtext(p.name).c_str());
+        snprintf(b, sizeof b, "%s 的一天", ns_gtext(p.name).c_str());
         P.text(f, NsDraw::FS_HEAD, RX0, TY - 1.5f, ink, b);
-        static const char *ACT[7] = { "Regain {Endurance}", "Regain {Strength}", "Pray for {Divine Favor}", "Alchemy work", "Earn a little money", "Guard the camp", "Train or study" };
-        static const char *WHY[7] = { "{Endurance} is full: earning money is the better day.", "Already at full {Strength}.", "{Divine Favor} is full.", "Knows no formula to make.", "Only at an inn in a town.", "Only when camping in the wild.", "No teachers retained in this town." };
-        static const char *WHAT[7] = { "Rest: {Endurance} comes back to full. Nothing else is gained.", "Rest and care: {Strength} comes back; the better the party's {Healing}, the more ({Endurance} too).",
-            "Prayer: {Divine Favor} comes back; the better {Religion} and {Virtue}, the more. {Endurance} does not come back that day.", "Make potions from a known formula (the ingredients are used up). {Endurance} does not come back that day.",
-            "Work in the town: the job that pays this member best, by their attributes and skills (wounds lower the pay; a bad name in the town too). {Endurance} does not come back that day.",
-            "Keep watch: the risk that the lord's men find the party living off his land grows more slowly each day. {Woodwise} helps most, then {Stealth}, then a weapon skill of 30 or more.", "Lessons from a teacher hired in this town, for a fee each day. {Endurance} does not come back that day." };
+        static const char *ACT[7] = { "恢复 {耐力}", "恢复 {力量}", "祈祷获得 {神恩}", "炼金术工作", "赚点小钱", "守卫营地", "训练或学习" };
+        static const char *WHY[7] = { "{耐力} 已满：此时赚钱更为划算。", "{力量} 已满。", "{神恩} 已满。", "不知道任何配方。", "只能在城镇的旅店里制作。", "只有在野外露营时才能制作。", "本镇没有保留任何老师。" };
+        static const char *WHAT[7] = { "休息：{耐力}恢复至满值。除此之外别无收获。", "休息与照料：{力量}恢复；队伍的 {治疗} 越好，恢复得越多（{耐力} 亦然）。",
+            "祈祷：{神恩}恢复；{宗教} 和 {美德} 越好，恢复得越多。但当天 {耐力} 不会恢复。", "根据已知配方制作药剂（原料用完后即告失效）。当天 {耐力} 不会恢复。",
+            "在城镇工作：根据该成员的属性和技能，这份工作能为他带来最高的报酬（伤势会降低报酬；在城镇声望不佳也会降低）。{耐力}当天不会恢复。",
+            "值守：领主的手下发现队伍在其领地内栖息的风险每天都会缓慢增加。{木艺}帮助最大，其次是{潜行}，然后是30点以上的武器技能。", "从本城雇佣的老师那里学习课程，每天需支付费用。{耐力}当天不会恢复。" };
         /* the teachers, one row a skill: the one who teaches it (the best, with the bestteacher fix) */
         int tl[LV_TEACHERS], ntl = 0;
         for (int t = 0; t < m.nteach; t++) {
@@ -278,13 +278,13 @@ extern "C" void lodgeview_draw(void)
             else if (h && can) P.rect(x0, ay, x1, ay + ah - 0.6f, HOVER, 1.2f);
             act_icon(P.dl, NsDraw::w(x0 + 4, ay + ah * 0.48f), ah * 0.72f * P.k, a);
             P.text(f, NsDraw::FS_NAME * fminf(1.0f, ah / 9.4f) * 0.95f, x0 + 10, ay + ah * 0.16f, cur && a != 6 ? NsDraw::LIGHT : can ? ink : dim, ACT[a]);
-            if (!can && (WHY[a][0] || a == 0)) P.text(fo, 3.6f, 0, ay + ah * 0.3f, dim, a <= 2 ? "full" : a == 3 ? "no formula" : a == 6 ? "none retained" : "", x1 - 1.5f);
+            if (!can && (WHY[a][0] || a == 0)) P.text(fo, 3.6f, 0, ay + ah * 0.3f, dim, a <= 2 ? "full" : a == 3 ? "没有配方" : a == 6 ? "没有保留" : "", x1 - 1.5f);
             if (can && a != 6 && P.hit(x0, ay, x1, ay + ah - 0.6f) && !cur) ns_push(LV_ACT, a, m.sel, 0);
             ay += ah;
             if (a == 5 && camp) {                                    /* the risk, as a chance: before the next day, and the day after */
                 ImU32 rc = m.risk_pct >= 50 ? NsDraw::RED : m.risk_pct >= 20 ? IM_COL32(150, 70, 20, 255) : soft;
-                if (m.risk_add == 0) snprintf(b, sizeof b, "No risk here: the lord's men will not come.");
-                else snprintf(b, sizeof b, "The lord's men: %d%% before the next day, %d%% the day after", m.risk_pct, m.risk_next_pct);
+                if (m.risk_add == 0) snprintf(b, sizeof b, "此处无风险：领主的手下不会前来。");
+                else snprintf(b, sizeof b, "领主的手下：第二天前为%d%%，后一天为%d%%", m.risk_pct, m.risk_next_pct);
                 P.text(fo, NsDraw::FS_SMALL * fminf(1.0f, ah / 9.4f), x0 + 10, ay - 1.2f, rc, b, -1, x1 - 1);
                 if (P.over(x0, ay - 1.4f, x1, ay + 5.4f)) hover_act = 200;
                 ay += 6.4f;
@@ -300,8 +300,8 @@ extern "C" void lodgeview_draw(void)
                     ImU32 tcol = tc ? NsDraw::LIGHT : capped ? dim : ink, scol = tc ? IM_COL32(244, 226, 190, 255) : capped ? dim : soft;
                     ui_skill_icon(P.dl, NsDraw::w(x0 + 11, ay + th * 0.48f), th * 0.48f * P.k, T.skill);
                     P.text(fo, NsDraw::FS_BODY * fminf(1.0f, th / 9.0f), x0 + 16, ay + th * 0.14f, tcol, gm_skill_name(T.skill), -1, x0 + 46);
-                    if (capped) snprintf(b, sizeof b, "learned all (%d)", T.val);
-                    else snprintf(b, sizeof b, "now %d, to %d  \xc2\xb7  %d%%  \xc2\xb7  %s  \xc2\xb7  %d day%s", gm_member_skill(m.sel, T.skill), T.val, teach_chance(T.val), money_str(T.fee).c_str(), T.days_left, T.days_left == 1 ? "" : "s");
+                    if (capped) snprintf(b, sizeof b, "已学会全部（%d）", T.val);
+                    else snprintf(b, sizeof b, "现在%d，至%d  \\xc2\\xb7  %d%%  \\xc2\\xb7  %s  \\xc2\\xb7  %d天%s", gm_member_skill(m.sel, T.skill), T.val, teach_chance(T.val), money_str(T.fee).c_str(), T.days_left, T.days_left == 1 ? "" : "s");
                     P.text(fo, NsDraw::FS_SMALL * fminf(1.0f, th / 9.0f), 0, ay + th * 0.2f, scol, b, x1 - 1.5f);
                     if (thv) hover_act = 100 + t;
                     if (P.hit(x0 + 6, ay, x1, ay + th - 0.6f) && !tc && !capped) ns_push(LV_TEACH, t, m.sel, 0);
@@ -314,12 +314,12 @@ extern "C" void lodgeview_draw(void)
         if (hover_act == 200) {
             char b[400];
             int g = 0; for (int i = 0; i < 5; i++) g += m.m[i].present && m.m[i].act == 5;
-            if (g) snprintf(b, sizeof b, "The lord's men may find the party living off his land, more likely each day. With %s on guard the day after is %d%% (%d%% unguarded). Camp broken, the risk stays half a day to two and a half.",
-                            g == 1 ? "this one" : "these", m.risk_next_pct, m.risk_next_unguarded_pct);
-            else snprintf(b, sizeof b, "The lord's men may find the party living off his land, more likely each day; members on guard slow it. Camp broken, the risk stays half a day to two and a half.");
+            if (g) snprintf(b, sizeof b, "领主的部下可能会发现队伍在侵占他的土地，且这种可能性逐日增加。若次日有%s守卫，则概率为%d%%（无守卫时为%d%%）。营地一旦被破坏，风险将持续半天至两天半。",
+                            g == 1 ? "这一个" : "these", m.risk_next_pct, m.risk_next_unguarded_pct);
+            else snprintf(b, sizeof b, "领主的手下可能会发现队伍在其领地内栖息，且每天发现的可能性都在增加；成员值守可减缓这一风险。营地被破坏后，风险仍维持半天至两天半。");
             about = b;
         } else if (hover_act >= 0 && hover_act < 7) about = std::string(WHAT[hover_act]) + (p.can[hover_act] && !(hover_act == 0 && p.end >= p.end_max && p.can[4]) ? "" : std::string(" ") + WHY[hover_act]);
-        if (hover_act == 3 && !camp) about += " At an inn a failed batch can blow up; in a camp in the wild it cannot.";
+        if (hover_act == 3 && !camp) about += "在客栈里，失败的批次可能引发爆炸；而在野外的营地则不会。";
         else if (hover_act >= 100 && hover_act < 200) {
             const auto &T = m.t[hover_act - 100];
             const char *sk = gm_skill_name(T.skill);
@@ -327,14 +327,14 @@ extern "C" void lodgeview_draw(void)
             int c = teach_chance(T.val), days = c > 0 ? (100 + c / 2) / c : 0;
             int same = 0; for (int t = 0; t < m.nteach; t++) same += m.t[t].skill == T.skill;
             if (teach_capped(m.sel, T.skill, T.val))
-                snprintf(b, sizeof b, "The teacher of {%s} knows %d; %s has %d already: nothing more to learn here.", sk, T.val, ns_gtext(p.name).c_str(), now);
+                snprintf(b, sizeof b, "{%s}的老师已知%d；%s已有%d：此处已无更多可学内容。", sk, T.val, ns_gtext(p.name).c_str(), now);
             else
-                snprintf(b, sizeof b, "Teacher of {%s} (skill %d), %d more day%s hired. Each day: %d%% chance of +1 (about one point in %d day%s)%s. %s has %d.%s",
-                         sk, T.val, T.days_left, T.days_left == 1 ? "" : "s", c, days, days == 1 ? "" : "s", fix_is_on("teachcap") ? ", up to the teacher's skill" : "",
-                         ns_gtext(p.name).c_str(), now, same > 1 ? (fix_is_on("bestteacher") ? " (The best of the teachers of it hired here teaches.)" : " (The one hired first teaches.)") : "");
+                snprintf(b, sizeof b, "{%s}（技能 %d）的教师，再雇用 %d 天%s。每天：%d%% 有 +1 的几率（约在 %d 天%s 中提升一点）。%s。%s 有 %d。%s",
+                         sk, T.val, T.days_left, T.days_left == 1 ? "" : "s", c, days, days == 1 ? "" : "s", fix_is_on("teachcap") ? "，直至达到老师的技能水平" : "",
+                         ns_gtext(p.name).c_str(), now, same > 1 ? (fix_is_on("bestteacher") ? "（这里雇佣的老师中，最优秀的那位授课。）" : "（最先雇佣的那位授课。）") : "");
             about = b;
-        } else if (hover_act < 0) about = m.nteach == 0 && !camp ? "No teachers retained in this town: ask a guild's masters, the university, the monks, the physician or an alchemist (with the Darklands+ switch \"Teachers\" on, a lectern marks the option on their cards); a teacher stays a week."
-                                                               : "Point at a choice to see what it does.";
+        } else if (hover_act < 0) about = m.nteach == 0 && !camp ? "本城未保留任何老师：可向公会大师、大学、僧侣、医师或炼金术士咨询（开启Darklands+开关“教师”后，讲台会在其卡片上标记此选项）；一位老师可停留一周。"
+                                                               : "点击某个选项以查看其效果。";
         P.para(fo, NsDraw::FS_SMALL, RX0, BY - 25, RX1 - RX0, hover_act < 0 ? dim : soft, about);
     }
 
@@ -356,47 +356,47 @@ extern "C" void lodgeview_draw(void)
             P.text(fo, NsDraw::FS_SMALL, LX, y, c, std::string(sign) + label);
             P.text(fo, NsDraw::FS_SMALL, 0, y, c, v ? money(v) : std::string("-"), RX_);
         };
-        row(173.0f, "", "In the purse", m.purse, soft);
-        row(178.4f, "+ ", "Wages", wages, wages ? GREEN : dim);
-        row(183.8f, "- ", camp ? (fees ? "Lessons" : "Food: from the land") : fees ? "Room and lessons" : "Room", out, out ? RED : dim);
+        row(173.0f, "", "在钱包里", m.purse, soft);
+        row(178.4f, "+ ", "工资", wages, wages ? GREEN : dim);
+        row(183.8f, "- ", camp ? (fees ? "课程" : "食物：来自土地") : fees ? "房间与课程" : "房间", out, out ? RED : dim);
         P.rect(LX, 189.6f, RX_, 189.9f, IM_COL32(120, 80, 36, 160));
-        P.text(fo, NsDraw::FS_SMALL, LX, 190.6f, ink, "After a day");
-        P.text(fo, NsDraw::FS_SMALL, 0, 190.6f, short_ ? NsDraw::RED : ink, short_ ? std::string("cannot pay") : money(after), RX_);
+        P.text(fo, NsDraw::FS_SMALL, LX, 190.6f, ink, "一天之后");
+        P.text(fo, NsDraw::FS_SMALL, 0, 190.6f, short_ ? NsDraw::RED : ink, short_ ? std::string("无法支付") : money(after), RX_);
         /* at the right: the day's sum alone, large */
         P.rect(132, 174, 132.3f, 195, IM_COL32(120, 80, 36, 90));
-        const char *hd = m.cost < 0 ? "A day earns" : m.cost > 0 ? "A day costs" : "A day costs";
+        const char *hd = m.cost < 0 ? "一天能赚取" : m.cost > 0 ? "一天所需花费" : "一天所需花费";
         P.text(fo, NsDraw::FS_SMALL, 136, 175, soft, hd);
         std::string amt = m.cost ? money(m.cost < 0 ? -m.cost : m.cost) : std::string("nothing");
         P.text(fo, NsDraw::FS_HEAD, 136, 182, short_ ? NsDraw::RED : m.cost < 0 ? GREEN : ink, amt);
     }
     bool pay = m.cost <= m.purse;
     float bx = 199;
-    if (P.button(bx, 174, bx + 22, 184, "A day", pay ? GREEN : GREY) && pay) ns_push(LV_DAY, 0, 0, 0);
-    if (P.button(bx + 24, 174, bx + 48, 184, "A week", pay ? GREEN : GREY) && pay) ns_push(LV_DAYS, 7, 0, 0);
+    if (P.button(bx, 174, bx + 22, 184, "一天", pay ? GREEN : GREY) && pay) ns_push(LV_DAY, 0, 0, 0);
+    if (P.button(bx + 24, 174, bx + 48, 184, "一周", pay ? GREEN : GREY) && pay) ns_push(LV_DAYS, 7, 0, 0);
     bool hurt = false;                                      /* (someone short of strength who only relaxes: Until rested has them regain it) */
     for (int i = 0; i < 5; i++) if (m.m[i].present && m.m[i].act == 0 && m.m[i].str < m.m[i].str_max && m.m[i].can[1]) hurt = true;
     bool rest = (m.resting || hurt) && pay;
-    if (P.button(bx + 50, 174, bx + 84, 184, "Until rested", rest ? BROWN : GREY) && rest) ns_push(LV_REST, 0, 0, 0);
+    if (P.button(bx + 50, 174, bx + 84, 184, "直至休息", rest ? BROWN : GREY) && rest) ns_push(LV_REST, 0, 0, 0);
     const char *tip = nullptr;
-    if (!pay && P.over(bx, 174, bx + 84, 184)) tip = "The purse cannot pay for a day. Members set to Earn a little money may make up the difference; otherwise, leave.";
-    else if (P.over(bx + 50, 174, bx + 84, 184)) tip = m.resting || hurt ? "Days pass until no one is regaining Strength or praying (at most 14; it stops if anything happens)." : "Nobody is short of Strength, regaining it or praying.";
-    else if (P.over(bx + 24, 174, bx + 48, 184)) tip = "Seven days, each member doing what was chosen (it stops if anything happens, or when a day cannot be paid).";
+    if (!pay && P.over(bx, 174, bx + 84, 184)) tip = "钱包无法支付一天的开销。被设定为赚取少量金钱的成员可自行补足差额；否则，请离开。";
+    else if (P.over(bx + 50, 174, bx + 84, 184)) tip = m.resting || hurt ? "天数流逝，直到无人再恢复体力或祈祷（最多14天；一旦发生任何情况即停止）。" : "无人缺乏体力、恢复体力或祈祷。";
+    else if (P.over(bx + 24, 174, bx + 48, 184)) tip = "七天内，每位成员按所选任务行事（一旦发生任何情况或无法支付某一天的开销即停止）。";
     if (tip) P.para(fo, 3.9f, 199, 186.5f, 117, TABLE_INK, tip);
-    if (P.button(bx + 86, 174, bx + 117, 184, "Leave", RED, NsDraw::FS_SMALL, PB_Y)) ns_push(LV_LEAVE, 0, 0, 0);
+    if (P.button(bx + 86, 174, bx + 117, 184, "离开", RED, NsDraw::FS_SMALL, PB_Y)) ns_push(LV_LEAVE, 0, 0, 0);
 
     /* the hours going by: the game's own clock (ui/hourglass.cpp), with the day of a run of days
        above it and how to skip below */
     if (m.passing) {
         P.rect(60, 0, 320, 200, IM_COL32(20, 12, 4, 120));
         const float CX0 = 130, CY0 = 44;
-        std::string head = m.pass_n == 0 ? (m.mode == 1 ? "A day in camp" : "A day at the inn")
-                         : m.pass_of ? "Day " + std::to_string(m.pass_n) + " of " + std::to_string(m.pass_of)
-                                     : "Day " + std::to_string(m.pass_n) + ", until rested";
+        std::string head = m.pass_n == 0 ? (m.mode == 1 ? "在营地的一天" : "在客栈的一天")
+                         : m.pass_of ? "第一天" + std::to_string(m.pass_n) + " of " + std::to_string(m.pass_of)
+                                     : "第一天" + std::to_string(m.pass_n) + "，直到休息";
         float hw = P.width(f, NsDraw::FS_HEAD, head);
         P.rect(190 - hw * 0.5f - 5, CY0 - 13, 190 + hw * 0.5f + 5, CY0 - 3, IM_COL32(40, 26, 12, 230), 2);
         P.text(f, NsDraw::FS_HEAD, 190 - hw * 0.5f, CY0 - 12, IM_COL32(244, 226, 180, 255), head);
         ui_draw_hourglass(P.dl, NsDraw::w(CX0, CY0), P.kx, P.k, m.pass_hour, m.pass_day, m.pass_month);
-        const char *hint = m.pass_n ? "Click or press a key to skip to the end" : "Click or press a key to skip";
+        const char *hint = m.pass_n ? "点击或按任意键跳至结尾" : "点击或按任意键跳过";
         float tw = P.width(fo, NsDraw::FS_SMALL, hint);
         P.rect(190 - tw * 0.5f - 4, CY0 + 121, 190 + tw * 0.5f + 4, CY0 + 129, IM_COL32(40, 26, 12, 220), 2);
         P.text(fo, NsDraw::FS_SMALL, 190 - tw * 0.5f, CY0 + 122, IM_COL32(230, 214, 178, 255), hint);

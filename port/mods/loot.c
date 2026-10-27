@@ -82,10 +82,10 @@ static void take_all(int share)
     if (redraw) { u16 a[1] = { (u16)cur }; game_call_live(redraw, 1, a); }
     int left = pile_units();
     char msg[160];
-    if (!taken && left) snprintf(msg, sizeof msg, share ? "Nobody has room: every member already carries 64 kinds of items."
-                                                        : "No room: this member already carries 64 kinds of items (S shares the pile out among the party).");
-    else if (left) snprintf(msg, sizeof msg, "%s %d; %d left in the pile (no room for more kinds of items).", share ? "Shared out" : "Took", taken, left);
-    else snprintf(msg, sizeof msg, share ? "Shared out all %d." : "Took all %d.", taken);
+    if (!taken && left) snprintf(msg, sizeof msg, share ? "没人还有空间：每位成员已经携带了64种物品。"
+                                                        : "没空间：该成员已携带64种物品（S将堆里的物品在队伍中分配）。");
+    else if (left) snprintf(msg, sizeof msg, "%s %d；堆里还剩%d（无法再装更多种类的物品）。", share ? "已分配" : "已拿走", taken, left);
+    else snprintf(msg, sizeof msg, share ? "已全部分配%d。" : "已全部拿走%d。", taken);
     ui_notice(msg);
     if (getenv("DL_LOOT_LOG")) fprintf(stderr, "loot: %s\n", msg);
 }
@@ -194,7 +194,7 @@ static void give_back_thrown(void)
         }
         if (got && ml < (int)sizeof msg - 40) {
             char nm[16]; g_str(G_DGROUP, (u16)(G_MEMBER(m) + G_M_SHORTNAME), nm, sizeof nm);
-            ml += snprintf(msg + ml, sizeof msg - ml, "%s%s %d", ml ? ", " : "Thrown weapons picked up after the battle (Darklands+): ", nm, got);
+            ml += snprintf(msg + ml, sizeof msg - ml, "%s%s %d", ml ? ", " : "战斗后拾取的投掷武器（Darklands+）：", nm, got);
         }
     }
     if (!given) return;
@@ -257,7 +257,7 @@ static void barter_many(int buy)
     char msg[120];
     int n = 0;
     if (buy) {
-        if (!g_rw((u16)(B_SIDE + 2 * m))) { ui_notice("Point at one of the merchant's goods first (the upper list)."); return; }
+        if (!g_rw((u16)(B_SIDE + 2 * m))) { ui_notice("先指向商人商品中的某一件（上方列表）。"); return; }
         for (int i = 0; i < 10; i++) {
             u32 before = purse();
             u16 a[1] = { 0x1970 };
@@ -265,9 +265,9 @@ static void barter_many(int buy)
             if (purse() == before) break;          /* no money left, or no room */
             n++;
         }
-        snprintf(msg, sizeof msg, n ? "Bought %d." : "Bought none: not enough money, or no room.", n);
+        snprintf(msg, sizeof msg, n ? "买了%d。" : "未买任何东西：要么钱不够，要么没空间。", n);
     } else {
-        if (g_rw((u16)(B_SIDE + 2 * m))) { ui_notice("Point at one of your own items first (the lower list)."); return; }
+        if (g_rw((u16)(B_SIDE + 2 * m))) { ui_notice("先指向自己物品中的某一件（下方列表）。"); return; }
         int idx = (s16)g_rw((u16)(B_TOP + 2 * m)) + (s16)g_rw((u16)(B_SEL + 2 * m));
         if (idx < 0 || idx >= g_rb((u16)(G_MEMBER(m) + G_M_NITEMS))) return;
         u16 o = G_ITEM(m, idx), id = rw(G_FAR2E38, o);
@@ -283,7 +283,7 @@ static void barter_many(int buy)
             if (purse() == before) break;          /* the merchant will not take it */
             n++;
         }
-        snprintf(msg, sizeof msg, n ? "Sold %d." : "This merchant does not buy that.", n);
+        snprintf(msg, sizeof msg, n ? "卖了%d。" : "这位商人不收购那个。", n);
     }
     ui_notice(msg);
     if (getenv("DL_LOOT_LOG")) fprintf(stderr, "shop: %s\n", msg);
