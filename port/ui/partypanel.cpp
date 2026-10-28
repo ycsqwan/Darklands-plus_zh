@@ -485,7 +485,7 @@ extern "C" void partypanel_draw(void)
             P.dl->AddLine(NsDraw::w(px1 - 2, py0 + 2), NsDraw::w(px0 + 2, py1 - 2), IM_COL32(170, 40, 30, 230), fmaxf(1.5f, 0.6f * P.k));
         }
         /* Endurance, Strength, Divine Favor */
-        static const char *LBL[3] = { "结束", "力量", "DF" };
+        static const char *LBL[3] = { "耐力", "力量", "神恩" };
         static const int ATT[3] = { 0, 1, 6 };
         static const ImU32 COL[3] = { IM_COL32(104, 132, 244, 255), IM_COL32(96, 184, 76, 255), IM_COL32(230, 200, 76, 255) };
         for (int r = 0; r < 3; r++) {
