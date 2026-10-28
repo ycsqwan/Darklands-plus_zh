@@ -135,6 +135,47 @@ function* runs(text) {
   }
 }
 
+/* Put the $variables the English row had back into the Chinese row.
+
+   The game expands these at run time: $his -> "his", $he -> "he",
+   $PlaceName -> the town. A translation has to carry them through untouched,
+   and the shared table does not -- it turns $his into 你的 and $he into 你 in
+   444 rows, which would show English pronouns on screen.
+
+   Each variable is restored at the position the English row gave it, by
+   looking for the Chinese word the shared table used in its place. */
+const PRON_BEFORE = new Map([
+  ['$his', '你'], ['$His', '你'], ['$her', '她'], ['$Her', '她'],
+  ['$he', '你'], ['$He', '你'], ['$she', '她'], ['$She', '她'],
+  ['$him', '你'], ['$Him', '你'], ['$himself', '你'], ['$Himself', '你'],
+  ['$herself', '她'], ['$Herself', '她'],
+]);
+
+/* The word that follows a pronoun variable in the English, and the word that
+   replaced it in the Chinese. Only that pair is swapped, so a plain English
+   "your" that happens to sit elsewhere keeps its 你的. */
+const PRON_AFTER = new Map([
+  ['$his', '的'], ['$His', '的'], ['$her', '的'], ['$Her', '的'],
+  ['$he', ''], ['$He', ''], ['$she', ''], ['$She', ''], ['$him', ''], ['$Him', ''],
+]);
+
+function restoreVars(en, zh) {
+  const vars = [...en.matchAll(/\$[A-Za-z0-9_]+/g)].map(m => m[0]);
+  if (!vars.length) return zh;
+  for (const v of vars) {
+    if (zh.includes(v)) continue;                 /* already there */
+    const before = PRON_BEFORE.get(v);
+    const after = PRON_AFTER.get(v);
+    if (!before) continue;
+    /* the shared table wrote the variable as "before + after" (你的, 她的) or
+       just "before" (你, 她). Swap that exact span back to the variable. */
+    for (const span of [before + after, before]) {
+      if (span && zh.includes(span)) { zh = zh.replace(span, v); break; }
+    }
+  }
+  return zh;
+}
+
 /* Overrides this fork's own table, which sits on top of the run table: a row
    here wins over a row there. It holds the runs the shared table gets wrong
    -- a machine translation that came back in German, a sentence whose Chinese
@@ -159,8 +200,13 @@ function translate(text, map, overrides) {
   for (const r of runs(text)) {
     if (r.kind !== 'run') { parts.push(r.buf); continue; }
     const en = r.buf.toString('latin1');
-    const zh = overrides.get(en) ?? map.get(en);
+    let zh = overrides.get(en) ?? map.get(en);
     if (zh !== undefined) {
+      /* Put the $variables back. The game expands these at run time ($his ->
+         "his", $PlaceName -> the town), so a row that turned one into a Chinese
+         word -- which is what the shared table does to $his/$he/$him in 444
+         rows -- would leak English on screen. Restore them in place. */
+      zh = restoreVars(en, zh);
       parts.push(Buffer.from(zh, 'utf8'));
       replaced++;
       if (overrides.has(en)) fromOverrides++;
