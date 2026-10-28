@@ -301,7 +301,7 @@ extern "C" void lodgeview_draw(void)
                     ui_skill_icon(P.dl, NsDraw::w(x0 + 11, ay + th * 0.48f), th * 0.48f * P.k, T.skill);
                     P.text(fo, NsDraw::FS_BODY * fminf(1.0f, th / 9.0f), x0 + 16, ay + th * 0.14f, tcol, gm_skill_name(T.skill), -1, x0 + 46);
                     if (capped) snprintf(b, sizeof b, "已学会全部（%d）", T.val);
-                    else snprintf(b, sizeof b, "现在%d，至%d  \\xc2\\xb7  %d%%  \\xc2\\xb7  %s  \\xc2\\xb7  %d天%s", gm_member_skill(m.sel, T.skill), T.val, teach_chance(T.val), money_str(T.fee).c_str(), T.days_left, T.days_left == 1 ? "" : "s");
+                    else snprintf(b, sizeof b, "现在%d，至%d  \xc2\xb7  %d%%  \xc2\xb7  %s  \xc2\xb7  %d天%s", gm_member_skill(m.sel, T.skill), T.val, teach_chance(T.val), money_str(T.fee).c_str(), T.days_left, T.days_left == 1 ? "" : "s");
                     P.text(fo, NsDraw::FS_SMALL * fminf(1.0f, th / 9.0f), 0, ay + th * 0.2f, scol, b, x1 - 1.5f);
                     if (thv) hover_act = 100 + t;
                     if (P.hit(x0 + 6, ay, x1, ay + th - 0.6f) && !tc && !capped) ns_push(LV_TEACH, t, m.sel, 0);

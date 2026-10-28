@@ -456,7 +456,7 @@ void ui_draw_battle_fast(void)
 {
     if (!battle_fast || game_mode() != GM_BATTLE || ns_showing()) return;
     ImDrawList *dl = ovl_list();
-    const char *t = "\\xe2\\x96\\xb6\\xe2\\x96\\xb6 快进  (Z)";
+    const char *t = "\xe2\x96\xb6\xe2\x96\xb6 快进  (Z)";
     ImFont *f = ImGui::GetFont(); float fs = ImGui::GetFontSize();
     ImVec2 ts = f->CalcTextSizeA(fs, 1e9f, 0, t), r = g2w(318, 2);
     if (!f->FindGlyphNoFallback(0x25b6)) { t = ">> 快进  (Z)"; ts = f->CalcTextSizeA(fs, 1e9f, 0, t); }
