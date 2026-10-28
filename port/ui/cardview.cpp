@@ -125,6 +125,49 @@ struct Laid {
 };
 }
 
+/* one UTF-8 character of t at i: its codepoint and how many bytes it is */
+static size_t utf8_cp(const std::string &t, size_t i, unsigned *cp)
+{
+    unsigned char b = (unsigned char)t[i];
+    if (b < 0x80) { if (cp) *cp = b; return 1; }
+    if ((b & 0xe0) == 0xc0) {   /* two bytes */
+        if (i + 1 >= t.size()) { if (cp) *cp = b; return 1; }
+        if (cp) *cp = (b & 0x1f) << 6 | ((unsigned char)t[i + 1] & 0x3f);
+        return 2;
+    }
+    if ((b & 0xf0) == 0xe0) {   /* three bytes */
+        if (i + 2 >= t.size()) { if (cp) *cp = b; return 1; }
+        if (cp) *cp = (b & 0x0f) << 12 | ((unsigned char)t[i + 1] & 0x3f) << 6 | ((unsigned char)t[i + 2] & 0x3f);
+        return 3;
+    }
+    if ((b & 0xf8) == 0xf0) {   /* four bytes */
+        if (i + 3 >= t.size()) { if (cp) *cp = b; return 1; }
+        if (cp) *cp = (b & 0x07) << 18 | ((unsigned char)t[i + 1] & 0x3f) << 12 | ((unsigned char)t[i + 2] & 0x3f) << 6 | ((unsigned char)t[i + 3] & 0x3f);
+        return 4;
+    }
+    if (cp) *cp = b;            /* a continuation byte, or not a lead at all */
+    return 1;
+}
+
+/* a character the translated text may end a line after, whatever follows it. The Han
+   languages run their sentences together, so the text has no blanks to break at: each of
+   these goes on the line it fits on and the next begins after it. (The original broke only
+   at blanks, so a Chinese sentence was one unbreakable word and ran off the card.) */
+static bool cjk_break(unsigned cp)
+{
+    return (cp >= 0x2e80 && cp <= 0xa4cf) || (cp >= 0xac00 && cp <= 0xd7a3) || (cp >= 0xf900 && cp <= 0xfaff) ||
+           (cp >= 0xfe30 && cp <= 0xfe4f) || (cp >= 0xff00 && cp <= 0xff60) || (cp >= 0xffe0 && cp <= 0xffe6) ||
+           (cp >= 0x1f300 && cp <= 0x1faff) || (cp >= 0x20000);
+}
+
+/* a closing mark: it may end a line but not begin one (so it stays with what it closes) */
+static bool cjk_no_start(unsigned cp)
+{
+    return cp == 0x3001 || cp == 0x3002 || cp == 0xff0c || cp == 0xff1b || cp == 0xff01 || cp == 0xff1f ||
+           cp == 0xff09 || cp == 0x3011 || cp == 0x300d || cp == 0x300f || cp == 0x300b ||
+           cp == 0x2026 || cp == 0x201d || cp == 0x2019;
+}
+
 /* words of t, wrapped to width w (the first `indent_lines` lines narrower by `indent`) */
 static void wrap(ImFont *f, float size, const std::string &t, float w, float indent, int indent_lines,
                  std::vector<std::string> &out, float cont = 0)
@@ -140,12 +183,21 @@ static void wrap(ImFont *f, float size, const std::string &t, float w, float ind
         else line = cand;
         word.clear();
     };
-    for (size_t i = 0; i <= t.size(); i++) {
-        char ch = i < t.size() ? t[i] : 0;
-        if (ch == ' ' || ch == 0 || ch == '\n') {
+    for (size_t i = 0; i < t.size();) {
+        unsigned cp;
+        size_t n = utf8_cp(t, i, &cp);
+        if (cp == ' ' || cp == '\n') {
             flush_word();
-            if (ch == '\n') { out.push_back(line); line.clear(); }
-        } else word += ch;
+            if (cp == '\n') { out.push_back(line); line.clear(); }
+        } else if (cjk_break(cp)) {                               /* the Han languages run their sentences
+                                                                 together: no blanks, so the line ends
+                                                                 after a character that fits */
+            flush_word();
+            if (!line.empty() && width(line + t.substr(i, n)) > avail()) { out.push_back(line); line.clear(); }
+            if (line.empty() && cjk_no_start(cp) && !out.empty()) out.back() += t.substr(i, n);   /* a mark that may not start a line */
+            else line += t.substr(i, n);
+        } else word += t.substr(i, n);
+        i += n;
     }
     if (!line.empty()) out.push_back(line);
 }
