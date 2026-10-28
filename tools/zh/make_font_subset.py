@@ -47,6 +47,8 @@ SOURCES = [
     os.path.join(ROOT, 'mods', 'chinese', 'ui_zh.tsv'),
     os.path.join(ROOT, 'mods', 'chinese', 'mod.txt'),
     os.path.join(ROOT, 'mods', 'chinese', 'untranslated.txt'),
+    # this fork's own run table: the runs the shared table gets wrong
+    os.path.join(ROOT, 'tools', 'zh', 'overrides.tsv'),
     os.path.join(ROOT, 'port', 'ui', 'gamedata.cpp'),
 ]
 

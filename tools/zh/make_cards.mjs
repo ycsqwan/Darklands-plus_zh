@@ -37,6 +37,8 @@ const flag = (n) => args.includes(n);
 
 const MSGFILES = path.resolve(opt('--msgfiles', 'D:\\goggame\\Darklands\\DARKLAND\\MSGFILES'));
 const TABLE = path.resolve(opt('--table', 'D:\\dkch\\zh\\work\\translations.tsv'));
+const OVERRIDES = path.resolve(opt('--overrides', 'tools/zh/overrides.tsv'));
+const overrides = loadOverrides();
 const OUT = path.resolve(opt('--out', 'mods/chinese/MSGFILES'));
 const REPORT = path.resolve(opt('--report', 'mods/chinese/untranslated.txt'));
 const ONLY = opt('--only', null);
@@ -133,23 +135,41 @@ function* runs(text) {
   }
 }
 
-function translate(text, map) {
+/* Overrides this fork's own table, which sits on top of the run table: a row
+   here wins over a row there. It holds the runs the shared table gets wrong
+   -- a machine translation that came back in German, a sentence whose Chinese
+   column is a copy of the English, and the $variable runs. See tools/zh/. */
+function loadOverrides() {
+  if (!fs.existsSync(OVERRIDES)) return new Map();
+  const m = new Map();
+  for (const line of fs.readFileSync(OVERRIDES, 'utf8').split('\n')) {
+    if (!line.trim() || line.startsWith('#')) continue;
+    const i = line.indexOf('\t');
+    if (i < 0) continue;
+    m.set(line.slice(0, i), line.slice(i + 1).trim());
+  }
+  return m;
+}
+
+function translate(text, map, overrides) {
   const parts = [];
   const missing = [];
   let replaced = 0;
+  let fromOverrides = 0;
   for (const r of runs(text)) {
     if (r.kind !== 'run') { parts.push(r.buf); continue; }
     const en = r.buf.toString('latin1');
-    const zh = map.get(en);
+    const zh = overrides.get(en) ?? map.get(en);
     if (zh !== undefined) {
       parts.push(Buffer.from(zh, 'utf8'));
       replaced++;
+      if (overrides.has(en)) fromOverrides++;
     } else {
       parts.push(r.buf);
       if (en.trim()) missing.push(en);
     }
   }
-  return { buf: Buffer.concat(parts), missing, replaced };
+  return { buf: Buffer.concat(parts), missing, replaced, fromOverrides };
 }
 
 /* A CJK ideograph in UTF-8 starts with 0xE3..0xE9 (U+3400..U+9FFF) or 0xEF. */
@@ -184,7 +204,7 @@ for (const e of cat) {
   const outCards = [];
   let anyZh = false, cardRuns = 0, cardBullets = 0;
   for (const c of parsed.cards) {
-    const { buf, missing, replaced } = translate(c.text, map);
+    const { buf, missing, replaced } = translate(c.text, map, overrides);
     if (hasCjk(buf)) anyZh = true;
     runsHit += replaced;
     runsMiss += missing.length;
