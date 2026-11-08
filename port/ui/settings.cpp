@@ -85,8 +85,10 @@ static void replacement_art(void)
         bool sn = hdart_show_names;
         if (ImGui::Checkbox("鼠标悬停时显示图片名称", &sn)) { hdart_show_names = sn; config_set_int("display.art_names", sn); ui_dirty_config = 1; }
         ui_hint("供美术师使用：一个名为 art%sNAME.png 的文件（任意尺寸；在图片颜色为0处保留透明度）将替换"
-             "游戏中任何位置显示的 NAME 图片，按窗口分辨率进行替换。导出时会将每张原始图片"
-             "以自身色彩保存为模板，存入 art%soriginal 文件夹。无论游戏在图片上绘制了什么内容（文字、"
+             "游戏中任何位置显示的 NAME 图片，按窗口分辨率进行替换。按 4:3 绘制（320 x 200 的图片用 1600 x 1200）："
+             "游戏的像素在垂直方向上的显示高度是水平宽度的 1.2 倍。导出时会将每张原始图片以自身色彩保存为模板，"
+             "存入 art%soriginal 文件夹，并附上 README.txt（尺寸，以及卡牌边框和队伍面板遮挡的位置）"
+             "和一张可叠在卡牌图片上的参考图。无论游戏在图片上绘制了什么内容（文字、"
              "鼠标指针、其他图片），这些内容都将保持在最上层。", PATH_SEP, PATH_SEP);
         ui_hint("更多徽章：art%sSHIELDP.png、SHIELDQ.png……直至 SHIELDZ.png，可在游戏原有的十五个徽章之后再添加"
              "（纹章学，组建队伍时）。使用其中某个徽章的成员所保存的游戏存档，仅能在 Darklands+ 中加载。", PATH_SEP);
@@ -274,6 +276,18 @@ extern "C" bool screenpics_map_draw(ImDrawList *dl, ImVec2 a, ImVec2 b);
 extern "C" bool screenpics_land_draw(ImDrawList *dl, ImVec2 a, ImVec2 b);
 extern "C" void saves_prefs(void);   /* ui/saves.cpp */
 static void opt_set(const Option *o, int v) { option_set(o, v); ui_dirty_config = 1; }
+/* words a choice gets from the game's own data, after its own: Ammunition, Endless - what the original's
+   losses come to, 100 arrows shot, 3 in 10 not found again (missile_spent), at a shop's price (buy_price,
+   s032 1462:192e: value x quality x 2 / 25, before the town's size and the bargainer's Charisma; all
+   ammunition is of quality 25, and the words do not say it, or tiers would seem to exist); arrows are item 33 */
+static std::string choice_more(const Option *o, int k)
+{
+    if (!strcmp(o->key, "assist.endless") && o->vals[k] == 1 && gamedata.items.size() > 33 && gamedata.items[33].value > 0) {
+        long each = (long)gamedata.items[33].value * 25 * 2 / 25;
+        return " Shooting 100 arrows loses about 30 of them, about " + money_str(each * 30) + " at a shop's price.";
+    }
+    return "";
+}
 static void option_row(const Option *o, int depth);
 static void option_children(const Option *o, int depth)
 {
@@ -300,7 +314,17 @@ static void option_row(const Option *o, int depth)
         int nc = option_nchoices(o), sel = -1;
         for (int k = 0; k < nc; k++) if (o->vals[k] == v) sel = k;
         char lab[96];
-        if (o->flags & OF_COMBO) {
+        if (o->flags & OF_LIST) {                       /* one under the other, each with its words */
+            char cd[1200];
+            for (int k = 0; k < nc; k++) {
+                ImGui::PushID(k);
+                if (ImGui::RadioButton("##r", k == sel)) opt_set(o, o->vals[k]);
+                ImGui::SameLine();
+                std::string w = std::string(option_choice_desc(o, k, cd, sizeof cd)) + choice_more(o, k);
+                if (ui_title_desc(option_choice(o, k, lab, sizeof lab), w.c_str())) opt_set(o, o->vals[k]);
+                ImGui::PopID();
+            }
+        } else if (o->flags & OF_COMBO) {
             float wmax = 0; for (int k = 0; k < nc; k++) wmax = fmaxf(wmax, ImGui::CalcTextSize(option_choice(o, k, lab, sizeof lab)).x);
             ImGui::SetNextItemWidth(wmax + ImGui::GetFrameHeight() + UIS(24));
             if (ImGui::BeginCombo("##c", sel >= 0 ? option_choice(o, sel, lab, sizeof lab) : "")) {

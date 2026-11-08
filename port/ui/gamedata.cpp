@@ -1,6 +1,7 @@
 // gamedata.cpp - see gamedata.h
 #include "gamedata.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <dirent.h>
@@ -404,6 +405,21 @@ static const char *const FORMULA_DESC_ZH[66] = {
     "一种饮剂，大幅提升使用者对火系魔法的抗性。",
     "一种饮剂，大幅提升使用者对火系魔法的抗性。",
 };
+/* the data read again when the mods in use change (F12 > Mods: a mod's DARKLAND.LST, .CTY, .SNT or .LOC
+   ticked or unticked during play), as the bestiary, Go to and the texts do */
+extern "C" int datamods_generation(void);
+void gamedata_follow_mods(const char *dir)
+{
+    static int gen = -1;
+    int g = datamods_generation();
+    if (g == gen) return;
+    bool again = gen != -1 && gamedata.loaded;
+    gen = g;
+    if (!again) return;
+    gamedata = GameData();
+    gamedata_load(dir);
+    fprintf(stderr, "gamedata: read again for the mods in use (%d items, %d saints, %d cities)\n", (int)gamedata.items.size(), (int)gamedata.saints.size(), (int)gamedata.cities.size());
+}
 
 void gamedata_load(const char *dir)
 {
@@ -418,6 +434,8 @@ void gamedata_load(const char *dir)
             d.type = w16(r + 30); d.flags = w16(r + 32); d.flags2 = w16(r + 34);
             d.weight = r[37]; d.quality = r[38]; d.value = w16(r + 44);
             d.flags5 = r[36]; d.rarity = r[39];
+            d.relic_virtue = w16(r + 40); d.relic_df = w16(r + 42);
+            memcpy(d.raw, r, sizeof d.raw);
             d.mineral = (d.flags2 & 0x1000) != 0;
             d.kind = classify(d);
             gamedata.items.push_back(d);
@@ -470,6 +488,18 @@ void gamedata_load(const char *dir)
             c.seed = w16(r + 0x56);
             for (int k = 0; k < 5; k++) c.docks[k] = (short)w16(r + 0x4a + 2 * k);
             gamedata.cities.push_back(c);
+        }
+    }
+    /* every place's name from the file (DARKLAND.LOC: a count, then 0x3a-byte records, the name at +0x26):
+       the copy in the game's memory is not there in every screen (a battle in a mine or castle: the
+       names read from it were rubbish, and a save made there was called so) */
+    std::vector<unsigned char> loc = read_all(open_ci(dir, "DARKLAND.LOC"));
+    if (loc.size() > 2) {
+        int n = loc[0] | loc[1] << 8;
+        for (int i = 0; i < n && 2 + (i + 1) * 0x3a <= (int)loc.size(); i++) {
+            const unsigned char *r = &loc[2 + i * 0x3a];
+            char b[21]; memcpy(b, r + 0x26, 20); b[20] = 0;
+            gamedata.loc_names.push_back(game_text(b, sizeof b));
         }
     }
     gamedata.loaded = !gamedata.items.empty();
@@ -906,15 +936,80 @@ std::string gamedata_spell_text(const std::string &t)
     return r;
 }
 
+/* a place the game's list holds twice: the same name and kind within a tile or so of an earlier one (DARKLAND.LOC
+   has two villages Putten two rows apart, 127 and 297): the maps mark and name only the first */
+extern "C" u32 plat_ticks_ms(void);
+static bool twin_of_earlier(int loc)
+{
+    u32 r = loc >= 92 ? g_location(loc) : 0;
+    if (!r) return false;
+    u16 s = (u16)(r >> 16), o = (u16)r;
+    int kind = (s16)rw(s, o), x = (s16)rw(s, (u16)(o + 4)), y = (s16)rw(s, (u16)(o + 6));
+    std::string n = loc_display_name(loc);
+    for (int k = 92; k < loc; k++) {
+        u32 q = g_location(k);
+        if (!q) continue;
+        u16 qs = (u16)(q >> 16), qo = (u16)q;
+        if ((s16)rw(qs, qo) != kind || abs((s16)rw(qs, (u16)(qo + 4)) - x) > 1 || abs((s16)rw(qs, (u16)(qo + 6)) - y) > 2) continue;
+        if (loc_display_name(k) == n) return true;
+    }
+    return false;
+}
+bool loc_is_twin(int loc)                 /* (asked for every place every frame: worked out every two seconds) */
+{
+    static std::vector<char> twin; static u32 at; static bool done;
+    u32 now = plat_ticks_ms();
+    if (!done || now - at > 2000) {
+        twin.assign(G_NLOC, 0);
+        for (int k = 92; k < G_NLOC; k++) twin[k] = twin_of_earlier(k);
+        at = now; done = true;
+    }
+    return loc >= 0 && loc < (int)twin.size() && twin[loc];
+}
+
 std::string loc_display_name(int loc)
 {
     if (loc >= 0 && loc < (int)gamedata.cities.size() && !gamedata.cities[loc].name.empty()) return gamedata.cities[loc].name;
-    u32 r = loc >= 0 ? g_location(loc) : 0;
-    if (!r) return "";
-    char b[24]; g_str((u16)(r >> 16), (u16)((u16)r + 0x26), b, sizeof b);
+    char b[24] = "";
+    if (loc >= 0 && loc < (int)gamedata.loc_names.size()) snprintf(b, sizeof b, "%s", gamedata.loc_names[loc].c_str());
+    else { u32 r = loc >= 0 ? g_location(loc) : 0; if (!r) return ""; g_str((u16)(r >> 16), (u16)((u16)r + 0x26), b, sizeof b); }
+    if (!b[0]) return "";
     static const struct { const char *cut, *full; } CUT[] = { { "雷克林斯恩", "雷克林斯豪森" }, { "马里恩韦尔德", "马里恩韦德尔" } };
     for (const auto &c : CUT) if (!strcmp(b, c.cut)) return c.full;
     return game_text(b, sizeof b);
+}
+
+/* (for C: a byte (size 1) or a word (size 2) of item id's record in DARKLAND.LST, a mod's if one replaces it; -1 if
+   unknown. The game's own copy is not in memory in a battle or a dungeon: what its pointers then point at is other
+   data, which made every thing an ingredient (mods/loot.c) - so the mods read the item list here) */
+extern "C" int gamedata_item_raw(int id, int off, int size)
+{
+    if (id < 0 || id >= (int)gamedata.items.size() || off < 0 || off + size > 46) return -1;
+    const unsigned char *r = gamedata.items[id].raw;
+    return size == 2 ? r[off] | r[off + 1] << 8 : r[off];
+}
+/* (for C: a thing's name as shown, "St. Dunstan's Hammer" for the game's "S.Dunstan Hammer"; 0 if unknown) */
+extern "C" int gamedata_item_name(int id, char *out, int n)
+{
+    if (id < 0 || id >= (int)gamedata.items.size() || gamedata.items[id].name.empty() || n < 1) return 0;
+    snprintf(out, (size_t)n, "%s", gamedata.items[id].name.c_str());
+    return 1;
+}
+/* (for C: a place's name as shown, in the game's letters turned to plain ones: "Gorlitz"; "" for none) */
+extern "C" void gamedata_loc_name(int loc, char *out, int n)
+{
+    std::string t = loc_display_name(loc);
+    int k = 0;
+    for (size_t i = 0; i < t.size() && k < n - 1; i++) {
+        unsigned char c = (unsigned char)t[i];
+        if (c < 0x80) out[k++] = (char)c;
+        else if (c == 0xc3 && i + 1 < t.size()) {          /* (a letter with an umlaut or accent, as UTF-8: its plain letter) */
+            static const char *PL = "AAAAAAACEEEEIIIIDNOOOOOxOUUUUYTsaaaaaaaceeeeiiiidnooooo/ouuuuyty";
+            unsigned char d = (unsigned char)t[++i];
+            if (d >= 0x80 && d < 0xc0) out[k++] = PL[d - 0x80];
+        }
+    }
+    out[k] = 0;
 }
 
 /* a town's number for its cards: loc_query 0x21, the city's +0x56 + party_seed (16-bit, as the game) */

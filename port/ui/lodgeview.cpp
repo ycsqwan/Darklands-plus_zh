@@ -187,8 +187,8 @@ extern "C" void lodgeview_draw(void)
         }
     }
     if (!camp) {                                             /* (in camp the risk is told under Guard the camp) */
-        snprintf(b, sizeof b, "房间：每天 %s。%s", money(m.lodging).c_str(), m.days ? ("已住天数：" + std::to_string(m.days)).c_str() : "");
-        P.text(fo, NsDraw::FS_SMALL, 70, 23.5f, soft, b, -1, 186);
+        snprintf(b, sizeof b, "房间：每天 %s。%s", money(m.lodging).c_str(), m.days ? ("   已住天数：" + std::to_string(m.days)).c_str() : "");
+        P.text(fo, NsDraw::FS_SMALL, 70, 23.5f, soft, b, -1, 180);       /* (clear of the fold: 1.3.1's camp line ran into it) */
     }
 
     /* the left page: the party's days */
@@ -225,7 +225,7 @@ extern "C" void lodgeview_draw(void)
                 int fm = p.brew_f[k];
                 line += (k ? ", " : "") + std::to_string(p.brew_n[k]) + " " + (fm >= 0 && fm < (int)gamedata.formula_names.size() ? gamedata.formula_names[fm] : std::string("?"));
             }
-        } else if (act == 0) { line = "放松"; more = p.end < p.end_max ? "恢复至满值：{耐力：" + std::to_string(p.end) + " of " + std::to_string(p.end_max) + "}" : p.can[4] ? "已经休息过：此时赚取收益更为划算" : "已经休息过"; if (p.end >= p.end_max && p.can[4]) mc = IM_COL32(150, 70, 20, 255); }
+        } else if (act == 0) { line = "放松"; more = p.end < p.end_max ? "恢复至满值：{耐力：" + std::to_string(p.end) + " / " + std::to_string(p.end_max) + "}" : p.can[4] ? "已经休息过：此时赚取收益更为划算" : p.can[5] ? "已经休息过：此时值守更为划算" : "已经休息过"; if (!p.can[0]) mc = IM_COL32(150, 70, 20, 255); }
         else if (act == 1) more = "{Strength:" + std::to_string(p.str) + " of " + std::to_string(p.str_max) + "}";
         else if (act == 5) { line = "守夜"; more = "{Woodwise:" + std::to_string(gm_member_skill(i, 18)) + "}  {潜行：" + std::to_string(gm_member_skill(i, 15)) + "}"; }
         else if (act == 2) more = "{神恩：" + std::to_string(p.df) + " of " + std::to_string(p.df_max) + "}";
@@ -248,11 +248,11 @@ extern "C" void lodgeview_draw(void)
         snprintf(b, sizeof b, "%s 的一天", ns_gtext(p.name).c_str());
         P.text(f, NsDraw::FS_HEAD, RX0, TY - 1.5f, ink, b);
         static const char *ACT[7] = { "恢复 {耐力}", "恢复 {力量}", "祈祷获得 {神恩}", "炼金术工作", "赚点小钱", "守卫营地", "训练或学习" };
-        static const char *WHY[7] = { "{耐力} 已满：此时赚钱更为划算。", "{力量} 已满。", "{神恩} 已满。", "不知道任何配方。", "只能在城镇的旅店里制作。", "只有在野外露营时才能制作。", "本镇没有保留任何老师。" };
-        static const char *WHAT[7] = { "休息：{耐力}恢复至满值。除此之外别无收获。", "休息与照料：{力量}恢复；队伍的 {治疗} 越好，恢复得越多（{耐力} 亦然）。",
-            "祈祷：{神恩}恢复；{宗教} 和 {美德} 越好，恢复得越多。但当天 {耐力} 不会恢复。", "根据已知配方制作药剂（原料用完后即告失效）。当天 {耐力} 不会恢复。",
-            "在城镇工作：根据该成员的属性和技能，这份工作能为他带来最高的报酬（伤势会降低报酬；在城镇声望不佳也会降低）。{耐力}当天不会恢复。",
-            "值守：领主的手下发现队伍在其领地内栖息的风险每天都会缓慢增加。{木艺}帮助最大，其次是{潜行}，然后是30点以上的武器技能。", "从本城雇佣的老师那里学习课程，每天需支付费用。{耐力}当天不会恢复。" };
+        static const char *WHY[7] = { "{耐力} 已满：此时赚钱更为划算。", "已经处于满 {力量}。", "{神恩} 已满。", "不知道任何配方。", "只能在城镇的旅店里制作。", "只有在野外露营时才能制作。", "本镇没有保留任何老师。" };
+        static const char *WHAT[7] = { "休息：{耐力}恢复至满值。除此之外别无收获。", "休息与照料：{力量}恢复，队伍的 {治疗} 越好恢复越多；{耐力} 也会恢复。",
+            "祈祷：{神恩}恢复；{宗教} 和 {美德} 越好，恢复得越多。但当天 {耐力} 不会恢复。", "根据已知配方制作药剂（原料会被用光）。当天 {耐力} 不会恢复。",
+            "在城镇工作：根据该成员的属性和技能，这份工作能为他带来最高的报酬（伤势会降低报酬；在城镇名声不佳也会降低）。{耐力}当天不会恢复。",
+            "值守：领主的手下发现队伍在其领地内栖息的风险每天都会按当地自身的量增加，每名值守的成员可减少：{木艺} 减 1（30 起减 2，70 起减 3），{潜行} 30 起减 1（70 起减 2），30 以上的武器技能减 1。", "从本城雇佣的老师那里学习课程，每天需支付费用。{耐力}当天不会恢复。" };
         /* the teachers, one row a skill: the one who teaches it (the best, with the bestteacher fix) */
         int tl[LV_TEACHERS], ntl = 0;
         for (int t = 0; t < m.nteach; t++) {
@@ -268,7 +268,6 @@ extern "C" void lodgeview_draw(void)
         float ay = LTOP;
         for (int a = 0; a < 7; a++) {
             bool can = p.can[a], cur = p.act == a;
-            if (a == 0 && p.end >= p.end_max && p.can[4]) can = false;   /* (rested, with work to be had: nothing to regain) */
             if (camp && (a == 4 || a == 6)) continue;                 /* (no work and no teachers in the wild; no guard at an inn) */
             if (!camp && a == 5) continue;
             float x0 = RX0, x1 = RX1;
@@ -314,12 +313,12 @@ extern "C" void lodgeview_draw(void)
         if (hover_act == 200) {
             char b[400];
             int g = 0; for (int i = 0; i < 5; i++) g += m.m[i].present && m.m[i].act == 5;
-            if (g) snprintf(b, sizeof b, "领主的部下可能会发现队伍在侵占他的土地，且这种可能性逐日增加。若次日有%s守卫，则概率为%d%%（无守卫时为%d%%）。营地一旦被破坏，风险将持续半天至两天半。",
-                            g == 1 ? "这一个" : "these", m.risk_next_pct, m.risk_next_unguarded_pct);
-            else snprintf(b, sizeof b, "领主的手下可能会发现队伍在其领地内栖息，且每天发现的可能性都在增加；成员值守可减缓这一风险。营地被破坏后，风险仍维持半天至两天半。");
-            about = b;
-        } else if (hover_act >= 0 && hover_act < 7) about = std::string(WHAT[hover_act]) + (p.can[hover_act] && !(hover_act == 0 && p.end >= p.end_max && p.can[4]) ? "" : std::string(" ") + WHY[hover_act]);
-        if (hover_act == 3 && !camp) about += "在客栈里，失败的批次可能引发爆炸；而在野外的营地则不会。";
+            if (g) snprintf(b, sizeof b, "领主的部下可能会发现队伍在侵占他的土地，且这种可能性逐日增加。若次日有%s守卫，则概率为%d%%（无守卫时为%d%%）。",
+                            g == 1 ? "这一个" : "这些人", m.risk_next_pct, m.risk_next_unguarded_pct);
+            else snprintf(b, sizeof b, "领主的部下可能会发现队伍在其领地内栖息，且每天发现的可能性都在增加；成员值守可减缓这一风险。");
+            about = std::string(b) + " 营地一旦被破坏，积累的风险仍会持续 12 至 60 小时：在此期间再次扎营会从此继续累积。";
+        } else if (hover_act >= 0 && hover_act < 7) about = std::string(WHAT[hover_act]) + (p.can[hover_act] ? "" : std::string(" ") + (hover_act == 0 && p.can[5] ? "{耐力} 已满：此时值守更为划算。" : WHY[hover_act]));
+        if (hover_act == 3 && !camp) about += " 在客栈里，失败的批次可能引发爆炸；而在野外的营地则不会。";
         else if (hover_act >= 100 && hover_act < 200) {
             const auto &T = m.t[hover_act - 100];
             const char *sk = gm_skill_name(T.skill);
@@ -368,6 +367,10 @@ extern "C" void lodgeview_draw(void)
         P.text(fo, NsDraw::FS_SMALL, 136, 175, soft, hd);
         std::string amt = m.cost ? money(m.cost < 0 ? -m.cost : m.cost) : std::string("nothing");
         P.text(fo, NsDraw::FS_HEAD, 136, 182, short_ ? NsDraw::RED : m.cost < 0 ? GREEN : ink, amt);
+        /* how long it is: until 5:00, or 5:00 the day after when that is under 9 hours away (camp_spend_day, s036 1462:147a) */
+        int hr = (s16)g_rw(GV_cur_hour), dh = (5 - hr + 24) % 24; if (dh < 9) dh += 24;
+        char lb[64]; snprintf(lb, sizeof lb, "%d hours, until 5:00", dh);
+        if (!m.passing) P.text(fo, 3.9f, 136, 190.8f, dh > 24 ? NsDraw::RED : soft, lb, -1, 195);
     }
     bool pay = m.cost <= m.purse;
     float bx = 199;
@@ -379,8 +382,9 @@ extern "C" void lodgeview_draw(void)
     if (P.button(bx + 50, 174, bx + 84, 184, "直至休息", rest ? BROWN : GREY) && rest) ns_push(LV_REST, 0, 0, 0);
     const char *tip = nullptr;
     if (!pay && P.over(bx, 174, bx + 84, 184)) tip = "钱包无法支付一天的开销。被设定为赚取少量金钱的成员可自行补足差额；否则，请离开。";
-    else if (P.over(bx + 50, 174, bx + 84, 184)) tip = m.resting || hurt ? "天数流逝，直到无人再恢复体力或祈祷（最多14天；一旦发生任何情况即停止）。" : "无人缺乏体力、恢复体力或祈祷。";
+    else if (P.over(bx + 50, 174, bx + 84, 184)) tip = m.resting || hurt ? "天数流逝，直到无人再恢复力量或祈祷（最多14天；一旦发生任何情况即停止）。" : "无人缺乏力量、恢复力量或祈祷。";
     else if (P.over(bx + 24, 174, bx + 48, 184)) tip = "七天内，每位成员按所选任务行事（一旦发生任何情况或无法支付某一天的开销即停止）。";
+    else if (P.over(bx, 174, bx + 22, 184)) tip = "一天持续到 5:00；若那时距现在不足 9 小时，则持续到次日 5:00：从 20:00 起为 9 小时的一夜，从 21:00 起为 32 小时。";
     if (tip) P.para(fo, 3.9f, 199, 186.5f, 117, TABLE_INK, tip);
     if (P.button(bx + 86, 174, bx + 117, 184, "离开", RED, NsDraw::FS_SMALL, PB_Y)) ns_push(LV_LEAVE, 0, 0, 0);
 

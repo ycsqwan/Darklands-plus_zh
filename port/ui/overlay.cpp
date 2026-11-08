@@ -66,21 +66,24 @@ void text_edged(ImDrawList *dl, ImFont *f, float size, ImVec2 p, ImU32 c, const 
         th = size * 0.055f; if (th < 1.0f) th = 1.0f;
     }
     static const float D[8][2] = { {1,0},{-1,0},{0,1},{0,-1},{0.7f,0.7f},{-0.7f,0.7f},{0.7f,-0.7f},{-0.7f,-0.7f} };
-    const char *st = t;
     while (*t) {
-        /* An ASCII run: one call, whatever it is.  A UTF-8 lead byte >= 0x80 means a
-         * Han glyph: those only exist in the CJK font (the game fonts have none),
-         * so the runs alternate between the two faces. */
-        bool cjk = ((unsigned char)*t) >= 0x80;
+        /* A run of one kind, one call: Han glyphs (a UTF-8 lead byte >= 0x80) live only in
+         * the CJK font, the game fonts have none; a coin (U+E000..E002) is drawn by the game
+         * font in its own colours and carries its own rim, so it takes no edge. */
+        int kind = ((unsigned char)*t >= 0x80) ? (((unsigned char)t[0] == 0xee && (unsigned char)t[1] == 0x80) ? 2 : 1) : 0;
         const char *en = t + 1;
-        while (*en && (((unsigned char)*en >= 0x80) == cjk)) en++;
-        ImFont *f2 = cjk ? ui_font_cjk : f;
-        if (edge) {
-            if (edge == 1) dl->AddText(f2, size, ImVec2(p.x + th, p.y + th), e, st, en);
-            else for (int k = 0; k < 8; k++) dl->AddText(f2, size, ImVec2(p.x + D[k][0] * th, p.y + D[k][1] * th), e, st, en);
+        while (*en) {
+            int k2 = ((unsigned char)*en >= 0x80) ? (((unsigned char)en[0] == 0xee && (unsigned char)en[1] == 0x80) ? 2 : 1) : 0;
+            if (k2 != kind) break;
+            en++;
         }
-        dl->AddText(f2, size, p, c, st, en);
-        p.x += f2->CalcTextSizeA(size, FLT_MAX, 0.0f, st, en).x;
+        ImFont *f2 = kind == 1 ? ui_font_cjk : f;
+        if (edge && kind != 2) {
+            if (edge == 1) dl->AddText(f2, size, ImVec2(p.x + th, p.y + th), e, t, en);
+            else for (int k = 0; k < 8; k++) dl->AddText(f2, size, ImVec2(p.x + D[k][0] * th, p.y + D[k][1] * th), e, t, en);
+        }
+        dl->AddText(f2, size, p, c, t, en);
+        p.x += f2->CalcTextSizeA(size, FLT_MAX, 0.0f, t, en).x;
         t = en;
     }
 }
@@ -387,14 +390,13 @@ static void draw_card_help(void)
     }
     std::vector<std::pair<std::string, std::string>> lines;
     std::vector<int> ids;                                   /* a saint, or 1000 + an item */
-    auto name_of = [](int m) { char n[16]; g_str(G_DGROUP, (u16)(G_MEMBER(m) + G_M_SHORTNAME), n, sizeof n); return game_text(n, sizeof n); };
     auto alive = [](int m) { int st = g_rb((u16)(G_MEMBER(m) + G_M_STATUS)); return st != 0 && st != 3; };   /* the dead know no saints and carry nothing */
     for (int j = 0; j < 4; j++) {
         int s = (s16)g_rw((u16)(GV_card_saints + 2 * j));
         if (s < 0 || s >= (int)gamedata.saints.size()) continue;
         std::string who;
         for (int m = 0; m < npar; m++)
-            if (alive(m) && (rb(G_FAR2E38, (u16)(0x082c + m * 0x14 + (s >> 3))) & (0x80 >> (s & 7)))) { if (!who.empty()) who += ", "; who += name_of(m); }
+            if (alive(m) && (rb(G_FAR2E38, (u16)(0x082c + m * 0x14 + (s >> 3))) & (0x80 >> (s & 7)))) { if (!who.empty()) who += " "; who += rich_member(m); }
         lines.push_back({ gamedata.saints[s].name, who.empty() ? "没有人知道" : who });
         ids.push_back(s);
     }
@@ -407,7 +409,7 @@ static void draw_card_help(void)
             if (!alive(m)) continue;
             int n = 0, k = g_rb((u16)(G_MEMBER(m) + G_M_NITEMS));
             for (int i = 0; i < k && i < 64; i++) if ((rw(G_FAR2E38, G_ITEM(m, i)) & 0xfff) == it) n += rb(G_FAR2E38, (u16)(G_ITEM(m, i) + 4));
-            if (n) { if (!who.empty()) who += ", "; who += name_of(m) + (n > 1 ? " (" + std::to_string(n) + ")" : ""); }
+            if (n) { if (!who.empty()) who += "  "; who += rich_member(m, n > 1 ? std::to_string(n) : ""); }
         }
         lines.push_back({ game_text(gamedata.items[it].name.c_str(), 64), who.empty() ? "没有人拥有" : who });
         ids.push_back(1000 + it);
@@ -425,7 +427,7 @@ static void draw_card_help(void)
     for (int tries = 0; tries < 6; tries++, size *= 0.93f) {
         lh = size * 1.12f; gapx = size * 0.8f; padx = size * 0.55f; pady = size * 0.3f;
         w = f->CalcTextSizeA(size * 0.92f, FLT_MAX, 0, hs).x;
-        for (auto &l : lines) { float a = f->CalcTextSizeA(size, FLT_MAX, 0, l.first.c_str()).x + gapx + f->CalcTextSizeA(size, FLT_MAX, 0, l.second.c_str()).x; if (a > w) w = a; }
+        for (auto &l : lines) { float a = f->CalcTextSizeA(size, FLT_MAX, 0, l.first.c_str()).x + gapx + rich_size(f, size, 0, l.second.c_str()).x; if (a > w) w = a; }
         h = lh * nrows + 2 * pady;
         p0 = ImVec2(br.x - w - 2 * padx, br.y - h); p1 = br;
         bool hit = false;
@@ -451,8 +453,9 @@ static void draw_card_help(void)
         bool none = lines[i].second == "nobody knows" || lines[i].second == "nobody has one";
         dl->AddText(f, size, ImVec2(x + size * 0.4f, y), IM_COL32(248, 236, 205, 255), lines[i].first.c_str());
         float nx = x + size * 0.4f + namew + gapx * 0.6f;
-        if (nx + f->CalcTextSizeA(size, FLT_MAX, 0, lines[i].second.c_str()).x > p1.x - padx * 0.5f) nx = p1.x - padx * 0.5f - f->CalcTextSizeA(size, FLT_MAX, 0, lines[i].second.c_str()).x;
-        dl->AddText(f, size, ImVec2(nx, y), none ? IM_COL32(175, 155, 130, 220) : IM_COL32(150, 230, 120, 255), lines[i].second.c_str());
+        float ww = rich_size(f, size, 0, lines[i].second.c_str()).x;   /* (who: their heads; an item's count after it) */
+        if (nx + ww > p1.x - padx * 0.5f) nx = p1.x - padx * 0.5f - ww;
+        rich_draw(dl, f, size, ImVec2(nx, y), 0, none ? IM_COL32(175, 155, 130, 220) : IM_COL32(150, 230, 120, 255), lines[i].second.c_str());
         if (hp.x >= p0.x && hp.x < p1.x && hp.y >= y && hp.y < y + lh) tip = i;
         y += lh;
     }
@@ -626,8 +629,8 @@ static void show_tip(ImVec2 pos, ImVec2 pivot, int item, int saint, int formula)
             const ItemDef *d = &gamedata.items[item];
             std::string nm = game_text(d->name.c_str(), d->name.size());
             ImGui::TextUnformatted(nm.c_str());
-            bool wearable = d->kind == K_WEAPON || d->kind == K_MISSILE || d->kind == K_ARMOR || d->kind == K_SHIELD;   /* (only equipped things count toward the load) */
-            ImGui::TextDisabled("%s%s", kind_name_one(d->kind), wearable && d->weight ? ("，重量" + std::to_string(d->weight) + "装备时").c_str() : "");
+            bool wearable = item_wieldable(d);   /* (only equipped things count toward the load) */
+            ImGui::TextDisabled("%s%s", kind_name_one(d->kind), wearable && d->weight ? ("，重量 " + std::to_string(d->weight) + "（装备时）").c_str() : "");
             ui_item_details(d, item);
         } else if (saint >= 0) {
             const Saint &st = gamedata.saints[saint];
@@ -728,9 +731,10 @@ static void draw_loot_buttons(void)
 }
 /* a click outside the menus on something the overlay drew: 1 if taken */
 extern "C" int battleoverlay_arrow_click(int x, int y);
+extern "C" int travel_camp_click(int x, int y);           /* (ui/travel.cpp: the campfire under the clock) */
 extern "C" int overlay_click(int x, int y)
 {
-    if (battleoverlay_arrow_click(x, y)) { click_taken = 1; return 1; }
+    if (battleoverlay_arrow_click(x, y) || travel_camp_click(x, y)) { click_taken = 1; return 1; }
     if (ImGui::GetFrameCount() - loot_btn_frame <= 2 && (loot_active || barter_active))
         for (int i = 0; i < 2; i++)
             if (x >= loot_btn[i][0].x && x < loot_btn[i][1].x && y >= loot_btn[i][0].y && y < loot_btn[i][1].y) { loot_press(i); click_taken = 1; return 1; }
@@ -790,6 +794,7 @@ extern "C" void ui_overlay(void)
     draw_card_help();
     if (assist_card_help) { watch_saints(); draw_learned(); }
     travel_overlay();
+    { void travel_camp_button(void); travel_camp_button(); }
     travelmap_labels();
     draw_picture_name();
     draw_new_encounter_seal();

@@ -78,7 +78,7 @@ On the first start a short welcome names the keys that matter and offers the ori
   party's best at each skill, drag and drop between members and a one-click leader change; F1 for the keys of the moment (the
   game's own hidden ones too); the mouse wheel in lists; the menu bar with a right click (the
   game shows it only while the button is held); the game waits while in the background;
-  a map of the level in battles and dungeons (Tab); tooltips for every item, saint and formula on
+  a map of the level in battles and dungeons, with its floors and the stairs between them (Tab); tooltips for every item, saint and formula on
   the game's own screens (armour with its hardness against each weapon); a foe's armour against
   the party's weapons in battle; loot and shop shortcuts (take or share a pile, sell a stack, buy
   ten); "Tidy the pack"; a bestiary (F12 > Records > Enemies, editable); icons on the world map.
@@ -115,8 +115,9 @@ On the first start a short welcome names the keys that matter and offers the ori
 `tools/nplay.py` runs a scripted session (`--x11` with the interface drawn, `--wine` for the
 Windows build) and takes screenshots; `tools/nctl.py` keeps a session to drive step by step;
 `tools/batch.sh` runs the standard play tests; `tools/smoke.py` checks a build quickly (start,
-battle, save and load); `tools/monkey.py` plays at random for as long as asked (a soak test: it
-reports a crash or a session that stops changing). The game folder comes from `--game` or
+battle, save and load); `tools/soaktest.py` plays at random for as long as asked, from Quickstart or
+a player's save (a soak test: it reports a crash, a "check:" line of `mods/checks.c`, a script's
+error, Go to or a journey that fails, a session that stops changing). The game folder comes from `--game` or
 `DARKLANDS_DIR`; it is copied, never changed. Scripts can use test commands of the platform
 layer: those that act as the system would (keys, clicks, the wheel, a controller) in
 `runtime/platform_sdl.c` (`run_script`), the rest (`ucmd ucard:`, `ugoto:N`, `uparty:`, `ucbt:`,

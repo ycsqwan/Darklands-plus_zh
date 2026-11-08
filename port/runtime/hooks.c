@@ -84,11 +84,41 @@ void hook_run(int idx)
 {
     int prev = hook_current, pd = hook_depth;
     hook_current = idx; hook_depth = 0;
+    /* ns_unwinding (mods/nscreen.c) tells a hook that a game call it made was cut short by the game
+       unwinding (a load, Quit), so it must return at once and leave the stack to the unwinding. Once that
+       unwinding has landed it means nothing, but nothing cleared it until the next ns_call: after a save
+       loaded from the menu (a native screen's game call unwinds) a hook that made no game call of its own
+       read it, returned without returning (levelwalk's on combat_input, every tick of the battle), the
+       stack crept down 4 bytes a tick into the game's data, and the battle stopped ("interp: opcode d9 at
+       6675:426f", build 1130). A hook is only ever entered with no unwinding under way: clear it here. */
+    { extern int ns_unwinding; if (!unw_active) ns_unwinding = 0; }
+    u16 sp0 = SP, bp0 = BP;
     hook_table[idx]();
     hook_current = prev; hook_depth = pd;
+    /* what any game function leaves as it was, a hook too: it returns (SP above where it was entered: the
+       return address popped, a near or far one, and the arguments of a function that pops its own) and BP is
+       the caller's. Said once a hook point, in the log (release_check.py looks for it). */
+    if (!unw_active && ((u16)(SP - sp0) < 2 || (u16)(SP - sp0) > 0x40 || BP != bp0)) {
+        static unsigned char said[8192];
+        if (idx >= 0 && idx < (int)sizeof said * 8 && !(said[idx >> 3] & (1 << (idx & 7)))) {
+            said[idx >> 3] |= (u8)(1 << (idx & 7));
+            unsigned lin = 0; int sect = -9;
+            for (int i = 0; i < HOOK_COUNT; i++) if (HOOK_POINTS[i].idx == idx) { lin = HOOK_POINTS[i].lin; sect = HOOK_POINTS[i].sect; break; }
+            fprintf(stderr, "hook: the hook of s%d %05x left the stack wrong (SP %+d, BP %04x, was %04x)\n", sect, lin, (s16)(u16)(SP - sp0), BP, bp0);
+        }
+    }
 }
 
 /* the next hook of the chain, or the game's function */
+static void unw_note(int idx, int d)            /* (debugging, DL_UNW_LOG: the hooks a game unwinding - a load, Quit - passes back through) */
+{
+    static int on = -1; if (on < 0) on = getenv("DL_UNW_LOG") != 0;
+    if (!on || !unw_active) return;
+    unsigned lin = 0; int sect = -9;
+    for (int i = 0; i < HOOK_COUNT; i++) if (HOOK_POINTS[i].idx == idx) { lin = HOOK_POINTS[i].lin; sect = HOOK_POINTS[i].sect; break; }
+    void (*h)(void) = chain_ok(idx) && d < chains[idx].n ? chains[idx].fn[d] : 0;
+    fprintf(stderr, "unwind: back through the hook of s%d %05x (chain %d, hook %p)\n", sect, lin, d, (void *)h);
+}
 void hook_call_original(void)
 {
     int idx = hook_current, d = hook_depth;
@@ -96,6 +126,7 @@ void hook_call_original(void)
         hook_depth = d + 1;
         chains[idx].fn[d + 1]();
         hook_current = idx; hook_depth = d;
+        unw_note(idx, d);
         return;
     }
     void (*f)(void) = func_of(idx);
@@ -103,6 +134,7 @@ void hook_call_original(void)
     hook_bypass = idx;
     f();
     hook_current = idx; hook_depth = d;
+    unw_note(idx, d);
 }
 
 void hook_return_far(unsigned n) { SP = (u16)(SP + 4 + n); }

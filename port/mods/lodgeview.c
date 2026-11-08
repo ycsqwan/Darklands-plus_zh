@@ -313,13 +313,13 @@ static void build(void)
             }
         if (p->act == 4) earn += p->val;
         if (p->act == 1 || p->act == 2) m->resting = 1;
-        p->can[0] = 1;
         p->can[1] = p->str < p->str_max;
         p->can[2] = p->df < p->df_max;
         p->can[3] = call(0x1e80, 1, i, 0) != 0;                          /* knows a formula */
         p->can[4] = lv_mode == 0;
         p->can[5] = lv_mode == 1;
         p->can[6] = m->nteach > 0;
+        p->can[0] = !(p->end >= p->end_max && (p->can[4] || p->can[5]));   /* (rested, with work or a watch to be had: nothing to regain) */
     }
     { u16 lo = (u16)ns_call(GF_money_pfennigs, 1, GV_party_money); m->purse = (long)(((u32)(u16)ns_call_dx() << 16) | lo); }
     m->cost = (s16)call(0x1858, 1, lv_mode, 0);
@@ -348,9 +348,33 @@ static int select_member(int i)
     return 1;
 }
 
+/* assist.inn_earn: a day of Just Relax refills Endurance and nothing else, yet it is what the game sets
+   everyone to. A member left relaxing is set to what it needs most (his order, 2026-11-05, kept on
+   2026-11-06 once he knew Endurance comes back on the road by itself, Divine Favor 1 to 5 a day):
+   Regain Strength when short of it, else Pray when short of Divine Favor, else Just Relax when short of
+   Endurance; one who needs nothing to the day's work: at an inn Earn a little money, in camp Guard
+   the camp (Relax is then not offered: can[0]). On opening, and after each day, as the game sets those
+   done regaining Strength or praying back to relaxing; a day the player chose stands. */
+static int rested_to_work(LodgeModel *m)
+{
+    static const int ACT_KEY[6] = { 0x244a, 0x1352, 0x1950, 0x1e41, 0x1245, 0x2247 };
+    if (!config_get_int("assist.inn_earn", 1) || config_get_int("original", 0)) return 0;
+    int any = 0, sel0 = (s16)g_rw(LV_SEL);
+    for (int i = 0; i < 5 && !ns_unwinding; i++) {
+        const LodgeMember *p = &m->m[i];
+        if (!p->present || p->act != 0) continue;
+        int to = p->can[1] ? 1 : p->can[2] ? 2 : p->can[0] ? 0 : p->can[4] ? 4 : 5;
+        if (to != 0 && select_member(i)) { key(ACT_KEY[to], 0); any = 1; }
+    }
+    if (any && !ns_unwinding) { select_member(sel0 >= 0 ? sel0 : 0); build(); }
+    return any;
+}
+
+int lodge_entered;                          /* how often a camp or an inn was entered, in either look (mods/travel.c: back on the road after a camp at 20:00) */
 static void lodge_hook(void)               /* the lodging screen (mode), s036 1462:0082 */
 {
     int mode = (s16)rw(SS, (u16)(SP + 4));
+    lodge_entered++;
     if (!lv_on || !ns_active()) { hook_call_original(); return; }
     plat_hold(600);                              /* (the old screen drawn while it is set up: not shown) */
     LodgeModel *m = &lodge_model;
@@ -379,17 +403,8 @@ static void lodge_hook(void)               /* the lodging screen (mode), s036 14
     ns_call(GF_screen_release, 0);
     if (ns_unwinding) { fixes_lodging(0); return; }
     build();
-    /* assist.inn_earn: a day of Just Relax refills Endurance and nothing else; one already at full
-       Endurance earns a little money instead (an inn in a town), as the player would choose */
-    if (mode == 0 && config_get_int("assist.inn_earn", 1) && !config_get_int("original", 0)) {
-        int any = 0, sel0 = (s16)g_rw(LV_SEL);
-        for (int i = 0; i < 5 && !ns_unwinding; i++) {
-            const LodgeMember *p = &m->m[i];
-            if (p->present && p->act == 0 && p->can[4] && p->end >= p->end_max && select_member(i)) { key(0x1245, 0); any = 1; }
-        }
-        if (any && !ns_unwinding) { select_member(sel0 >= 0 ? sel0 : 0); build(); }
-        if (ns_unwinding) { fixes_lodging(0); return; }
-    }
+    rested_to_work(m);
+    if (ns_unwinding) { fixes_lodging(0); return; }
     m->open = 1;
     fprintf(stderr, "lodging: open (mode %d, %d teachers, a day %ld pf)\n", mode, m->nteach, m->cost);
     ns_enter(NS_LODGE);
@@ -445,7 +460,9 @@ static void lodge_hook(void)               /* the lodging screen (mode), s036 14
                     leave = key(0x1454, 0);
                 }
                 break;
-            case LV_DAY: if (m->cost <= m->purse) { m->pass_n = m->pass_of = 0; leave = key(0x1f53, 0); } break;   /* (as the button: a day paid for) */
+            case LV_DAY:                                                /* (as the button: a day paid for) */
+                if (m->cost <= m->purse) { m->pass_n = m->pass_of = 0; leave = key(0x1f53, 0); if (!leave && !ns_unwinding) { build(); rested_to_work(m); } }
+                break;
             case LV_REST: case LV_DAYS:
                 if (a.type == LV_REST) {                                /* (those short of strength who only relax regain it) */
                     for (int i = 0; i < 5 && !leave && !ns_unwinding; i++) {
@@ -466,6 +483,7 @@ static void lodge_hook(void)               /* the lodging screen (mode), s036 14
                     leave = key(0x1f53, 0);
                     if (leave || ns_unwinding || (s16)g_rw(LV_NDAYS) == before) break;   /* (something happened; or the day could not be paid) */
                     build();
+                    rested_to_work(m);
                     if (d + 1 < (a.type == LV_DAYS ? a.a : 14) && day_changed(&was, m, a.type == LV_REST)) break;   /* (the days stop where a choice would be made anew) */
                     for (int w = 0; w < 30 && !skip_run; w++) {         /* (a moment to see each day: the hours went by on the page) */
                         dl_poll(); plat_sleep_ms(4);

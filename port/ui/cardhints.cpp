@@ -15,8 +15,8 @@ static const CardHint HINTS[] = {
 /* the same options with a fix on (mods/fixes.c: "cardopts" unless named): as the cards were meant to be */
 struct FixedHint { const char *fix; const char *card; int opt; const char *why; };
 static const FixedHint FIXED[] = {
-    { "university", "$UNIVE00", 0, "在这里徒劳寻找宗教图书馆约一周后，不再适用。" },
-    { "university", "$UNIVE00", 1, "在这里徒劳寻找炼金术配方约一周后，不再适用。" },
+    { "university", "$UNIVE00", 0, "在这里徒劳寻找宗教图书馆一周后，不再适用。" },
+    { "university", "$UNIVE00", 1, "在这里徒劳寻找炼金术配方一周后，不再适用。" },
     { "cardopts", "$SELEC01", 1, "在这座城镇的一处下水道井盖击败你约三周后，不再适用。" },
     { "cardopts", "$SELEC01", 2, "需要你钱包里的贿赂；在守卫认出你后的两天内以及守卫发现你在墙边偷窥后的一天内，都不适用。" },
     { "cardopts", "$REVOL14", 4, "需要一根绳子，且不能在你等待一天后再返回城墙时使用。" },

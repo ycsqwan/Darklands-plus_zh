@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
+#include <ctype.h>
 #include <time.h>
 #include <math.h>
 #include <string>
@@ -42,6 +43,13 @@ extern "C" int savesview_showing(int *loading)
     return 1;
 }
 
+/* the saving options (quick save, autosaves): a Darklands+ window over the page, by the saves. While it is up
+   it takes the pointer and the keys (ui/ui.cpp ui_event, windows_up), as the menu does: the page's own clicks
+   go to the game's screen, and the window, given none, could be neither changed, moved nor closed (GitHub
+   issue 11). It closes with its X, Esc, or the page */
+static bool opts;
+extern "C" int savesview_opts_open(void) { if (opts && !savesview_showing(nullptr)) opts = false; return opts; }
+extern "C" void savesview_opts_close(void) { opts = false; }
 extern "C" void saves_prefs(void);   /* ui/saves.cpp */
 extern "C" void savesview_draw(void)
 {
@@ -71,13 +79,12 @@ extern "C" void savesview_draw(void)
     if (P.button(bx, 4, 315, 15, "取消", IM_COL32(112, 40, 22, 235), NsDraw::FS_HEADBTN, PB_Y)) savesview_push(SVV_CANCEL, 0);
     if (S.loading) { if (S.sel >= 0 && P.button(bx - 34, 4, bx - 3, 15, "载入", IM_COL32(40, 92, 34, 235), NsDraw::FS_HEADBTN, PB_X)) savesview_push(SVV_OK, S.sel); }
     else if (P.button(bx - 34, 4, bx - 3, 15, "保存", IM_COL32(40, 92, 34, 235), NsDraw::FS_HEADBTN, PB_X)) savesview_push(SVV_OK, 0);
-    static bool opts;                                         /* the saving options (quick save, autosaves): here, by the saves */
-    if (P.button(bx - 94, 4, bx - 38, 15, opts ? "关闭选项" : "保存选项", IM_COL32(120, 92, 70, 220), NsDraw::FS_HEADBTN)) opts = !opts;
+    if (P.button(bx - 94, 4, bx - 38, 15, "保存选项", IM_COL32(120, 92, 70, 220), NsDraw::FS_HEADBTN)) opts = true;
     if (opts) {
         ImGuiIO &io = ImGui::GetIO();
         ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-        ImGui::SetNextWindowSize(ImVec2(fminf(io.DisplaySize.x * 0.8f, 900), 0), ImGuiCond_Appearing);
-        if (ImGui::Begin("保存选项", &opts, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) saves_prefs();
+        ImGui::SetNextWindowSize(ImVec2(fminf(io.DisplaySize.x * 0.8f, UIS(900)), 0), ImGuiCond_Always);   /* (its width fixed, the long lines wrapped; as tall as it needs) */
+        if (ImGui::Begin("保存选项", &opts, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize)) saves_prefs();
         ImGui::End();
     }
 
@@ -134,7 +141,13 @@ extern "C" void savesview_draw(void)
         std::string title = ns_gtext(v.comment);
         if (title.empty()) title = ns_gtext(v.place);
         float tx = X0 + 3;
-        P.text(f, NsDraw::FS_NAME, tx, y + 1.0f, ink, title, -1, X1 - 72);
+        std::string fn = v.file;                                  /* the save's file, to tell one from another ("(dksave3)") */
+        if (fn.size() > 4 && !strcasecmp(fn.c_str() + fn.size() - 4, ".sav")) fn.resize(fn.size() - 4);
+        for (char &ch : fn) ch = (char)tolower((unsigned char)ch);
+        fn = "(" + fn + ")";
+        float fw = P.width(fo, NsDraw::FS_SMALL, fn), tmax = X1 - 72 - fw - 2;
+        P.text(f, NsDraw::FS_NAME, tx, y + 1.0f, ink, title, -1, tmax);
+        P.text(fo, NsDraw::FS_SMALL, fminf(tx + P.width(f, NsDraw::FS_NAME, title), tmax) + 2, y + 1.8f, dim, fn);
         char when[64]; snprintf(when, sizeof when, "%d %s %d, %d:00", v.day, gm_month_name((unsigned)v.month % 12), v.year, v.hour);
         P.text(fo, NsDraw::FS_SMALL, 0, y + 1.8f, soft, when, X1 - 3);
         bool armed = S.loading && S.armed == i && plat_ticks_ms() - S.armed_t <= 4000, del_hit = false;

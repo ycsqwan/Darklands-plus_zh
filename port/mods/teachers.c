@@ -128,7 +128,7 @@ int teach_town(int loc, const TchTown *t, TchSource *out, int max)
         TchSource *o = NEXT(); if (!o) return n;
         o->src = TCH_UNIVERSITY; o->who = "大学";
         o->ask = "白天前往大学，选择“雇佣一位教师”。";
-        o->cond = "他们可能会拒绝（这取决于{感知}、{智力}、{拉丁语}、队伍的最佳{炼金术}以及声望）。一旦被拒绝，他们的大门将关闭一周，并使队伍在此地的声望略微下降。";
+        o->cond = "他们可能会拒绝（这取决于{感知}、{智力}、{拉丁语}、队伍的最佳{炼金术}以及声望）。被拒绝会耗费两小时，他们的大门将关闭一周，并可能使队伍在此地的声望下降 1。";
         o->strength = (int)(seed % 15) + 45;
         add(o, SKILL_ALCHEMY, 90); add(o, SKILL_RELIGION, 70); add(o, SKILL_LATIN, 50); add(o, SKILL_RW, 50); add(o, SKILL_HEALING, 110);
     }

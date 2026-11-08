@@ -176,7 +176,8 @@ extern "C" void barterview_draw(void)
         if (!L) for (int i = 0; i < b.nwares; i++) order.push_back(i);
         else {
             auto tidy = [&](size_t from) { std::stable_sort(order.begin() + from, order.end(), [&](int a, int c) { return ui_item_tidy_less(b.item[a].id, b.item[a].qual, b.item[c].id, b.item[c].qual); }); };
-            for (int sec = 0; sec < 6; sec++) {                    /* (the character sheet's sections: ns_item_section) */
+            for (int k = -1; k < 6; k++) {                         /* (the character sheet's sections, in its order: ns_item_section) */
+                int sec = k < 0 ? 0 : ns_section_at(k);
                 size_t head = order.size(); order.push_back(-1 - sec);
                 for (int i = 0; i < b.nitems; i++) if ((sec == 0) == (b.item[i].equipped != 0) && (sec == 0 || ns_item_section(b.item[i].id) == sec)) order.push_back(i);
                 if (order.size() == head + 1) order.pop_back(); else tidy(head + 1);
@@ -294,7 +295,7 @@ extern "C" void barterview_draw(void)
         std::vector<FRow> rows;
         for (int fm = 0; fm < 66 && fm < (int)gamedata.formulas.size() && fm < (int)gamedata.formula_names.size(); fm++) {
             std::string who;
-            for (int m = 0; m < 5; m++) if (b.present[m] && gm_knows_formula(m, fm)) { if (!who.empty()) who += ", "; who += gt(b.names[m]); }
+            for (int m = 0; m < 5; m++) if (b.present[m] && gm_knows_formula(m, fm)) { if (!who.empty()) who += " "; who += rich_member(m); }
             if (who.empty()) continue;
             const Formula &F = gamedata.formulas[fm];
             bool here = false; int bt = 1 << 20;

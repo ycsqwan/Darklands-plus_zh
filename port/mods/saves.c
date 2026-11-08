@@ -53,12 +53,23 @@ u32 plat_ticks_ms(void);
 #define D_LOAD_OK  GV_font_flag_b        /* Load menu item: 1 enabled */
 #define D_IN_BATTLE GV_in_battle       /* 1 during a battle */
 #define D_SAVENAME 0xa680        /* "dksaveN.sav": the save last written or loaded */
+/* that name as the save is on disk: past 99 the game writes "dksave100.sav", which is dksavea0.sav
+   (dos_name_alias, runtime/dos.c), the name the listings give */
+void saves_cur_name(char *out, size_t n)
+{
+    int dos_name_alias(const char *, char *, size_t);
+    g_str(G_DGROUP, D_SAVENAME, out, n);
+    char al[32];
+    if (dos_name_alias(out, al, sizeof al)) snprintf(out, n, "%s", al);
+}
 
 static const char *answer;       /* text_input's answer while we save */
 static int quick_due;
 static char auto_due[24];
 static char load_name[16];
 static int load_stage;           /* 1 asked for, 2 load_game called, 3 confirmed, 4 read */
+/* a load waits for the game's own card screen (mods/cardview.c: from inside the native one, a card a castle, mine or
+   dungeon brought up left the battle the save resumed corrupt) */
 static u32 load_t, loaded_t;
 static int in_save;
 static char iron[16];            /* the running game's save comment when it is an Ironman game ("Ironman 3f2a"), else "" */
@@ -136,7 +147,7 @@ static void remove_ci(const char *name)
 
 int saves_delete(const char *name)
 {
-    char cur[16]; g_str(G_DGROUP, D_SAVENAME, cur, sizeof cur);
+    char cur[16]; saves_cur_name(cur, sizeof cur);
     if (!strcasecmp(cur, name)) return 0;                  /* the game's own rule: not the loaded one */
     char b[20];
     remove_ci(name);
@@ -175,12 +186,12 @@ static int do_save(const char *comment)
     if (g_rb(D_SAVE_OK) != 1) return 0;
     int asked = !strncmp(comment, "Quick", 5);
     if (iron[0]) comment = iron;                       /* (an Ironman game: always over its one save) */
-    char before[16]; g_str(G_DGROUP, D_SAVENAME, before, sizeof before);
+    char before[16]; saves_cur_name(before, sizeof before);
     answer = comment; in_save = 1;
     int r = game_call_far(GF_save_game, 0, 0);
     answer = 0; in_save = 0;
     if (r < 0) { ui_notice("无法保存。"); return 0; }
-    char name[16]; g_str(G_DGROUP, D_SAVENAME, name, sizeof name);
+    char name[16]; saves_cur_name(name, sizeof name);
     if (getenv("DL_SAVES_LOG")) fprintf(stderr, "saves: %s -> %s\n", comment, name);
     if (iron[0]) { prune(iron, 1); if (asked) ui_notice("已保存（Ironman 游戏仅保留一个存档，随玩随存）。"); return 1; }
     if (!strncmp(comment, "Quicksave", 9)) prune("快速存档。", saves_keep_quick);
@@ -255,6 +266,7 @@ static void menubar_hook(void)             /* menu_bar_run(menu, once): with onc
 /* the cover over the game's load screen: while it opens and reads the save, and after, until that
    screen (s037) is gone and the place saved in has had a moment to be drawn (it showed for a few
    frames as the save was read: "Difficulty is now set to ...", the list) */
+int saves_load_under_way(void) { return load_stage != 0; }   /* (a load of ours asked for, or the save being read: mods/checks.c) */
 int saves_loading_cover(void)
 {
     static u32 gone_t;
@@ -317,7 +329,11 @@ static void loadscreen_hook(void)
     hook_return_far(0);
 }
 
-static void loaded_hook(void)              /* the save is read (s037 1c7d:0d24) */
+static void (*on_loaded[16])(void); static int non_loaded;
+static char menu_card[16];                         /* (the card whose menu's switches are kept: note_menu_flags) */
+unsigned saves_loaded_ms;
+void saves_on_loaded(void (*fn)(void)) { if (non_loaded < 16) on_loaded[non_loaded++] = fn; }
+static void loaded_hook(void)              /* the save is read (s037 1c7d:0d24): always installed, saves_on or not */
 {
     if (getenv("DL_SAVES_LOG")) {
         char f[16]; g_str(rw(SS, (u16)(SP + 6)), rw(SS, (u16)(SP + 4)), f, sizeof f);
@@ -327,15 +343,38 @@ static void loaded_hook(void)              /* the save is read (s037 1c7d:0d24) 
     if (load_name[0] && load_stage) {
         char m[80]; snprintf(m, sizeof m, g_rb(D_IN_BATTLE) == 1 ? "已加载 %s：一场战斗，已暂停（按空格键可继续）" : "已加载 %s", load_name);
         ui_notice(m);
+        if (g_rb(D_IN_BATTLE) == 1) {             /* (the field drawn at once, round the leader: it stayed black until someone moved) */
+            void battlescroll_look(int i); int lead = (s8)g_rb(GV_marching_order);
+            battlescroll_look(lead >= 0 && lead < 5 ? lead : 0);
+        }
     }
     load_stage = 0;
     loaded_t = plat_ticks_ms();
+    saves_loaded_ms = loaded_t | 1;
     auto_due[0] = 0;
     loaded_since_title = 1; iron_check = 1;          /* (an Ironman game's save, or not: saves_frame) */
+    menu_card[0] = 0;                                /* (the old game's card menu: note_menu_flags) */
+    for (int i = 0; i < non_loaded; i++) on_loaded[i]();   /* (what each module kept of the old game: saves_on_loaded) */
 }
 
 /* the game's own Save and Load (the menu, Alt-S, Alt-L) as native dialogs (mods/savesview.c) */
+/* The game's save writes over the start of the card's text (the card's .msg file, DS:a895: 32 bytes as the soak
+   test saw it) and the text on show (msg_buf). A card that shows its menu again after a save made meanwhile - a
+   quicksave during the text of a failed climb over a city's wall at night, $CityW01 - showed that menu without its
+   text and options, and the party stood there for good (soak test, 2026-11-04). Both are kept across every save. */
+#define CARD_FILE_N 6000
+static u8 keep_file[CARD_FILE_N], keep_msg[900];
+static void save_hook_run(void);
 static void save_hook(void)                /* save_game () */
+{
+    for (int i = 0; i < CARD_FILE_N; i++) keep_file[i] = g_rb((u16)(GV_msg_file + i));
+    for (int i = 0; i < (int)sizeof keep_msg; i++) keep_msg[i] = g_rb((u16)(GV_msg_buf + i));
+    save_hook_run();
+    if (unw_active) return;
+    for (int i = 0; i < CARD_FILE_N; i++) g_wb((u16)(GV_msg_file + i), keep_file[i]);
+    for (int i = 0; i < (int)sizeof keep_msg; i++) g_wb((u16)(GV_msg_buf + i), keep_msg[i]);
+}
+static void save_hook_run(void)
 {
     if (in_save) { hook_call_original(); return; }          /* (a quick- or autosave: do_save) */
     if (iron[0]) {                                          /* (an Ironman game: over its one save, no name to give) */
@@ -351,12 +390,12 @@ static void save_hook(void)                /* save_game () */
     int r = savesview_save(c, sizeof c, old, sizeof old);
     if (r < 0) { hook_call_original(); return; }
     if (r == 0) { AX = 0; hook_return_far(0); return; }
-    g_str(G_DGROUP, D_SAVENAME, before, sizeof before);
+    saves_cur_name(before, sizeof before);
     answer = c; in_save = 1;
     hook_call_original();
     answer = 0; in_save = 0;
     if (unw_active) return;
-    char name[16]; g_str(G_DGROUP, D_SAVENAME, name, sizeof name);
+    char name[16]; saves_cur_name(name, sizeof name);
     SaveInfo now;
     int written = (s16)AX >= 0 && saves_read(name, &now) && strcasecmp(name, old) && (strcasecmp(name, before) || !before[0]);
     char m[128];
@@ -386,10 +425,13 @@ static void load_hook(void)                /* load_game () */
    were while the menu was up. A save before a battle is made after the option chosen has run,
    which may have used them for something else (the boars' "use your horses" switch was left on);
    loaded, the card's menu comes up again from the saved switches without its script, and offered
-   the horses to a party without any. The battle's autosave keeps the menu's switches instead */
-static char menu_card[16]; static u16 menu_flags[10];
+   the horses to a party without any. The battle's autosave keeps the menu's switches instead - those of
+   this visit to the card only: the cards left (the map, a town's streets, a battle), or a game loaded, they
+   are forgotten, so a later visit whose battle comes before its menu is saved with its own */
+static u16 menu_flags[10];
 static void note_menu_flags(void)
 {
+    if (game_mode() != GM_CARD) { menu_card[0] = 0; return; }
     if (!assist_in_card_menu()) return;
     g_str(G_DGROUP, GV_card_name, menu_card, sizeof menu_card);
     for (int k = 0; k < 10; k++) menu_flags[k] = g_rw((u16)(GV_opt_flag_0 + 2 * k));
@@ -413,7 +455,7 @@ static void hooks_set(int on);
    again whenever a save is read during play */
 static void iron_from_save(void)
 {
-    char cur[16]; g_str(G_DGROUP, D_SAVENAME, cur, sizeof cur);
+    char cur[16]; saves_cur_name(cur, sizeof cur);
     SaveInfo si;
     iron[0] = 0; close_due = 0;
     if (cur[0] && saves_read(cur, &si) && !strncmp(si.comment, "Ironman ", 8)) snprintf(iron, sizeof iron, "%.15s", si.comment);
@@ -536,7 +578,7 @@ int saves_key(int sym, int ctrl)
 
 static struct { int sect; unsigned seg, off; void (*fn)(void); } HK[] = {
     { 37, 0x1462, 0x43e6, textinput_hook }, { -1, 0x0000, 0x0000, menubar_hook }, { -1, 0x0000, 0x2522, askyesno_hook },
-    { 37, 0x1c7d, 0x06e6, loadlist_hook }, { 37, 0x1c7d, 0x0d24, loaded_hook }, { 37, 0x1c7d, 0x0002, loadscreen_hook }, { 29, 0x0e76, 0x2278, battle_hook } };
+    { 37, 0x1c7d, 0x06e6, loadlist_hook }, { 37, 0x1c7d, 0x0002, loadscreen_hook }, { 29, 0x0e76, 0x2278, battle_hook } };
 
 static void hooks_set(int on)
 {
@@ -576,8 +618,35 @@ int saves_restart_on_exit(void)
 void saves_note_game(void) { if (game_mode() != GM_OTHER) game_seen = 1; }
 int saves_party_ended(void) { return !user_quit && game_seen; }     /* the program ends for the party's end, not a quit */
 
+/* ---- battle saves made by Darklands+ up to 1.3: a castle's, mine's or dungeon's trigger areas came back
+ * as pits. A battle save stores each level's trigger routines as numbers (s003 0e76:09b9..0a48: e->fn ==
+ * vec_17f7 -> 1 ...) and the restore turns them back, any number it does not know into the pit's routine
+ * (vec_181f, "Aaaahh!" once the whole party stands in the area). The translation compared the routines'
+ * segment without the load segment, so nothing matched and the routines were saved as they stood in memory
+ * (fixed in the translator, recomp16.py: a relocated immediate of cmp): after loading such a save every
+ * trap, secret door, alarm and the mine's dwarves' iron door was a pit, and the door showed no riddle
+ * (GitHub issue 2). When the restore takes a level out of the save (EXPLODE, s003 1016:0d07, from
+ * 0e76:17d5), a routine stored as a far pointer is given its number first (the restore's own table). */
+static void bsv_level_hook(void)
+{
+    u16 ret_off = rw(SS, SP), ret_seg = rw(SS, (u16)(SP + 2));
+    hook_call_original();
+    if (ret_off != 0x17da || ret_seg != (u16)(LOADSEG + 0x0e76)) return;
+    static const u16 VEC[8] = { 0x17ed, 0x17f7, 0x1801, 0x180b, 0x181f, 0x1815, 0x1833, 0x1829 }, TYPE[8] = { 0, 1, 2, 4, 5, 6, 7, 8 };
+    u16 bo = g_rw(GV_load_buf), bs = g_rw((u16)(GV_load_buf + 2));
+    int n = rb(bs, (u16)(bo + 0x2184)), fixed = 0;
+    for (int k = 0; k < n && k < 50; k++) {
+        u16 r = (u16)(bo + 0x218c + 14 * k), off = rw(bs, r), seg = rw(bs, (u16)(r + 2));
+        if (!seg) continue;                                     /* (a number, as the game saves it) */
+        for (int t = 0; t < 8; t++) if (off == VEC[t]) { ww(bs, r, TYPE[t]); ww(bs, (u16)(r + 2), 0); fixed++; break; }
+    }
+    if (fixed) fprintf(stderr, "saves: %d trigger routines of a level put back (a battle save of an earlier Darklands+)\n", fixed);
+}
+
 void saves_init(void)
 {
+    hook_install(3, 0x1016, 0x0d07, bsv_level_hook);
+    hook_install(37, 0x1c7d, 0x0d24, loaded_hook);   /* (always: saves_on_loaded) */
     saves_restart = config_get_int("saves.restart_on_end", 1);
     hook_install(GF_quit_to_dos, quit_hook);
     hook_install(GF_save_game, save_hook);

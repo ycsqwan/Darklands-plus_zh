@@ -1,0 +1,28 @@
+# The swallows under the ice: cutting the frozen mere for water at dawn, the kettle comes up with a clump of swallows sleeping out the winter on the bottom, as the old fishers say they do.
+name     The swallows under the ice
+card     $NkIce00
+picture  XMTLAKE
+where    camp
+when     any
+weight   1
+only     month == 12 or month <= 2             # the mere freezes hard
+
+[start]
+block    0
+chosen   bestskill(Woodwise)                   # who cut the ice for water
+option 0                                   # warm them at the fire to see if the tale is true
+  chance none
+  ok     text 1; hours 1; attr party, DF, -2; exit
+option 1                                   # lower them back to the bottom without waking them (Woodwise, Agility)
+  who    bestattrskill(Agl, Woodwise)
+  chance clamp(5, 90, skill(who, Woodwise) + attr(who, Agl) / 3)
+  ok     chosen who; text 2; attr party, DF, 2; practice who, Woodwise, 1, 10, 0; exit
+  fail   chosen who; text 3; practice who, Woodwise, 0, 10, 0; exit
+option 2                                   # cut them open for swallow-stones (Alchemy)
+  who    bestskill(Alchemy)
+  chance clamp(5, 90, skill(who, Alchemy) + attr(who, Int) / 3 - 10)
+  ok     chosen who; money1 random(48) + 48; text 4; gain money1; attr party, DF, -3; practice who, Alchemy, 1, 10, 0; exit
+  fail   chosen who; text 5; attr party, DF, -3; practice who, Alchemy, 0, 10, 0; exit
+option 3                                   # drop them back and fetch water elsewhere
+  chance none
+  ok     text 6; exit

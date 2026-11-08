@@ -20,6 +20,7 @@
 #include "fixes.h"
 #include "saintinfo.h"
 #include "sheetview.h"
+#include "encounters.h"
 
 /* does / unlike: the game's code; st_does / st_unlike: with the sainttexts fix (0: the same), st_arm:
    that needs armourday (else the game's help); cards: the encounters that call for the saint */
@@ -41,7 +42,7 @@ static const struct { const char *does, *unlike, *st_does, *st_unlike; int st_ar
       0, 0, 0, 0 },   /* 4 St.Albert the Great */
     { "智力+6至11，拉丁语及读写+20至39。",
       "",
-      0, 0, 0, 5 },   /* 5 St.Alcuin */
+      0, 0, 0, 6 },   /* 5 St.Alcuin */
     { "可在最近的城镇提升声望10至19点。魅力+6至11。若队伍既无弗罗林又无格罗申，则获得3至9格罗申。",
       "",
       0, 0, 0, 1 },   /* 6 St.Alexis */
@@ -77,7 +78,7 @@ static const struct { const char *does, *unlike, *st_does, *st_unlike; int st_ar
       0, 0, 0, 1 },   /* 16 St.Catherine */
     { "魅力与感知+1至15，通用语+10至29。",
       "",
-      0, 0, 0, 12 },   /* 17 St.Catherine of Siena */
+      0, 0, 0, 13 },   /* 17 St.Catherine of Siena */
     { "魅力+3至10。@INSTR，队伍所在城镇的声望（在陆地视图中为最近的）可提升20至59点。",
       "",
       0, 0, 0, 7 },   /* 18 St.Cecilia */
@@ -89,13 +90,13 @@ static const struct { const char *does, *unlike, *st_does, *st_unlike; int st_ar
       "防火保护每位成员50，被祈祷者90。治愈10%已损失的耐力。", "", 1, 3 },   /* 20 St.Charity */
     { "敏捷+8至15，魅力+1至10。",
       "",
-      0, 0, 0, 8 },   /* 21 St.Christina, Astonish. */
+      0, 0, 0, 10 },   /* 21 St.Christina, Astonish. */
     { "街头智慧+10至19，木艺+20至39，骑术+25至74，弓箭+6至11。",
       "无加速旅行，亦不恢复力量或耐力。",
       "队伍一周内行进速度提高一半（路上天数减少）。治愈10%已损失的力量与20%已损失的耐力。街头智慧+10至19，木艺+20至39，骑术+25至74，弓箭+6至11。", "", 0, 1 },   /* 22 St.Christopher */
     { "治愈所有已损失的耐力与力量。",
       "",
-      0, 0, 0, 3 },   /* 23 St.Clare */
+      0, 0, 0, 4 },   /* 23 St.Clare */
     { "治愈25%已损失的耐力与50%已损失的力量。魅力+6至11，治疗+10至19。",
       "",
       0, 0, 0, 0 },   /* 24 St.Clotilda */
@@ -113,7 +114,7 @@ static const struct { const char *does, *unlike, *st_does, *st_unlike; int st_ar
       "每位成员的皮革与布质盔甲在品质上均提升10点。", "", 1, 0 },   /* 28 St.Crispin */
     { "智力+5至9，炼金术+5至9。",
       "",
-      0, 0, 0, 3 },   /* 29 St.Cyprian */
+      0, 0, 0, 4 },   /* 29 St.Cyprian */
     { "治愈所有已损失的耐力，并恢复30%已损失的力量。教授圣科斯马斯。",
       "",
       0, 0, 0, 0 },   /* 30 St.Damian */
@@ -131,7 +132,7 @@ static const struct { const char *does, *unlike, *st_does, *st_unlike; int st_ar
       0, 0, 0, 4 },   /* 34 St.Devota */
     { "敏捷+10至19，木艺与潜行+10至19，街头智慧与巧思+20至39。",
       "仅对所祈求之人有效，不作用于整个队伍；无魅力或通用语技能。",
-      "每位成员的潜行+10至19。敏捷、木艺+10至19，街头智慧与巧思+20至39，魅力与通用语+6至11。", "", 0, 6 },   /* 35 St.Dismas */
+      "每位成员的潜行+10至19。敏捷、木艺+10至19，街头智慧与巧思+20至39，魅力与通用语+6至11。", "", 0, 7 },   /* 35 St.Dismas */
     { "智力+10至19，通用语与拉丁语+10至19，读写+20至39。",
       "",
       0, 0, 0, 3 },   /* 36 St.Dominic */
@@ -185,10 +186,10 @@ static const struct { const char *does, *unlike, *st_does, *st_unlike; int st_ar
       "体力与感知+6至11，魅力+15至29，通用语+10至19，美德+25至49。每两次中有一次，队伍会损失十分之一的金钱。", "", 0, 1 },   /* 52 St.Francis */
     { "智力与感知+10至29。",
       "",
-      0, 0, 0, 14 },   /* 53 St.Gabriel */
+      0, 0, 0, 15 },   /* 53 St.Gabriel */
     { "治愈30%的体力损耗和20%的力量损耗。一周内不会遭遇伏击（如盗匪等）。",
       "",
-      0, 0, 0, 22 },   /* 54 St.Genevieve */
+      0, 0, 0, 23 },   /* 54 St.Genevieve */
     { "力量+10至14，敏捷+5至9，所有武器技能与骑术+25至49。",
       "",
       "被祈祷者的武器与盔甲品质提升10点。力量+10至14，敏捷+5至9，所有武器技能与骑术+25至49。", "", 1, 0 },   /* 55 St.George */
@@ -209,13 +210,13 @@ static const struct { const char *does, *unlike, *st_does, *st_unlike; int st_ar
       0, 0, 0, 4 },   /* 60 St.Godehard */
     { "治愈20%的体力损耗。通用语+15至29，工艺+10至19。一周内不会遭遇伏击（如盗匪等）。",
       "",
-      0, 0, 0, 30 },   /* 61 St.Godfrey */
+      0, 0, 0, 31 },   /* 61 St.Godfrey */
     { "可在石勒苏益格、吕贝克、维斯马、罗斯托克、汉堡、吕讷堡或不来梅等地将声望提升20至39点（其他地方无效）。所有武器技能+15至29。",
       "",
       0, 0, 0, 0 },   /* 62 St.Gottschalk */
     { "魅力+8至15，炼金术与通用语+10至19，工艺+20至39。",
       "",
-      0, 0, 0, 13 },   /* 63 St.Gregory Thaumaturg. */
+      0, 0, 0, 15 },   /* 63 St.Gregory Thaumaturg. */
     { "可在奥得河畔法兰克福、布雷斯劳、奥洛穆茨或特申等地将声望提升30至49点（其他地方无效）。治疗+20至29。",
       "",
       "可在奥得河畔法兰克福、布雷斯劳、奥洛穆茨或特申等地将声望提升30至49点（其他地方无效）。治愈20%的体力与力量损耗。治疗+20至29。", "", 0, 6 },   /* 64 St.Hedwig */
@@ -230,10 +231,10 @@ static const struct { const char *does, *unlike, *st_does, *st_unlike; int st_ar
       0, 0, 0, 10 },   /* 67 St.Herve */
     { "感知+20至59。",
       "无任何声望加成。",
-      "感知+20至59。沿莱茵河（巴塞尔至桑滕），可将声望提升5至14点。", "", 0, 10 },   /* 68 St.Hildegard */
+      "感知+20至59。沿莱茵河（巴塞尔至桑滕），可将声望提升5至14点。", "", 0, 11 },   /* 68 St.Hildegard */
     { "长柄武器、投掷武器与弓箭+15至29，投射装置+10至19，潜行+25至49，木系知识+40至79。",
       "",
-      0, 0, 0, 11 },   /* 69 St.Hubert */
+      0, 0, 0, 12 },   /* 69 St.Hubert */
     { "魅力+15至29，所有武器技能与通用语+10至19，骑术+5至9。",
       "",
       0, 0, 0, 0 },   /* 70 St.Illtyd */
@@ -260,13 +261,13 @@ static const struct { const char *does, *unlike, *st_does, *st_unlike; int st_ar
       "每项技能+1至4，每5点美德再加1。", "", 0, 0 },   /* 77 St.John Climacus */
     { "@NEPOMUK 魅力+8至15，智力+6至11，通用语+20至39，街头智慧+4至7。",
       "",
-      0, 0, 0, 6 },   /* 78 St.John Nepolmuchen */
+      0, 0, 0, 7 },   /* 78 St.John Nepolmuchen */
     { "魅力+6至11，工艺与街头智慧+30至59。",
       "",
       "工艺与街头智慧+30至59；在城镇中，魅力+6至11。", "", 0, 1 },   /* 79 St.Joseph */
     { "耐力、魅力、力量、感知、敏捷和智力+4至8，手中武器的技能+15至24，炼金术、宗教、通用语、拉丁语、读写、治疗、潜行、工艺、木艺和街头智慧+6至11。",
       "并非所有技能：没有骑术，除手中武器外无其他武器技能。",
-      "耐力、魅力、力量、感知、敏捷和智力+4至8，手中武器的技能+15至24，其他各项技能+6至11。", "", 0, 9 },   /* 80 St.Jude */
+      "耐力、魅力、力量、感知、敏捷和智力+4至8，手中武器的技能+15至24，其他各项技能+6至11。", "", 0, 11 },   /* 80 St.Jude */
     { "木艺+20至39，骑术+6至11。队伍可如在陆地上般穿越水域。",
       "",
       0, 0, 0, 1 },   /* 81 St.Julian, Hospitaler */
@@ -350,7 +351,7 @@ static const struct { const char *does, *unlike, *st_does, *st_unlike; int st_ar
       0, 0, 0, 7 },   /* 107 St.Perpetua */
     { "魅力+8至15，力量+12至19，感知降至最大值的一半，通用语、拉丁语及治疗+10至19，刃器+15至29。",
       "",
-      0, 0, 0, 5 },   /* 108 St.Peter */
+      0, 0, 0, 6 },   /* 108 St.Peter */
     { "可使最近城镇的声望降低1至4点。智力和感知+6至11，炼金术和骑术+10至19，潜行+40至79。",
       "",
       0, 0, 0, 0 },   /* 109 St.Peter of Atroa */
@@ -368,7 +369,7 @@ static const struct { const char *does, *unlike, *st_does, *st_unlike; int st_ar
       0, 0, 0, 0 },   /* 113 St.Raymond Lull */
     { "治愈30%的已损失耐力。魅力降至6至11，炼金术+6至17，工艺+35至69。",
       "",
-      0, 0, 0, 7 },   /* 114 St.Reinold */
+      0, 0, 0, 8 },   /* 114 St.Reinold */
     { "治愈20%的已损失耐力和20%的已损失力量。治疗+10至19，工艺+8至15。",
       "",
       0, 0, 0, 2 },   /* 115 St.Roch */
@@ -439,21 +440,21 @@ static const char *special(int s, const char *tok, char *buf, size_t n)
 {
     int arm = fix_is_on("armorday"), fire = fix_is_on("fireward"), pauls = fix_is_on("pauls"), nep = fix_is_on("saintrep");
     (void)s;
-    if (!strcmp(tok, "INSTR")) return sheetview_shared() ? "如果队伍中有任何人携带乐器（使用 Darklands 的共享背包时，不必是被祈求者本人）" : "如果被祈求者本人携带乐器";
-    if (!strcmp(tok, "FIRE1")) return arm ? "为被祈求者提供 90 点防火保护。" :
-        fire ? "本意是用于防火保护，但游戏却将其加到了护甲上，效果很好（在启用“无防火保护免疫”修复后，此效果将失效）。"
-             : "本意是用于防火保护，却为被祈求者在战斗中提供了 +32 护甲值，效果很好。";
-    if (!strcmp(tok, "CRISPIN")) return arm ? "每位成员所穿戴的护甲品质提升 10 点。"
-                                            : "每位成员所穿戴的躯干与腿部护甲品质提升 10 点，效果很好，每次祈祷都会叠加。";
-    if (!strcmp(tok, "ARM1")) return arm ? "护甲厚度增加一级。" : "护甲厚度增加一级，效果很好，可叠加。";
-    if (!strcmp(tok, "ARM2")) return arm ? "护甲厚度增加两级。" : "护甲厚度增加两级，效果很好，可叠加。";
-    if (!strcmp(tok, "NEPOMUK")) return nep ? "可以在布拉格提升 15 至 24 点声望，在圣约阿希姆斯塔尔、比尔格利茨、库滕贝格、奥洛穆茨或布伦提升 10 至 19 点声望（其他地方不可）。"
-        : "可以在圣约阿希姆斯塔尔、比尔格利茨、库滕贝格、奥洛穆茨或布伦提升 10 至 19 点声望（其他地方不可）；而在布拉格则随机选择一处地点。";
-    if (!strcmp(tok, "PAUL")) return pauls ? "治愈 10% 的已损失力量。耐力 +5 至 9，魅力 +8 至 15，通用语 +20 至 39，拉丁语 +10 至 19，读写能力 +40 至 79。" : "治愈所有已损失的耐力与力量。智力降低至最大值的一半。";
-    if (!strcmp(tok, "SIMPLE")) return pauls ? "治愈所有已损失的耐力与力量。智力降低至最大值的一半。" : "智力+12至23，通用语和拉丁语+12至26，读写能力+15至29，治疗+10至19。";
-    if (!strcmp(tok, "POLYCARP")) return arm ? "每位成员：90 点防火保护。" :
-        fire ? "每位成员：90 点防火保护，效果很好（并附带护甲加成，该加成已被“无防火保护免疫”修复取消）。"
-             : "每位成员：90 点防火保护，效果很好，并附带 +48 护甲值（本意是用于防火保护）。";
+    if (!strcmp(tok, "INSTR")) return sheetview_shared() ? "If anyone in the party carries a musical instrument (with Darklands+'s shared pack, it need not be the one prayed for)" : "If the one prayed for carries a musical instrument";
+    if (!strcmp(tok, "FIRE1")) return arm ? "Fire protection 90 for the one prayed for." :
+        fire ? "Meant as protection against fire, but the game adds it to the armor instead, for good (with the fix \"No invulnerability from fire protection\" on, it does nothing)."
+             : "Meant as protection against fire, it gives the one prayed for armor +32 in battle instead, for good.";
+    if (!strcmp(tok, "CRISPIN")) return arm ? "Every member's worn armor counts 10 points better in quality."
+                                            : "Every member's worn body and leg armor +10 quality, for good, piling up with each prayer.";
+    if (!strcmp(tok, "ARM1")) return arm ? "Armor one level thicker." : "Armor one level thicker, for good, piling up.";
+    if (!strcmp(tok, "ARM2")) return arm ? "Armor two levels thicker." : "Armor two levels thicker, for good, piling up.";
+    if (!strcmp(tok, "NEPOMUK")) return nep ? "May raise the reputation by 15 to 24 in Prag, and by 10 to 19 in St. Joachimsthal, Bürglitz, Kuttenberg, Olmütz or Brünn (nowhere else)."
+        : "May raise the reputation by 10 to 19 in St. Joachimsthal, Bürglitz, Kuttenberg, Olmütz or Brünn (nowhere else); in Prag it goes to a place picked at random.";
+    if (!strcmp(tok, "PAUL")) return pauls ? "Heals 10% of lost Strength. Endurance +5 to 9, Charisma +8 to 15, Speak Common +20 to 39, Latin +10 to 19, Read & Write +40 to 79." : "Heals all lost Endurance and Strength. Intelligence lowered by half its maximum.";
+    if (!strcmp(tok, "SIMPLE")) return pauls ? "Heals all lost Endurance and Strength. Intelligence lowered by half its maximum." : "Intelligence +12 to 23, Speak Common and Latin +12 to 26, Read & Write +15 to 29, Healing +10 to 19.";
+    if (!strcmp(tok, "POLYCARP")) return arm ? "Every member: fire protection 90." :
+        fire ? "Every member: fire protection 90 for good (and an armor bonus, which the fix \"No invulnerability from fire protection\" cancels)."
+             : "Every member: fire protection 90 for good, and armor +48 for good (meant as protection against fire).";
     snprintf(buf, n, "?");
     return buf;
 }
@@ -484,12 +485,27 @@ const char *saint_info_does(int s)
 const char *saint_info_unlike(int s)
 {
     if (s < 0 || s >= SAINT_INFO_N) return "";
-    if (s == 105 && !fix_is_on("pauls")) return "这是文本与说明书对圣保罗·辛普勒提供的帮助：两圣保罗被混淆了（“两圣保罗按各自文本行事”修复纠正了这一问题）。";
-    if (s == 106 && !fix_is_on("pauls")) return "这是圣托马斯·阿奎那的帮助：两圣保罗被混淆了（“两圣保罗按各自文本行事”修复纠正了这一问题）。";
+    if (s == 105 && !fix_is_on("pauls")) return "This is the help the texts and the manual give St. Paul the Simple: the two Pauls are mixed up (the fix \"The two St. Pauls do what their texts say\" sets this right).";
+    if (s == 106 && !fix_is_on("pauls")) return "This is St. Thomas Aquinas's help: the two Pauls are mixed up (the fix \"The two St. Pauls do what their texts say\" sets this right).";
     return st(s) ? INFO[s].st_unlike : INFO[s].unlike;
 }
 
-int saint_info_cards(int s) { return s >= 0 && s < SAINT_INFO_N ? INFO[s].cards : 0; }
+/* the game's own card scripts that call for the saint (the decompiled ones and the five read in the disassembly:
+   s044 $Chall00, s049 $Marke01, s079 $Execu01, s081 $Drago01, s106 $McGuf01), and the encounters of the mods
+   in use (mods/encounters.c) */
+int saint_info_cards(int s) { return s >= 0 && s < SAINT_INFO_N ? INFO[s].cards + encounters_asks_saint(s) : 0; }
+int saint_info_cards_game(int s) { return s >= 0 && s < SAINT_INFO_N ? INFO[s].cards : 0; }
+/* the game's own card scripts (with the five read in the disassembly: s044 $Chall00, s049 $Marke01,
+   s081 $Drago01, ...): the potions an option offers (card_items), 95 Ironarm ... 116 */
+int potion_cards_game(int id)
+{
+    static const unsigned char CARDS[22] = { 62, 44, 56, 5, 15, 4, 74, 41, 12, 8, 0, 1, 0, 0, 1, 6, 1, 1, 0, 0, 1, 6 };
+    return id >= 95 && id <= 116 ? CARDS[id - 95] : 0;
+}
+/* of the general goods only rope and lockpicks are asked for by cards (count_items, s029 0e76:0c76), and an
+   instrument by St. Cecilia (the type flag 0x20000000, s039 165c:1024); the boars' tusks and the other
+   trophy by nothing (add_item, count_items, take_item in the cards' scripts) */
+int item_unasked_game(int id) { return id == 0x39 || id == 0x3a || (id >= 0x3c && id <= 0x3f) || id == 0x92 || id == 0x93; }
 
 /* "" for a saint whose help holds nothing to wear off (healing, the reputation, money: St. Clare) */
 const char *saint_info_note(int s)
@@ -497,6 +513,6 @@ const char *saint_info_note(int s)
     static const char *WEARS[] = { "+", "lowered", "protection", "better", "thicker" };
     const char *d = saint_info_does(s);
     for (size_t k = 0; k < sizeof WEARS / sizeof *WEARS; k++)
-        if (strstr(d, WEARS[k])) return "圣人的帮助通常持续约一天，除非另有说明。";
+        if (strstr(d, WEARS[k])) return "A saint's help lasts about a day, unless said otherwise.";
     return "";
 }

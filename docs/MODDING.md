@@ -116,18 +116,37 @@ layout is in `formats/dlformats/enm.py`.
 
 ## New encounters
 
-A mod can add wilderness encounters of its own: cards like the game's, with a picture, text and
-options that test the party's skills, run by Darklands+ from a plain text script
-(`port/mods/encounters.c`). Darklands+ comes with one such mod, **New encounters** (sixteen of
-them; tick it in F12 > Mods). Its folder is the best place to start reading:
+A mod can add encounters of its own: cards like the game's, with a picture, text and options
+that test the party's skills, run by Darklands+ from a plain text script
+(`port/mods/encounters.c`). Darklands+ comes with one such mod, **New encounters** (tick it in
+F12 > Mods). Its folder is the best place to start reading:
 `mods/New encounters/ENCOUNTERS/*.TXT` and `MSGFILES/$NW*.TXT`.
 
-While a mod with an `ENCOUNTERS` folder is ticked, some of the random encounters in the overland
-view are new ones. Each new encounter counts as `weight` more entries of the game's own table of
-encounters for the terrain (9 to 29 entries), so with a weight of 1 it is about as common as one
-of the game's own; F12 > Mods sets an overall percentage, and none comes twice within a few days.
-A small red seal in the corner of the card marks a new encounter (its tooltip names it). Not in
-the Full Original preset (the game as it was).
+An encounter's `where` says where it comes up:
+
+| where | |
+|---|---|
+| `wild` (the default) | among the random encounters of the overland view. It counts as `weight` more entries of the game's own table of encounters for the terrain (9 to 29 entries), so with a weight of 1 it is about as common as one of the game's own. It never takes the place of the game's encounters that give what little else does (the witch's hut, the hermit, the travelling alchemist, the merchant caravan, the knight bound for a tournament, the cave in the pass) |
+| `boat` | on a boat trip, before the landing (3 trips in 10 bring one, in place of the river pirates). `exit` lands the party |
+| `street` | as the party comes into a town's street: the main street by day 3 times in 100, at night or in a side street by day 6, a side street at night 10. `exit` goes on into the street; `card N` to another of the town's cards |
+| `camp` | after a night camping in the wild (12 nights in 100), as the party sets out again. `exit` goes on to the map |
+
+Within a place, `weight` sets how often one comes up against the others there. F12 > Mods sets an
+overall percentage, and none comes twice within a few days. A small red seal in the corner of the
+card marks a new encounter (its tooltip names it). Not in the Full Original preset (the game as it
+was).
+
+**What came of it.** Under the text a choice ends on (and under each text on the way), a band
+lists what changed since the last one: each member's attributes and skills (as their heads and
+shields: "Each" when all changed alike), members lost, things gained or lost, money, fame, a
+town's reputation and the time that passed; "Nothing came of it." when a choice that ends the
+encounter changed nothing. A battle's wounds and spoils are left to the battle's own screens: the
+band after it lists what came after it. The band lists only what the player could not know before: not a
+saint's or a potion's help for a while (it is in the margin's blessings and potions), nor the Divine
+Favor a prayer spends, the potion drunk, or a sum the chosen option's line showed (`pay money1`
+under a line with `$Money1`, or the same with `money2`). A `text` is shown when the script next stops (another `text`, a menu,
+a battle, `exit`), so the actions after it on the same line are the ones listed under it: write
+`ok text 1; attr party, End, 4; exit`, not the other way round.
 
 An encounter is two files: its text, `MSGFILES/<CARD>.TXT` in the card text format above (block 0
 is usually the first menu), and its script, `ENCOUNTERS/<NAME>.TXT`:
@@ -137,6 +156,7 @@ is usually the first menu), and its script, `ENCOUNTERS/<NAME>.TXT`:
 name     The gallows oak             # shown in the seal's tooltip
 card     $NwGal00                    # the MSGFILES text (at most 8 letters)
 picture  XTREE                       # PICS\XTREE.PIC (pictures starting with X get white text)
+where    wild                        # wild (the default), boat, street or camp
 terrain  farmland plains woods forest
 when     any                         # day, night or any
 weight   2                           # how many table entries it counts as (0 to 100)
@@ -194,7 +214,7 @@ menu comes back unless its actions went elsewhere.
 | `text N` | show text block N (and wait for a key) |
 | `goto SECTION`, `exit` | go to another section; back to the map |
 | `card N` | on to the game's card N (in a town: 0x13 the church district ...) |
-| `tocity` | end at the nearest city's gate |
+| `tocity` | end at the nearest city's gate (in a street or on a boat: as `exit`) |
 | `if EXPR goto A else goto B` | |
 | `if EXPR then ACTION else ACTION` | an action, or several in `{ ... }` |
 | `set NAME = EXPR` | a number declared with `vars` |
@@ -208,7 +228,7 @@ menu comes back unless its actions went elsewhere.
 | `additem WHO, CODE[, QUALITY]`, `takeitem WHO, CODE` | items (`$ItemName` names the last added) |
 | `loseitems WHO`, `keepitems WHO, PCT`, `removeitems WHO, MASK` | the game's losses: robbed (with `party` also the purse), each stack kept with PCT % |
 | `fame K` | the game's reward of fame (1 to 5: 3, 10, 25, 64, 200) |
-| `reputation A, B` | the nearest city's reputation (the game's random change: `1, 3` up, `-1, -3` down) |
+| `reputation A, B` | the nearest city's reputation, as the game's own change reckons it (`1, 3` up, `-1, -3` down: from A to one short of B, so 1 or 2; kept within -99..99), but made every time, so a text that says the town hears of it can count on it (the game's own cards make it only with a chance of 100 less the town's present opinion, its sign dropped; its quests give 10 to 50, a fight with the watch -10 to -70) |
 | `battle FIELD, ENEMY, QUALITY, COUNT[, ENEMY, QUALITY, COUNT ...]` | a battle; `result` is then `Won`, `Fled`, `Beaten` or `Surrendered` |
 | `rejoin`, `dropaway` | after fleeing: members left behind come back, or are lost |
 | `kill WHO` | a member is lost for good (as the game's harshest cards do; never the last one) |
@@ -220,16 +240,17 @@ menu comes back unless its actions went elsewhere.
 
 | | |
 |---|---|
-| members | `leader`, `party`, `who`, `chosen`, `bestskill(K)`, `worstskill(K)`, `bestattr(K)`, `worstattr(K)`, `bestskill2(K1, K2)`, `bestskillsum(K1, K2)`, `bestattrsum(A1, A2)`, `bestattrskill(A, K)`, `spotter` (best Perception + Woodwise), `slowest` (the slowest with their load) |
+| members | `leader`, `party`, `who`, `chosen`, `bestskill(K)`, `worstskill(K)`, `bestattr(K)`, `worstattr(K)` (with a member as a second value, `bestskill(Healing, chosen)`: the same among the others), `bestskill2(K1, K2)`, `bestskillsum(K1, K2)`, `bestattrsum(A1, A2)`, `bestattrskill(A, K)`, `spotter` (best Perception + Woodwise), `slowest` (the slowest with their load) |
 | one member | `skill(W, K)`, `attr(W, K)`, `attrmax(W, K)`, `able(W)`, `has(W, CODE)`, `count(W, CODE)`, `quality(W, CODE)` (`has(party, CODE)`: anyone) |
 | the party | `wounds(ATTR)` (what the members present have lost of it, together), `standing` (the reputation here, or in the nearest town), `maxskill(K)`, `minskill(K)`, `avgskill(K)`, `maxattr(K)`, `minattr(K)`, `avgattr(K)`, `maxskill2(K1, K2)`, `maxskillsum(K1, K2)`, `maxattrsum`, `maxattrskill`, `spotvalue`, `avgagility`, `minagility` (agility with the load), `slowspeed`, `lore` (1-10, the game's measure of the party's strength), `fame`, `money` (pfennigs), `size` (members present), `members`, `women`, `mounted` |
 | the world | `daylight`, `night`, `hour`, `day` (1-31), `month` (1-12), `year`, `terrain`, `difficulty`, `event(K)` |
 | rolls | `random(N)` (0..N-1), `roll(C)` (a check of C %), `clamp(LO, HI, V)`, `min`, `max`, `abs` |
-| after | `result` (a battle), `q`, `item`, `saint` |
-| names | skills `Edged Impact Flails Polearms Thrown Bows Missile Alchemy Religion Virtue SpeakCommon Latin ReadWrite Healing Artifice Stealth Streetwise Riding Woodwise`; attributes `End Str Agl Per Int Cha DF` (or in full); enemies `Bandit BrigandSergeant RobberCaptain Mercenary Raubritter Villager Friar Huntsman Wolf Boar Bear Spider Kobold Gargoyle Schrat Tatzelwurm` and more (see `CONSTS` in encounters.c), or any DARKLAND.ENM number; battlefields `Wilds Surrounded Clearing` (`Cave` holds one enemy only) or another of the game's wilderness battlefields (0x2e-0x55, 0x61-0x63, 0x6f-0x79) |
+| after | `result` (a battle), `q`, `item`, `saint`, `money1`, `money2`, `number1` (as last set) |
+| names | skills `Edged Impact Flails Polearms Thrown Bows Missile Alchemy Religion Virtue SpeakCommon Latin ReadWrite Healing Artifice Stealth Streetwise Riding Woodwise`; attributes `End Str Agl Per Int Cha DF` (or in full); enemies `Bandit BrigandSergeant RobberCaptain Mercenary Raubritter Villager Friar Huntsman Wolf Boar Bear Spider Kobold Gargoyle Schrat Tatzelwurm` and more (see `CONSTS` in encounters.c), or any DARKLAND.ENM number; battlefields `Wilds Surrounded Clearing` (`Cave` holds one enemy only) or another of the game's wilderness battlefields (0x2e-0x55, 0x61-0x63, 0x6f-0x79; the river pirates fight `Pirate`s on the bank, 0x55); in a street `MainStreet` and `SideStreet` (or the game's other town fields, 0x11-0x17 and 0x56) |
 
-Terrains: `marsh woods farmland plains forest pinewood hills mountains road`, `wild` (all but
-farmland and road), `any`, or the map's terrain numbers.
+Terrains (for `where wild`; the others leave `terrain` out): `marsh woods farmland plains forest
+pinewood hills mountains road`, `wild` (all but farmland and road), `any`, or the map's terrain
+numbers.
 
 To keep a new encounter in step with the game's own, take its numbers from them: the chances of
 the game's cards are clamped (usually 1..99) sums such as `(4 * Cha + SpeakCommon) / 5` for
@@ -243,11 +264,14 @@ out); `DL_ENC_LOG=1` logs every roll. The script is checked against its card tex
 mod's `MSGFILES/<CARD>.TXT`: each `block` and `text` must exist, each option must have its line
 in the block, and a `\16` line must be a `saint` option and a `\10` line a `potion` one. The
 game holds at most 25 text blocks of under 6000 bytes in all, with up to 10 option lines in a
-block. What can only be known while it runs is checked then: an item, saint, skill or member
+block, and each block may come to at most 899 characters with its `$variables` filled in (counted
+at their longest: a name 12, a place or building 32, a money text or `$Text1..4` 40, `$PlaceDesc`
+100). The game fills them in with no limit, and past 899 it wrote over its own menus; a longer
+block is reported, and in a mod's other card texts it is cut there. What can only be known while it runs is checked then: an item, saint, skill or member
 out of range, or sections that lead only to one another, end the encounter with a notice
 instead of upsetting the game. A battle holds at most 8 foes (a `Cave` one); groups beyond that
 are cut down, and qualities are kept within 0 to 9. For testing, the `uenc:N` step of `DL_CTL` /
-`DL_SCRIPT` makes the next wilderness encounter number N.
+`DL_SCRIPT` makes the next encounter in N's place number N (`uenc:` lists them).
 
 ## Party figures
 
@@ -264,7 +288,13 @@ palette gives the colors). The portrait (`ExxSMALL.PIC`) and the little battle f
 
 `art/NAME.png` replaces the picture `PICS/NAME.PIC` (or a sprite of that name) at any resolution,
 drawn at window resolution; F12 > Mods, under "Replacement art (for artists)", can export all
-original pictures as templates and show the name of the picture under the mouse. `sounds/NAME.wav` (or `.ogg`, `NAME2.wav` ...
+original pictures as templates and show the name of the picture under the mouse. Draw at 4:3: the
+game's pixels are shown 1.2 times as tall as wide, so a 320 x 200 picture is 1600 x 1200 (5 x 6 to
+a pixel), and any other picture its width x 5 by its height x 6. On a card, the party's panel covers
+the picture's left fifth and the frame its edges: what shows is about x 66 to 312 and y 6 to 194 of
+320 x 200 (x 330 to 1560, y 36 to 1164 of 1600 x 1200). The export writes these specs as
+`art/original/README.txt`, with `card-guide-1600x1200.png`, a layer that marks what a card covers.
+PNG, JPG, BMP and TGA are read; files under `art/original` are never used. `sounds/NAME.wav` (or `.ogg`, `NAME2.wav` ...
 for variations) replaces a battle sound; the names are listed in F12 > Settings > Sound, under
 "Custom sound packs". Mods can carry both folders; a mod's files win over the game folder's.
 

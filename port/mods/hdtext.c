@@ -472,6 +472,7 @@ static void cursor_read(const u32 *lut)
         o = (u16)(o + n);
     }
     cur_x = (s16)rw(ds, 0x202); cur_y = (s16)rw(ds, 0x204); cur_w = w; cur_h = h;
+    if (getenv("DL_CURSOR_DUMP")) { static int done; if (!done++) for (int r = 0; r < h && r < CUR_MAX; r++) { char line[CUR_MAX + 1]; for (int c = 0; c < w && c < CUR_MAX; c++) line[c] = cur_px[r * CUR_MAX + c] ? '#' : '.'; line[w < CUR_MAX ? w : CUR_MAX] = 0; fprintf(stderr, "cursor %2d %s\n", r, line); } }
     for (int i = 0; i < CUR_MAX * CUR_MAX; i++) cur_rgb[i] = cur_px[i] ? (lut[cur_px[i]] | 0xff000000u) : 0;
     cur_on = 1;
 }
@@ -494,21 +495,28 @@ const unsigned *hdtext_cursor(int *x, int *y, int *w, int *h, int *stride)
  * game last drew it: the game moves its pointer only when it gets round to it (a frame or
  * two late, in whole game pixels - 3 or 4 screen pixels a step), which felt sluggish. Its
  * sprite is taken out of the picture (hdtext_live_pointer, set by the interface while it
- * draws the pointer); its offset from the mouse position (the hot spot) is learnt while
- * the mouse stands still. */
-static int hot_x, hot_y; static u16 hot_seg; static int hot_w, hot_h;
+ * draws the pointer).
+ * Its hot spot: the game draws its sprite at the mouse less the hot spot it was given
+ * (mouse_set_cursor, root 047c: DS:6ef6, 6ef8; the sprite DS:6ef4), and every click, the game's
+ * and our screens', is taken at the mouse. The gauntlet (cursor_default) points with its
+ * fingertip at its top left corner, and is given (0, 0) everywhere but on the world map, which
+ * gives it (5, 0) (s030 1462:0000) though it takes its clicks at the mouse too (1462:02e6: the
+ * mouse less 0x41, 0x15, the tiles' origin): there, and in every screen of ours opened from it
+ * (a camp, its alchemy), the fingertip stood 5 pixels left of where a click landed. The gauntlet is drawn
+ * with its fingertip at the click; another sprite (an item carried on the sheet: 3, 3) with the
+ * hot spot the game gave it. (It was learnt from where the game's sprite stood while the mouse
+ * stood still, which copied the map's offset, and could not be learnt while a screen of ours
+ * held the game.) */
 void plat_mouse_game(int *x, int *y);
-void hdtext_pointer_hotspot(int *hx, int *hy) { *hx = hot_x; *hy = hot_y; }
+void hdtext_pointer_hotspot(int *hx, int *hy)
+{
+    int gauntlet = g_rw(0x6ef4) == g_rw(GV_cursor_default);
+    int x = gauntlet ? 0 : (s16)g_rw(0x6ef6), y = gauntlet ? 0 : (s16)g_rw(0x6ef8);
+    *hx = x >= 0 && x < CUR_MAX ? -x : 0; *hy = y >= 0 && y < CUR_MAX ? -y : 0;
+}
 static void pointer_out(u32 *rgb, const u32 *lut, u8 *idx)
 {
     if (!cur_on) return;
-    {   static int lmx = -1, lmy = -1, still; int mx, my; plat_mouse_game(&mx, &my);
-        u16 seg = drvseg_mgraphic ? rw((u16)(drvseg_mgraphic + 0x140), 0x200) : 0;
-        if (seg != hot_seg || cur_w != hot_w || cur_h != hot_h) { hot_seg = seg; hot_w = cur_w; hot_h = cur_h; hot_x = hot_y = 0; still = 0; }
-        if (mx == lmx && my == lmy) still++; else still = 0;
-        lmx = mx; lmy = my;
-        if (still >= 3) { int hx = cur_x - mx, hy = cur_y - my; if (hx > -CUR_MAX && hx <= 0 && hy > -CUR_MAX && hy <= 0) { hot_x = hx; hot_y = hy; } }
-    }
     if (!hdtext_live_pointer) return;
     for (int r = 0; r < cur_h; r++)
         for (int c = 0; c < cur_w; c++) {

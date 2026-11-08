@@ -5,7 +5,7 @@
 
 The same things are said in several places - README.md, the changelog's newest section, the release
 notes (docs/release_notes.md, what is above "New in 1.2" and from "What it adds" on), the README of
-the download (tools/release_readme.txt), docs/MODDING.md and the game's own welcome and news windows
+the download (tools/release_readme.txt), docs/MODDING.md and the game's own welcome window
 (ui/ui_windows.cpp). Older sections of the changelog and release notes are history and left alone.
 Checked:
   - a skill's or attribute's shield is never drawn by a fixed number (it stands for that skill only);
@@ -58,12 +58,13 @@ def sections_of_docs():
     out.append(('docs/release_notes.md', rn[:i if i >= 0 else len(rn)] + (rn[j:] if j >= 0 else '')))
     out.append(('tools/release_readme.txt', rd('port/tools/release_readme.txt')))
     out.append(('docs/MODDING.md', rd('docs/MODDING.md')))
-    out.append(('ui/ui_windows.cpp (welcome, news)', '\n'.join(c_strings(rd('port/ui/ui_windows.cpp')))))
+    out.append(('ui/ui_windows.cpp (welcome)', '\n'.join(c_strings(rd('port/ui/ui_windows.cpp')))))
     return out
 
 
 GENERATED = [('docs/CODE_MAP.md', 'port/tools/code_map.py'), ('docs/COPY.md', 'port/tools/copy_catalog.py'),
-             ('port/runtime/gamevars.h', 'port/tools/gen_gamevars.py --stdout')]
+             ('port/runtime/gamevars.h', 'port/tools/gen_gamevars.py --stdout'),
+             ('docs/MERGING.md', 'port/tools/switch_map.py')]   # (its section 4: every switch and the files that read it)
 
 
 def generated(fix):
@@ -151,7 +152,7 @@ def main():
     # the changelog's newest section and the release notes' "New in" section: the same text
     ch = texts[2][1]                     # (the newest released version: the release notes are the download's)
     rn = rd('docs/release_notes.md')
-    a = rn.find('**New in '); b = rn.find('**New in ', a + 1)
+    a = rn.find('**New in '); b = min((k for k in (rn.find('**New in ', a + 1), rn.find('\n### ', a)) if k > 0), default=-1)   # (to the next version's block or the next heading)
     def body(s):
         lines = [l.rstrip() for l in s.splitlines() if l.strip()]
         k = next((i for i, l in enumerate(lines) if l.startswith('**') and not l.startswith('**New in')), len(lines))
@@ -176,14 +177,19 @@ def main():
     known = set(re.findall(r'"([^"]+)"', gm[gm.index('const char *gm_attr_name'):gm.index('/* the months')]))
     known |= {'Latin', 'Reputation', 'Fame', 'Age', 'Missile Device', 'Missile Weapons', 'Edged Weapon', 'Impact Weapon', 'Flail', 'Polearm', 'Thrown Weapon', 'Bow'}
     known |= set(re.findall(r'"([^"]+)"', gm[gm.index('const char *gm_skill_short'):][:400]))
+    rt = rd('port/ui/effects.cpp')
+    effects = set(re.findall(r'"([^"]+)"', rt[rt.index('EFFECT_NAME[] = {'):].split('};')[0]))
     for d in ('port/ui', 'port/mods'):
         for f in sorted(os.listdir(os.path.join(TOP, d))):
             if not f.endswith(('.c', '.cpp')): continue
             for i, line in enumerate(rd(os.path.join(d, f)).splitlines()):
                 for lit in re.findall(r'"((?:[^"\\]|\\.)*)"', line):
-                    for m in re.finditer(r'\{([A-Z][a-z][A-Za-z &]*)(?::[^{}]*)?\}', lit):   # (not a controller button's {A}, {LSTICK})
+                    for m in re.finditer(r'\{~?([A-Z][a-z][A-Za-z &]*)(?::[^{}]*)?\}', lit):   # (not a controller button's {A}, {LSTICK}; ~ struck)
                         if m.group(1) not in known:
                             bad.append('%s/%s:%d: "{%s}" - no attribute or skill of that name for its shield (ui/richtext.h)' % (d, f, i + 1, m.group(1)))
+                    for m in re.finditer(r'\{\*([^{}:]*)(?::[^{}]*)?\}', lit):          # a roundel ({*Fire}): EFFECT_NAME in ui/effects.cpp
+                        if m.group(1) not in effects:
+                            bad.append('%s/%s:%d: "{*%s}" - no roundel of that name (EFFECT_NAME, ui/effects.cpp)' % (d, f, i + 1, m.group(1)))
 
     for b_ in bad: print('  ' + b_)
     print('docs: %s (%d fixes, %d saints, %d texts)' % ('as the code' if not bad else '%d mismatches' % len(bad), n_fix, n_saints, len(texts)))

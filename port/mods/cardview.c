@@ -32,6 +32,7 @@
 #include "cardview.h"
 #include "fixes.h"
 #include "nscreen.h"
+#include "gamemodel.h"
 
 CardView cardview;
 int cardview_on = 1;
@@ -427,6 +428,12 @@ static void build_popup(int j)
             e->vmin = sheet_saint_vmin(e->id);
             if (ns_unwinding) return;
             e->virtue = (s8)g_rb((u16)(G_MEMBER(e->member) + G_M_SKILLS + 9));
+            e->dfbest = -1;
+            if (e->virtue >= e->vmin && (gm_knows_saint(e->member, e->id) || code == 0x87)) {   /* (one to call on: the favor it takes) */
+                void sheet_saint_prayer(int m, int t, int *best, int *at, int *df99, int *have);
+                int at; sheet_saint_prayer(e->member, e->id, &e->dfbest, &at, &e->df99, &e->dfhave);
+                if (ns_unwinding) return;
+            }
         }
         name[0] = 0;
     }
@@ -462,6 +469,19 @@ static int entry_at(int mx, int my)
    while the native layout moved) */
 static int forced_opt = -1;
 void cardview_choose(int opt) { forced_opt = opt; }
+/* test (ustate): the option numbers that can be chosen now, at most max of them */
+int cardview_test_options(int *out, int max)
+{
+    const CardView *c = &cardview; int n = 0;
+    for (int j = 0; j < c->npieces && n < max; j++) if (c->piece[j].is_opt && c->piece[j].state == 1) out[n++] = c->piece[j].opt;
+    return n;
+}
+
+/* A load asked for while a card is up (the menu bar's Load, F9, Darklands+'s Load page) is handed to the game's
+   own card screen: the native loop ends and the game's card_menu or card_text runs, whose menu bar loads the save.
+   Loaded from inside the native loop instead, a card a castle, mine or dungeon brings up (the riddle of the
+   dwarves' iron door in Moresnet) left the battle the save resumed corrupt: a crash or "Buffer dealloc error" in
+   most loads (1.4); the cause in the native loop is not found. Through the game's screen none crashed. */
 
 int cardview_menu(void)
 {
@@ -488,10 +508,20 @@ int cardview_menu(void)
         { static int lx = -1, ly = -1; if (mx != lx || my != ly) { if (lx >= 0) c->key_line = -1; lx = mx; ly = my; } }   /* the mouse moved: it leads again */
         c->hover = c->key_line >= 0 ? -1 : piece_at(mx, my);
         c->hover_entry = entry_at(mx, my);
-        if (forced_opt >= 0) {
+        if (forced_opt >= 0) {                              /* (test: uchoose; an option with a box of items or saints takes its first that may be chosen) */
             int o = forced_opt; forced_opt = -1;
-            for (int j = 0; j < c->npieces; j++) if (c->piece[j].is_opt && c->piece[j].opt == o && c->piece[j].state == 1 && c->piece[j].type != 1 && c->piece[j].type != 2) sel = o;
-            if (sel >= 0) break;
+            for (int j = 0; j < c->npieces && sel < 0; j++) {
+                if (!c->piece[j].is_opt || c->piece[j].opt != o || c->piece[j].state != 1) continue;
+                if (c->piece[j].type != 1 && c->piece[j].type != 2) { sel = o; break; }
+                build_popup(j);
+                if (ns_unwinding) break;
+                for (int e = 0; e < c->nentries; e++) if (c->entry[e].on) {
+                    g_ww(A_MENU_MEMBER, (u16)c->entry[e].member); g_ww(A_MENU_SLOT, (u16)c->entry[e].slot);
+                    g_ww(A_MENU_POPUP, 1); g_wb(A_EE42, 1);
+                    sel = o; break;
+                }
+            }
+            if (ns_unwinding || sel >= 0) break;
         }
         if (left_released(&mx, &my)) {
             int e = entry_at(mx, my), j = piece_at(mx, my);
@@ -581,8 +611,33 @@ static void dialog_ask(void) { dialog_hook_k(3); }
 static void dialog_msg(void) { dialog_hook_k(1); }
 static void dialog_box(void) { dialog_hook_k(2); }
 
+/* text_expand (idx, out), s043 150b:06fe: a card's text block, its $variables filled in, written to out -
+ * msg_buf, 900 bytes, for every caller - with no limit. A longer text (a mod's: 1.4.6-RC6's "The goose-foot
+ * track" came to 906 and more) went on over what follows msg_buf, the menu bar's variables and table
+ * (DS:9409..: the Game menu became "MeetA01", greyed, for the rest of the game). The bytes after the buffer
+ * are kept and put back, the text cut at 899, and the log says so once. (The block's raw copy on the stack,
+ * also 900 bytes, is kept in bounds where texts are loaded: encounters.c check(), datamods.c.) */
+#define MSGBUF_LEN 900
+#define MSGBUF_SPILL 0x300
+static void expand_guard_hook(void)
+{
+    u16 out = rw(SS, (u16)(SP + 6)), end = (u16)(out + MSGBUF_LEN);
+    if (out != A_MSG_BUF) { hook_call_original(); return; }
+    static u8 keep[MSGBUF_SPILL];
+    for (int k = 0; k < MSGBUF_SPILL; k++) keep[k] = g_rb((u16)(end + k));
+    int idx = (s16)rw(SS, (u16)(SP + 4));
+    hook_call_original();
+    int n = 0; while (n < MSGBUF_LEN + MSGBUF_SPILL && g_rb((u16)(out + n))) n++;
+    if (n < MSGBUF_LEN) return;
+    g_wb((u16)(out + MSGBUF_LEN - 1), 0);
+    for (int k = 0; k < MSGBUF_SPILL; k++) g_wb((u16)(end + k), keep[k]);
+    static int told;
+    if (!told++) { char cn[16]; g_str(G_DGROUP, GV_card_name, cn, sizeof cn); fprintf(stderr, "cards: %s's text block %d came to %s%d characters: cut at 899 (the game holds 900)\n", cn, idx, n >= MSGBUF_LEN + MSGBUF_SPILL ? "over " : "", n); }
+}
+
 static void hooks(void)
 {
+    hook_remove(GF_text_expand, expand_guard_hook); hook_install(GF_text_expand, expand_guard_hook);   /* (always: the game's own screens too) */
     hook_install(GF_ask_yes_no, dialog_ask);           /* ask_yes_no */
     hook_install(GF_show_message, dialog_msg);           /* show_message */
     hook_install(GF_message_box, dialog_box);            /* message_box */
@@ -603,6 +658,7 @@ void cardview_set(int on)
     cardview_on = on;
     config_set_int("display.native_cards", on);
     hooks();
+    void encounters_rehook(void); encounters_rehook();     /* (what came of it on the game's cards: their hooks before these) */
 }
 
 void cardview_init(void)

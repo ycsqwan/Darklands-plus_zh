@@ -16,6 +16,7 @@
 #include "ui.h"
 #include "gamedata.h"
 #include "../mods/gamemodel.h"
+#include "../mods/relics.h"
 extern "C" {
 #include "../runtime/game.h"
 #include "../runtime/gamevars.h"
@@ -535,6 +536,23 @@ static void give(int from, int to, int idx, bool one = false)
  * effect (the character sheet's and the shops' tooltips) */
 void ui_item_details(const ItemDef *d, int id, int q)    /* (q: the thing's quality, -1 unknown: its usual one) */
 {
+    if (d && d->kind == K_RELIC && d->relic_df > 0) {      /* a relic: what it takes off a prayer, and who could bear it (mods/relics.c) */
+        bool weapon = relic_is_weapon(id);
+        ImGui::Separator();
+        if (weapon) ui_rich_textf("Wielded, it takes {Divine Favor:%d} off every prayer of the one wielding it, to any saint (none below 5). "
+                                  "Wielding it asks {Virtue:%d}.", d->relic_df, d->relic_virtue);
+        else ui_rich_textf("It takes {Divine Favor:%d} off every prayer of the one carrying it, to any saint (none below 5), "
+                           "if they have {Virtue:%d}.", d->relic_df, d->relic_virtue);
+        ui_rich_textf_dim("Of several relics, the best counts.");
+        int size = (s16)g_rw(G_PARTY_SIZE); if (size < 0 || size > 5) size = 0;
+        for (int m = 0; m < size; m++) {
+            int v = (s8)g_rb((u16)(G_MEMBER(m) + G_M_SKILLS + 9));
+            ui_rich_textf_c(v >= d->relic_virtue ? ImVec4(0.18f, 0.40f, 0.16f, 1) : ImVec4(0.62f, 0.20f, 0.12f, 1), "%s {%sVirtue:%d}%s", rich_member(m).c_str(), v >= d->relic_virtue ? "" : "~", v,
+                            v >= d->relic_virtue ? "" : weapon ? " - too little to wield it" : " - too little");
+        }
+        if (!relics_on()) ui_rich_textf_dim("Off: Relics as the manual has them (F12 > Settings > The party and its items).");
+        else ui_rich_textf_dim("This blessed item is immune from any quality degradation.");
+    }
     if (d && d->type >= 0 && d->type <= 33 && (d->kind == K_WEAPON || d->kind == K_MISSILE || d->kind == K_RELIC)) {
         /* the combat tables (far 20a5, 63 weapon types; s014 weapon_ready): skill used, blow
            time, hands and penetration, damage, skill and strength wanted */
@@ -594,7 +612,7 @@ void ui_item_details(const ItemDef *d, int id, int q)    /* (q: the thing's qual
             int pen = rb(G_FAR20A5, (u16)(0x76a8 + w.type)) & 15;
             grp[pen < h ? 0 : pen == h ? 1 : 2].push_back(game_text(w.name.c_str(), w.name.size()));
         }
-        static const char *GL[3] = { "可偏转大部分冲击力（穿透力低于%d）：", "将冲击力减半（穿透力为%d）：", "已被刺穿（穿透力高于%d）：" };
+        static const char *GL[3] = { "将武器的额外伤害减至八分之一（穿透力低于%d）：", "将额外伤害减半（穿透力为%d）：", "已被刺穿（穿透力高于%d）：" };
         ImVec4 GC[3] = { ImVec4(0.18f, 0.40f, 0.16f, 1), ImVec4(0.6f, 0.42f, 0.08f, 1), ImVec4(0.62f, 0.20f, 0.12f, 1) };
         for (int g = 0; g < 3; g++) {
             if (grp[g].empty()) continue;

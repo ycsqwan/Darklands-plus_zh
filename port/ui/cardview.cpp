@@ -80,8 +80,10 @@ void ui_card_tip(ImVec2 pos, ImVec2 pivot, int item, int saint);
 void ui_card_formula_tip(ImVec2 pos, ImVec2 pivot, int formula);
 extern "C" {
 #include "../mods/gamemodel.h"
+#include "../mods/encounters.h"
 extern "C" int ui_is_open(void);
 }
+#include "nsdraw.h"
 void ui_item_icon_q(ImDrawList *dl, ImVec2 c, float s, int id, int q);
 void ui_item_icon_tier(ImDrawList *dl, ImVec2 c, float s, int id, int tier);
 /* the quality of member m's best thing id (-1 none): a potion's picture shows its grade by it */
@@ -204,6 +206,51 @@ static void wrap(ImFont *f, float size, const std::string &t, float w, float ind
 
 static std::string gtext(const char *s) { return game_text(s, strlen(s)); }
 
+/* what came of a choice (mods/encounters.h: a new encounter's, or a game card's), under the text that tells of it: each member's
+   changes as their head and shields with the amounts (the same for everyone: "Each" once), things gained or
+   lost, money, fame, a town's opinion, the time it took; "Nothing came of it." under the last text of a choice
+   that changed nothing. "" when it is not an encounter's text */
+static std::string encounter_outcome_text(void)
+{
+    EncOutcome o[64]; int fin = 0;
+    int n = encounters_outcome(o, 64, &fin);
+    if (n < 0) return "";
+    if (!n) return fin ? "Nothing came of it." : "";
+    auto num = [](long v) { char b[16]; snprintf(b, sizeof b, "%+ld", v); return std::string(b); };
+    std::string mem[5]; bool lost[5] = {};
+    for (int i = 0; i < n; i++) {
+        const EncOutcome &e = o[i];
+        if (e.m < 0 || e.m > 4) continue;
+        if (e.kind == EO_LOST) { lost[e.m] = true; continue; }
+        std::string key = e.kind == EO_SKILL ? ui_key_name(UI_KEY_SKILL + e.k) : ui_key_name(e.k);
+        mem[e.m] += (mem[e.m].empty() ? "{" : " {") + key + ":" + num(e.v) + (e.kind == EO_ATTRMAX ? " max" : "") + "}";
+    }
+    int nm = 0, same = 1; std::string first;
+    for (int m = 0; m < 5; m++) if (!mem[m].empty()) { if (!nm) first = mem[m]; else if (mem[m] != first) same = 0; nm++; }
+    int members = 0; for (int m = 0; m < 5; m++) if (gm_member_present(m) && gm_member_status(m) == 1) members++;
+    std::string a;
+    if (nm >= 2 && same && nm == members) a = "Each " + first;
+    else for (int m = 0; m < 5; m++) if (!mem[m].empty()) a += (a.empty() ? "" : "   ") + rich_member(m) + " " + mem[m];
+    for (int m = 0; m < 5; m++) if (lost[m]) a += (a.empty() ? "" : "   ") + game_text(encounters_outcome_name(m), strlen(encounters_outcome_name(m))) + " is gone";
+    std::string b;
+    for (int i = 0; i < n; i++) {
+        const EncOutcome &e = o[i];
+        std::string t;
+        if (e.kind == EO_ITEM) t = num(e.v) + " " + ns_item_name(e.k);
+        else if (e.kind == EO_MONEY) t = (e.v < 0 ? "-" : "+") + money_str(e.v < 0 ? -e.v : e.v);
+        else if (e.kind == EO_FAME) t = "{Fame:" + num(e.v) + "}";
+        else if (e.kind == EO_REP) t = "{Reputation:" + num(e.v) + "} in " + (e.k >= 0 && e.k < (int)gamedata.cities.size() ? gamedata.cities[e.k].name : std::string("a town"));
+        else if (e.kind == EO_HOURS) {
+            long h = e.v; char t2[64] = "";
+            if (h >= 24) snprintf(t2, sizeof t2, "%ld day%s%s", h / 24, h / 24 == 1 ? "" : "s", h % 24 ? " " : "");
+            if (h % 24) snprintf(t2 + strlen(t2), sizeof t2 - strlen(t2), "%ld hour%s", h % 24, h % 24 == 1 ? "" : "s");
+            t = std::string(t2) + " pass" + (h == 1 ? "es" : "");
+        }
+        if (!t.empty()) b += (b.empty() ? "" : "  \u00b7  ") + t;          /* (a dot between: "+2 in Paderborn  ·  3 hours pass") */
+    }
+    return a + (!a.empty() && !b.empty() ? "\n" : "") + b;
+}
+
 /* the mark of the key that chooses an option: a red numeral, as a manuscript's rubric. c: the
    mark's middle; size: the card's letters; f: the card's face */
 static void card_key_mark(ImDrawList *dl, ImFont *f, ImVec2 cpos, float size, const char *n, bool dark)
@@ -315,11 +362,14 @@ extern "C" void cardview_draw(void)
     float size = 0, L = 0, gap = 0, pad = 0, cap = 0, total = 0;
     std::vector<std::string> ws;
     std::vector<std::string> utf(c.npieces);
-    for (int j = 0; j < c.npieces; j++) utf[j] = gamedata_spell_text(gtext(c.piece[j].text));   /* (names the game cut short, in full) */
+    for (int j = 0; j < c.npieces; j++) utf[j] = money_words(gamedata_spell_text(gtext(c.piece[j].text)));   /* (names the game cut short, in full; money with its coins) */
     /* a narrow column beside a picture: the first letter in the line (an initial two lines high
        would leave a word or two a line beside it) */
     const int dropcap = c.dropcap && c.w < 110 ? 0 : c.dropcap;
     if (c.dropcap && !dropcap && c.npieces > 0) { char t[2] = { (char)c.dropcap, 0 }; utf[0] = t + utf[0]; }
+    /* what came of the choice, under a rule (mods/encounters.h): a new encounter's text, a game card's text or menu */
+    const std::string outcome = encounter_outcome_text();
+    float oc_y = 0, oc_fs = 0;
     for (int tries = 0; tries < 10; tries++) {
         size = 7.1f * k * fk * scale;
         L = 9.0f * k * scale;
@@ -355,6 +405,11 @@ extern "C" void cardview_draw(void)
             /* the members' saints or items under the option */
             if (p.is_opt && c.popup_piece == j) y += (float)c.nentries * L * 0.92f + (c.nentries ? 0.4f * L : L);
             if (!p.is_opt) y += gap;
+        }
+        if (!outcome.empty()) {                                  /* (a rule, "What came of it", the changes) */
+            oc_fs = size * 0.86f;
+            oc_y = y - 0.35f * gap;
+            y = oc_y + 0.35f * L + oc_fs * 1.15f + (outcome == "Nothing came of it." ? 0 : rich_size(fs, oc_fs, X1 - X0, outcome.c_str()).y) + 0.25f * L;
         }
         total = y - Y0;
         if (y <= bottom || scale < 0.74f) break;
@@ -405,6 +460,7 @@ extern "C" void cardview_draw(void)
     }
 
     int tip_item = -1, tip_saint = -1, tip_formula = -1; ImVec2 tip_at;
+    int tip_head = -1; ImVec2 tip_head0, tip_head1;                              /* (the pointer on a member's head in an option's list: the name) */
     int chance_tip = -1; ImVec2 chance_tip_a0, chance_tip_a1;                   /* (the pointer on an option's chance: who tries it, and what it rests on) */
     /* each member's chip, their head and their chance: a click on one chooses the option with that member
        speaking. x: where they begin; t: how far slid out (0..1, the hover's); returns where they end */
@@ -605,14 +661,19 @@ extern "C" void cardview_draw(void)
                does not know; then those it knows already are dimmed */
             bool saint_learning = false;
             if (c.popup_kind == 2) for (int e = 0; e < c.nentries; e++) { const CvEntry &q = c.entry[e]; if (q.id >= 0 && q.member >= 0 && q.member < 5 && !gm_knows_saint(q.member, q.id)) saint_learning = true; }
-            float namew = 0;
-            for (int e = 0; e < c.nentries; e++) if (c.entry[e].who[0]) namew = fmaxf(namew, fs->CalcTextSizeA(size * 0.82f, FLT_MAX, 0, gtext(c.entry[e].who).c_str()).x);
+            float namew = 0, hs = L * 0.92f * 0.88f;                 /* (who: the member's head, before their first entry) */
+            for (int e = 0; e < c.nentries; e++) if (c.entry[e].who[0]) namew = hs / 1.2f;
             for (int e = 0; e < c.nentries; e++) {
                 const CvEntry &en = c.entry[e];
                 float h = L * 0.92f;
+                bool on_chip = false;
                 bool eh = c.hover_entry == e && en.on;
                 if (eh) dl->AddRectFilled(ImVec2(ex - 0.4f * size, ey - 0.1f * h), ImVec2(X1 + 1.0f * k, ey + 0.95f * h), dark ? IM_COL32(255, 214, 140, 50) : IM_COL32(150, 92, 30, 55), 1.2f * k);
-                if (en.who[0]) dl->AddText(fs, size * 0.82f, ImVec2(ex, ey + 0.08f * h), ink_soft, gtext(en.who).c_str());
+                if (en.who[0]) {
+                    ImVec2 h0(ex, ey + 0.02f * h), h1(ex + hs / 1.2f, ey + 0.02f * h + hs);
+                    ui_member_head(dl, en.member, h0, hs);
+                    if (ImGui::IsMouseHoveringRect(h0, h1, false)) { tip_head = en.member; tip_head0 = h0; tip_head1 = h1; }
+                }
                 ImU32 ec = !en.on || en.code == 0x83 ? ink_dim : en.code == 0x87 ? (dark ? IM_COL32(250, 210, 110, 255) : IM_COL32(150, 90, 0, 255)) : ink;
                 std::string et = gtext(en.text);
                 if (c.popup_kind == 2 && en.id >= 0 && en.id < (int)gamedata.saints.size() && !gamedata.saints[en.id].name.empty()) et = gamedata.saints[en.id].name;   /* (the saint's whole name, as the sheet writes it: not the card's "S.Christina") */
@@ -637,34 +698,73 @@ extern "C" void cardview_draw(void)
                                       en.code == 0x87 ? (c.popup_kind == 2 ? "在最简单难度下，首领不必知道圣人" : "在最简单难度下，首领不需要任何东西") : nullptr;
                     if (knows_saint) why = "已经认识这位圣人";
                     if (why) dl->AddText(fs, size * 0.78f, ImVec2(tx + f->CalcTextSizeA(size * 0.95f, FLT_MAX, 0, et.c_str()).x + 0.6f * size, ey + 0.12f * h), ink_soft, why);
-                    /* a saint to call on: the Virtue it asks of the one who prays, at the row's end - Virtue's shield and
-                       the number, greyed when this member's is below it (more Divine Favor does not help then), as on the
-                       Saints page and the prayer screen */
-                    if (c.popup_kind == 2 && !saint_learning && en.vmin > 0) {
+                    /* a saint to call on, or to learn: the Virtue it asks of the one who prays, at the row's end - Virtue's
+                       shield and the number, greyed when this member's is below it (more Divine Favor does not help then),
+                       as on the Saints page and the prayer screen; after it, for one to call on, the Divine Favor a 99%
+                       chance takes (his wish, 2026-11-06), greyed when the member has less (their best chance then in its
+                       tooltip), or the best chance when no favor gives 99% */
+                    float vs = size * 0.82f, ish = size * 0.8f, gap = 0.7f * size;
+                    on_chip = false;                                 /* (the pointer on one of them: its own tooltip, not the saint's) */
+                    char db[16] = "";
+                    const bool dfrow = c.popup_kind == 2 && !saint_learning && en.dfbest >= 0 && (en.df99 > 0 || en.dfbest > 0);
+                    const bool dfshort = dfrow && en.dfbest < 99;
+                    if (dfrow) { if (en.df99 > 0) snprintf(db, sizeof db, "%d", en.df99); else snprintf(db, sizeof db, "%d%%", en.dfbest); }
+                    const float dw = dfrow ? UI_SHIELD_W * ish + ish * 0.2f + fs->CalcTextSizeA(vs, FLT_MAX, 0, db).x : 0;
+                    if (dfrow) {
+                        ImVec2 d0(X1 - 0.5f * size - dw, ey), d1(X1 - 0.5f * size, ey + h);
+                        int v0 = dl->VtxBuffer.Size;
+                        ui_shield_value(dl, ImVec2(d0.x, ey + 0.46f * h), ish, ATTR_DF, db, fs, vs, ink_soft);
+                        if (dfshort) ui_dim_since(dl, v0, 0.38f);
+                        if (ImGui::IsMouseHoveringRect(d0, d1, false) && !ui_is_open()) {
+                            on_chip = true;
+                            ui_tip_beside(d0, d1);
+                            ImGui::BeginTooltip(); ImGui::PushTextWrapPos(ImGui::GetFontSize() * 22);
+                            std::string who = ui_member_name(en.member);
+                            if (en.dfbest >= 99) ui_rich_textf("A 99%% chance takes {Divine Favor:%d}, of the %d %s has: more is spent for nothing. The prayer screen sets the favor.", en.df99, en.dfhave, who.c_str());
+                            else if (en.df99 > 0 && en.dfbest > 0) ui_rich_textf("A 99%% chance takes {Divine Favor:%d}; %s has %d, which gives %d%%.", en.df99, who.c_str(), en.dfhave, en.dfbest);
+                            else if (en.df99 > 0) ui_rich_textf("A 99%% chance takes {Divine Favor:%d}; %s has %d, too little for this saint to hear them.", en.df99, who.c_str(), en.dfhave);
+                            else ui_rich_textf("All of %s's {Divine Favor} (%d) gives a %d%% chance: no favor gives them 99%% with this saint.", who.c_str(), en.dfhave, en.dfbest);
+                            ImGui::PopTextWrapPos(); ImGui::EndTooltip();
+                        }
+                    }
+                    if (c.popup_kind == 2 && en.vmin > 0) {
                         char vb[16]; snprintf(vb, sizeof vb, "%d", en.vmin);
-                        float vs = size * 0.82f, ish = size * 0.8f;
                         float vw = UI_SHIELD_W * ish + ish * 0.2f + fs->CalcTextSizeA(vs, FLT_MAX, 0, vb).x;
                         bool low = en.virtue < en.vmin;
-                        ImVec2 m0(X1 - 0.5f * size - vw, ey), m1(X1 - 0.5f * size, ey + h);
+                        float right = X1 - 0.5f * size - (dfrow ? dw + gap : 0);
+                        ImVec2 m0(right - vw, ey), m1(right, ey + h);
                         int v0 = dl->VtxBuffer.Size;
                         ui_shield_value(dl, ImVec2(m0.x, ey + 0.46f * h), ish, UI_KEY_SKILL + SKILL_VIRTUE, vb, fs, vs, ink_soft);
                         if (low) ui_dim_since(dl, v0, 0.38f);
                         if (ImGui::IsMouseHoveringRect(m0, m1, false) && !ui_is_open()) {
+                            on_chip = true;
                             ui_tip_beside(m0, m1);
                             ImGui::BeginTooltip(); ImGui::PushTextWrapPos(ImGui::GetFontSize() * 22);
                             ui_rich_textf("这位圣人向祈祷者索取 %d 的 {美德}。", en.vmin);
-                            if (low) { char nm[24]; g_str(G_DGROUP, (u16)(G_MEMBER(en.member) + G_M_SHORTNAME), nm, sizeof nm);
-                                       ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_TextDisabled));
-                                       ui_rich_textf("%s 拥有 %d：无论花费多少 {神恩}，都低到无法召唤这位圣人。", game_text(nm, strlen(nm)).c_str(), en.virtue);
+                            if (low) { ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_TextDisabled));
+                                       ui_rich_textf(saint_learning ? "%s：太低，在提升之前无法召唤这位圣人，无论花费多少 {神恩}。"
+                                                                    : "%s：太低，无法召唤这位圣人，无论花费多少 {神恩}。", rich_member(en.member, std::to_string(en.virtue)).c_str());
                                        ImGui::PopStyleColor(); }
                             ImGui::PopTextWrapPos(); ImGui::EndTooltip();
                         }
                     }
                 }
                 c.entry_y0[e] = wy2g(ey - 0.1f * h); c.entry_y1[e] = wy2g(ey + 0.95f * h);
-                if (c.hover_entry == e) { tip_at = ImVec2(X1 + 2 * k, ey); if (c.popup_kind == 2) tip_saint = en.id; else if (ef >= 0) tip_formula = ef; else tip_item = en.id; }
+                if (c.hover_entry == e && !on_chip) { tip_at = ImVec2(X1 + 2 * k, ey); if (c.popup_kind == 2) tip_saint = en.id; else if (ef >= 0) tip_formula = ef; else tip_item = en.id; }
                 ey += h;
             }
+        }
+    }
+    if (!outcome.empty()) {                                      /* what came of it: a rule, a dim lead, the changes */
+        float ry = oc_y - shift;
+        dl->AddLine(ImVec2(X0, ry), ImVec2(X1, ry), ink_dim, fmaxf(1.0f, 0.3f * k));
+        float ly = ry + 0.35f * L;
+        bool none = outcome == "Nothing came of it.";
+        if (none) dl->AddText(fs, oc_fs, ImVec2(X0, ly), ink_soft, outcome.c_str());
+        else {
+            dl->AddText(fs, oc_fs * 0.9f, ImVec2(X0, ly), ink_soft, "What came of it:");
+            rich_draw(dl, fs, oc_fs, ImVec2(X0, ly + oc_fs * 1.15f), X1 - X0, ink, outcome.c_str());
+            if (!ui_is_open()) { int key = rich_key_at(ImGui::GetIO().MousePos); if (key >= 0) ui_rich_tip_later(key); }
         }
     }
     /* go on: a quiet sign at the end of a text that waits */
@@ -731,6 +831,7 @@ extern "C" void cardview_draw(void)
             ImGui::EndTooltip();
         }
     }
+    else if (tip_head >= 0 && !ui_is_open()) { ui_tip_beside(tip_head0, tip_head1); ImGui::SetTooltip("%s", ui_member_name(tip_head).c_str()); }
     else if (tip_formula >= 0) ui_card_formula_tip(tip_at, ImVec2(0, 0), tip_formula);
     else if (tip_item >= 0 || tip_saint >= 0) ui_card_tip(tip_at, ImVec2(0, 0), tip_item, tip_saint);
     else if (tipmenu && c.hover >= 0 && c.hover < c.npieces && teaches[c.hover]) {
@@ -742,7 +843,7 @@ extern "C" void cardview_draw(void)
         ui_rich_text(ui_teacher_text(teach[c.hover]).c_str());
         std::string hired = ui_teachers_hired_line((s16)g_rw(GV_cur_loc));
         if (!hired.empty()) ui_rich_textf_dim("此刻在此雇佣：%s。", hired.c_str());
-        if (const char *why = greyed_hint(c.piece[c.hover])) { ImGui::Separator(); ImGui::TextDisabled("目前无法实现"); ImGui::TextUnformatted(why); }
+        if (const char *why = greyed_hint(c.piece[c.hover])) { ImGui::Separator(); ImGui::TextDisabled("目前无法实现"); ui_rich_text(why); }
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
     }
@@ -789,7 +890,7 @@ extern "C" void cardview_draw(void)
         ImGui::BeginTooltip();
         ImGui::TextDisabled("目前无法实现");
         ImGui::PushTextWrapPos(ww);
-        ImGui::TextUnformatted(greyed_hint(c.piece[c.hover]));
+        ui_rich_text(greyed_hint(c.piece[c.hover]));        /* (an amount with its coin: ui/richtext.h) */
         if (no_gain(c.hover)) ImGui::TextDisabled("同样毫无收获：此处出售的石头品质为 %d，队伍的为 %d。", stone_offer, stone_have);
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
@@ -800,7 +901,6 @@ extern "C" void cardview_draw(void)
            (even when nobody does: the option is then greyed) */
         const CvPiece &p = c.piece[c.hover];
         int npar = (s16)g_rw(G_PARTY_SIZE);
-        auto name_of = [](int m) { char n[16]; g_str(G_DGROUP, (u16)(G_MEMBER(m) + G_M_SHORTNAME), n, sizeof n); return game_text(n, strlen(n)); };
         auto alive = [](int m) { int st = g_rb((u16)(G_MEMBER(m) + G_M_STATUS)); return st != 0 && st != 3; };
         std::vector<std::pair<std::string, std::string>> rows;
         bool formulas = false;
@@ -811,12 +911,12 @@ extern "C" void cardview_draw(void)
                 if (id < 0 || id >= (int)gamedata.saints.size()) continue;
                 what = gamedata.saints[id].name;
                 for (int m = 0; m < npar && m < 5; m++)
-                    if (alive(m) && (rb(G_FAR2E38, (u16)(0x082c + m * 0x14 + (id >> 3))) & (0x80 >> (id & 7)))) { if (!who.empty()) who += ", "; who += name_of(m); }
+                    if (alive(m) && (rb(G_FAR2E38, (u16)(0x082c + m * 0x14 + (id >> 3))) & (0x80 >> (id & 7)))) { if (!who.empty()) who += " "; who += rich_member(m); }
             } else if (cv_formula_of_slot(j) >= 0) {             /* a formula on sale: who knows it already */
                 int fo = cv_formula_of_slot(j);
                 what = gamedata.formula_names[fo] + " (" + cv_formula_price(j) + ")";
                 for (int m = 0; m < npar && m < 5; m++)
-                    if (alive(m) && gm_knows_formula(m, fo)) { if (!who.empty()) who += ", "; who += name_of(m); }
+                    if (alive(m) && gm_knows_formula(m, fo)) { if (!who.empty()) who += " "; who += rich_member(m); }
                 rows.push_back({ what, who.empty() ? "尚无人知晓" : "为……所知" + who });
                 formulas = true;
                 continue;
@@ -827,7 +927,7 @@ extern "C" void cardview_draw(void)
                     if (!alive(m)) continue;
                     int n = 0, k = g_rb((u16)(G_MEMBER(m) + G_M_NITEMS));
                     for (int i = 0; i < k && i < 64; i++) if ((rw(G_FAR2E38, G_ITEM(m, i)) & 0xfff) == id) n += rb(G_FAR2E38, (u16)(G_ITEM(m, i) + 4));
-                    if (n) { if (!who.empty()) who += ", "; who += name_of(m) + (n > 1 ? " (" + std::to_string(n) + ")" : ""); }
+                    if (n) { if (!who.empty()) who += "  "; who += rich_member(m, n > 1 ? std::to_string(n) : ""); }
                 }
             }
             rows.push_back({ what, who.empty() ? (p.type == 2 ? "尚无人知晓这位圣人" : "尚无人携带") : who });
@@ -836,12 +936,12 @@ extern "C" void cardview_draw(void)
             float ww = tip_place(30);                              /* beside the option (the pointer may be the game's only) */
             ImGui::BeginTooltip();
             ImGui::TextDisabled("%s", p.type == 2 ? "在此提供帮助的圣人" : formulas ? "出售的配方" : "在此提供帮助的物品");
-            for (auto &r : rows) { ImGui::TextUnformatted(r.first.c_str()); ImGui::SameLine(); ImGui::TextDisabled("  %s", r.second.c_str()); }
+            for (auto &r : rows) { ImGui::TextUnformatted(r.first.c_str()); ImGui::SameLine(); ui_rich_textf_dim("  %s", r.second.c_str()); }
             if (const char *why = greyed_hint(p)) {                 /* greyed for a reason of the card's own */
                 ImGui::Separator();
                 ImGui::PushTextWrapPos(fminf(ww, ImGui::GetFontSize() * 21));
                 ImGui::TextDisabled("目前无法实现");
-                ImGui::TextUnformatted(why);
+                ui_rich_text(why);
                 ImGui::PopTextWrapPos();
             }
             if (formulas) ImGui::TextDisabled("（点击选择学习某项的人；指向配方以查看其详情）");

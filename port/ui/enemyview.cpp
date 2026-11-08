@@ -2,6 +2,7 @@
 // kind of foe on the field with its picture, how many and how many still fight, its armour,
 // shield and weapons (with the game's word for its skill, but not at Expert), and what each of
 // the party's weapons does against its body armour.
+#include <math.h>
 #include <stdio.h>
 #include <string>
 #include "nsdraw.h"
@@ -102,21 +103,20 @@ extern "C" void enemyview_draw(void)
             for (int p = 0; p < size; p++) {
                 if (!gm_member_present(p) || gm_member_status(p) != 1) continue;
                 /* the member's name, then each weapon in hand as its picture and what it does in its colour:
-                   green pierces, amber half damage, red mostly deflected (wrapped by the weapon where it runs long;
+                   green pierces, amber its extra damage halved, red cut to an eighth (wrapped by the weapon where it runs long;
                    the weapon's name under the pointer) */
                 struct Seg { int id; std::string word; ImU32 col; };
                 std::vector<Seg> seg;
-                char nm[24]; gm_member_name(p, nm, sizeof nm);
                 for (int k = 0; k < 2; k++) {
                     int mw = (s8)g_rb((u16)(G_MEMBER(p) + (k ? 0x0e : 0x3d)));
                     if (mw < 0 || mw > 62) continue;
                     int pen = rb(G_FAR20A5, (u16)(0x76a8 + mw)) & 15, r = pen > h ? 0 : pen == h ? 1 : 2;
-                    seg.push_back({ type_id(mw, K_WEAPON, K_MISSILE), r == 0 ? "pierces" : r == 1 ? "减半伤害" : "大部分被弹开",
+                    seg.push_back({ type_id(mw, K_WEAPON, K_MISSILE), r == 0 ? "穿透" : r == 1 ? "额外伤害减半" : "额外伤害减至八分之一",
                                     r == 0 ? IM_COL32(40, 96, 34, 255) : r == 1 ? IM_COL32(176, 124, 0, 255) : NsDraw::RED });
                 }
                 if (seg.empty() || ly >= y + ch - 4) continue;
                 float lh2 = P.para_height(fo, 4.4f, 1000, "X"), lx = tx, iw = lh2 * P.k / P.kx;
-                std::string head = ns_gtext(nm) + ":";
+                std::string head = rich_member(p);                   /* (their head: the name under the pointer) */
                 P.text(fo, 4.4f, lx, ly, NsDraw::INK, head); lx += P.width(fo, 4.4f, head) + 1.5f;
                 for (const Seg &g : seg) {
                     float w = iw + 0.8f + P.width(fo, 4.4f, g.word) + 3;

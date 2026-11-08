@@ -88,7 +88,7 @@ struct TownFind { const char *label; int icon; int shop; const char *shrt; };   
 static const TownFind TFIND[] = {
     { "一所大学", TI_UNIVERSITY, -1, "大学" }, { "一座大教堂", TI_CATHEDRAL, -1, "大教堂" }, { "一位炼金术士", TI_ALCHEMIST, -1, "炼金术士" },
     { "一位医师", TI_PHYSICIAN, -1, "医生" }, { "码头（船只）", TI_DOCKS, -1, "码头" }, { "一家银行", TI_BANK, -1, "银行" },
-    { "一位30q+的剑匠", TI_SWORD, 2, "剑 30q+" }, { "一位30q+的盔甲师", TI_ARMOUR, 3, "盔甲 30q+" }, { "一位30q+的弓箭匠", TI_BOW, 5, "弓 30q+" },
+    { "一位30q+的剑匠", TI_SWORD, 2, "武器 30q+" }, { "一位30q+的盔甲师", TI_ARMOUR, 3, "盔甲 30q+" }, { "一位30q+的弓箭匠", TI_BOW, 5, "弓 30q+" },
     { "一位30q+的工匠", TI_TOOLS, 6, "工匠 30q+" } };   /* (a library: nearly every town has one; the character sheet's Saints say where each saint is taught) */
 static const int NTFIND = (int)(sizeof TFIND / sizeof TFIND[0]);
 static int tfind = -1;                                    /* -1: off */
@@ -324,7 +324,8 @@ extern "C" void worldmap_draw(void)
     // auto-travel route
     if (travel.active && travel.n > 1) {
         std::vector<ImVec2> pts;
-        for (int i = travel.i > 0 ? travel.i - 1 : 0; i < travel.n; i++) { float x, y; tile_px(travel.rx[i], travel.ry[i], &x, &y); pts.push_back(to_scr(x, y)); }
+        route_ahead(travel.rx, travel.ry, travel.n, travel.i - 1, pts);
+        for (ImVec2 &q : pts) q = to_scr(q.x, q.y);
         dl->AddPolyline(pts.data(), (int)pts.size(), IM_COL32(0, 0, 0, 160), 0, 5);
         dl->AddPolyline(pts.data(), (int)pts.size(), IM_COL32(255, 220, 90, 255), 0, 2.5f);
     }
@@ -378,8 +379,11 @@ extern "C" void worldmap_draw(void)
             float dz = fmaxf(3.5f, 4.0f * fminf(1.6f, zoom / fitz));
             float t = (float)ImGui::GetTime(), sp = dz * 4.0f, acc = sp - fmodf(t * 30.0f, sp);   /* (the dots run from the party towards the place) */
             ImVec2 prev = ImVec2(0, 0);
-            for (int i = 0; i < pn; i++) {
-                float x, y; tile_px(px_[i], py_[i], &x, &y); ImVec2 q = to_scr(x, y);
+            std::vector<ImVec2> way; way.reserve((size_t)pn);
+            for (int i = 0; i < pn; i++) { float x, y; tile_px(px_[i], py_[i], &x, &y); way.push_back(ImVec2(x, y)); }
+            route_simplify(way);
+            for (int i = 0; i < (int)way.size(); i++) {
+                ImVec2 q = to_scr(way[i].x, way[i].y);
                 if (i) {
                     float L = sqrtf((q.x - prev.x) * (q.x - prev.x) + (q.y - prev.y) * (q.y - prev.y));
                     for (float s0 = fmodf(sp - acc + 1000 * sp, sp); s0 < L; s0 += sp) {
@@ -410,9 +414,12 @@ extern "C" void worldmap_draw(void)
     ImFont *fs = ui_font_overlay;
     float ks = ui_text_px() / 22.0f;
     float fsize = ui_text_px() * 0.68f * fminf(fmaxf(powf(zoom / fitz, 0.3f), 0.9f), 1.6f);
+    std::vector<int> quested;                                /* the places a quest's picture stands on: always shown under it */
+    if (show_quests) for (const auto &m : marks) quested.push_back(m.first);
     for (const Place &p : P) {
         int g = kind_group(p.kind);
-        if (!show_kind[icon_kind(p.kind)]) continue;
+        bool anchor = std::find(quested.begin(), quested.end(), p.loc) != quested.end();
+        if (!show_kind[icon_kind(p.kind)] && !anchor) continue;
         float x, y; tile_px(p.x, p.y, &x, &y);
         ImVec2 s = to_scr(x, y);
         if (s.x < o.x - 50 || s.y < o.y - 20 || s.x > o.x + sz.x + 50 || s.y > o.y + sz.y + 20) continue;
@@ -420,8 +427,8 @@ extern "C" void worldmap_draw(void)
         /* the towns at every zoom; every other place comes in slowly as one zooms closer (far out the map
            would be all icons) */
         float fade = g == 0 ? 1.0f : fminf(1.0f, fmaxf(0.0f, (zoom - 0.61f) / 0.48f));
-        if (fade <= 0.02f && p.loc != selected) continue;
-        if (p.loc == selected) fade = 1.0f;
+        if (fade <= 0.02f && p.loc != selected && !anchor) continue;
+        if (p.loc == selected || anchor) fade = 1.0f;
         int v_fade = dl->VtxBuffer.Size;
         bool unseen = g == 0 && p.loc < 92 && !journal_visited(p.loc);   /* a town the party has not been to: faded, a ring */
         if (show_icons) {                                    /* an icon for its kind, bigger as one zooms in */
@@ -593,8 +600,14 @@ extern "C" void worldmap_draw(void)
         } else if (in_town) {
             const char *lb = "离开城镇并前往那里";
             float bw = ImGui::CalcTextSize(lb).x + ImGui::GetStyle().FramePadding.x * 2;
+            static int lkey[2] = { -9, -9 }; static int land = 0;      /* (a way by land from the town's gate: none to an island's towns) */
+            int cur = (s16)g_rw(G_CUR_LOC);
+            if (lkey[0] != cur || lkey[1] != p.loc) { lkey[0] = cur; lkey[1] = p.loc; land = cur >= 0 && cur < (int)gamedata.cities.size() ? travel_minutes_loc_from(gamedata.cities[cur].x, gamedata.cities[cur].y, p.loc) : 0; }
             ImGui::SameLine(bx - bw);
+            ImGui::BeginDisabled(land < 0);
             if (ImGui::Button(lb)) ImGui::OpenPopup("##leavetravel");
+            ImGui::EndDisabled();
+            if (land < 0 && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) { ImGui::BeginTooltip(); ImGui::TextUnformatted("No way there by land from here."); ImGui::EndTooltip(); }
         } else {
             const char *t = "要出行，需处于陆地视图或城镇街道上";
             ImGui::SameLine(bx - ImGui::CalcTextSize(t).x); ImGui::TextDisabled("%s", t);
@@ -747,11 +760,13 @@ extern "C" void worldmap_draw(void)
        an ingredient or any ware); then what the map shows (the layers, the kinds of place) */
     ImGui::SetNextWindowPos(ImVec2(o.x + sz.x - pad, o.y + pad), ImGuiCond_Always, ImVec2(1, 0));
     ImGui::SetNextWindowBgAlpha(0.97f);
-    ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(fminf(UIS(380) * pk, sz.x * 0.27f), avail_h));
+    /* as wide folded as open: anchored at its right edge, it grew to the left as a section opened, and the header
+       pressed moved under the pointer (third_party/imgui's tree node now keeps where the press was, too) */
+    float rw = fminf(UIS(300) * pk, sz.x * 0.27f - 2 * ImGui::GetStyle().WindowPadding.x);
+    ImGui::SetNextWindowSizeConstraints(ImVec2(rw + 2 * ImGui::GetStyle().WindowPadding.x, 0), ImVec2(fminf(UIS(380) * pk, sz.x * 0.27f), avail_h));
     ImGui::Begin("##wmfind", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings);
     wm_find_left = ImGui::GetWindowPos().x - o.x; wm_find_bottom = ImGui::GetWindowPos().y + ImGui::GetWindowHeight() - o.y;
     ImGui::SetWindowFontScale(pk);
-    float rw = fminf(UIS(300) * pk, sz.x * 0.27f - 2 * ImGui::GetStyle().WindowPadding.x);
     /* a grid of entries, two to a row, each a picture and a word, in the small font: the legend's
        kinds of place (a click shows or hides them) and the towns' offers (a click marks the towns
        with it, again unmarks) */
@@ -777,11 +792,34 @@ extern "C" void worldmap_draw(void)
         }
         return click;
     };
-    bool find_open = fold_head("寻找城镇", FOLD_FIND);
+    bool find_open = fold_head("寻找……", FOLD_FIND);
     if (find_open || wm_test_enter) {
+        /* a place by its name, then the finders: each a field or a button with its picture inside at the left */
+        const float fh = ImGui::GetFrameHeight(), fis = fh * 0.78f;
+        ImDrawList *fdl = ImGui::GetWindowDrawList();
+        auto pic_left = [&](auto draw) { ImVec2 a = ImGui::GetItemRectMin(); draw(ImVec2(a.x + fh * 0.62f, a.y + fh * 0.5f)); };
+        auto pic_button = [&](const char *label, bool on, auto draw) {
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(fh * 1.3f, ImGui::GetStyle().FramePadding.y));
+            ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0, 0.5f));
+            if (on) ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+            bool c = ImGui::Button(label, ImVec2(rw, 0));
+            if (on) ImGui::PopStyleColor();
+            ImGui::PopStyleVar(2);
+            pic_left(draw);
+            return c;
+        };
         char *find = wm_find;
         ImGui::SetNextItemWidth(rw);
-        bool enter = ImGui::InputTextWithHint("##find", "寻找地点……", find, sizeof wm_find, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_EscapeClearsAll);
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(fh * 1.3f, ImGui::GetStyle().FramePadding.y));
+        bool enter = ImGui::InputTextWithHint("##find", "任意地点", find, sizeof wm_find, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_EscapeClearsAll);
+        ImGui::PopStyleVar();
+        pic_left([&](ImVec2 c) {                                    /* a magnifying glass */
+            float r = fis * 0.3f; ImU32 ink = IM_COL32(70, 44, 20, 255);
+            ImVec2 lc(c.x - fis * 0.08f, c.y - fis * 0.08f);
+            fdl->AddCircleFilled(lc, r, IM_COL32(236, 240, 244, 200), 20);
+            fdl->AddCircle(lc, r, ink, 20, fmaxf(1.5f, fis * 0.1f));
+            fdl->AddLine(ImVec2(lc.x + r * 0.72f, lc.y + r * 0.72f), ImVec2(c.x + fis * 0.42f, c.y + fis * 0.42f), ink, fmaxf(2.0f, fis * 0.14f));
+        });
         if (wm_test_enter) { enter = true; wm_test_enter = 0; }
         if (find[0]) {                                         /* the places named so, the nearest first on the travel map, with the journey */
             std::string f = fold_name(find, false);
@@ -819,8 +857,23 @@ extern "C" void worldmap_draw(void)
             if (hits.size() > 8) ImGui::TextDisabled("还有 %d 个：输入更多名称以缩小列表范围", (int)hits.size() - 8);
             if (hits.empty()) ImGui::TextDisabled("没有该名称的地点。");
         }
-        ImGui::Spacing();
-        if (fold_head(tfind < 0 ? "带有 … 的城镇" : (std::string("带有 的城镇") + TFIND[tfind].label + "###tw").c_str(), FOLD_TOWNS)) {
+        {   /* the two finders: windows of their own (ui/journal.cpp); a click on a town there shows it here */
+            static bool buy_open[2];
+            if (pic_button("炼金术原料", buy_open[0], [&](ImVec2 c) { ui_draw_town_icon(fdl, c, fis * 1.1f, TI_PHARMACY); })) buy_open[0] = !buy_open[0];   /* (sold by the apothecaries) */
+            if (pic_button("任何商品", buy_open[1], [&](ImVec2 c) { ui_draw_town_icon(fdl, c, fis * 1.1f, TI_MARKET); })) buy_open[1] = !buy_open[1];
+            for (int w = 0; w < 2; w++) if (buy_open[w]) {
+                int pick = journal_buy_window(&buy_open[w], w);
+                if (pick >= 0) for (const Place &p : P) if (p.loc == pick) { tile_px(p.x, p.y, &cx, &cy); if (zoom < 0.6f) zoom = 0.6f; selected = pick; }
+            }
+        }
+        int fo = config_get_int("map.folded", FOLD_LEGEND | FOLD_TOWNS | FOLD_BUY);   /* (the towns' kinds: shown or not, kept) */
+        bool towns_open = !(fo & FOLD_TOWNS);
+        if (pic_button(tfind < 0 ? "带有 …… 的城镇" : (std::string("带有 ") + TFIND[tfind].label + " 的城镇###tw").c_str(), towns_open,
+                       [&](ImVec2 c) { ui_draw_town_icon(fdl, c, fis * 1.1f, tfind < 0 ? TI_UNIVERSITY : TFIND[tfind].icon); })) {
+            towns_open = !towns_open;
+            config_set_int("map.folded", towns_open ? fo & ~FOLD_TOWNS : fo | FOLD_TOWNS); extern int ui_dirty_config; ui_dirty_config = 1;
+        }
+        if (towns_open) {
             if (ui_font_small) ImGui::PushFont(ui_font_small);
             ImGui::TextDisabled("点击其中一个，即可在地图上圈出这些城镇。");
             for (int k = 0; k < NTFIND; k++)
@@ -846,15 +899,6 @@ extern "C" void worldmap_draw(void)
                     else linew = w;
                     if (ImGui::SmallButton(lb)) { tile_px(e.second->x, e.second->y, &cx, &cy); if (zoom < 0.6f) zoom = 0.6f; selected = e.second->loc; }
                 }
-            }
-        }
-        {   /* the two finders: windows of their own (ui/journal.cpp); a click on a town there shows it here */
-            static bool buy_open[2];
-            if (ImGui::Button("寻找炼金术原料", ImVec2(rw, 0))) buy_open[0] = !buy_open[0];
-            if (ImGui::Button("寻找任何商品", ImVec2(rw, 0))) buy_open[1] = !buy_open[1];
-            for (int w = 0; w < 2; w++) if (buy_open[w]) {
-                int pick = journal_buy_window(&buy_open[w], w);
-                if (pick >= 0) for (const Place &p : P) if (p.loc == pick) { tile_px(p.x, p.y, &cx, &cy); if (zoom < 0.6f) zoom = 0.6f; selected = pick; }
             }
         }
     }
@@ -923,16 +967,12 @@ extern "C" void worldmap_draw(void)
             ImGui::End();
         }
     }
-    {   /* at the top, between the panels: what the map is, how to move it, the journey under way */
+    {   /* at the top, between the panels: how to move the map, the journey under way (the map's name is on it: "Map of Greater Germany") */
         float l = wm_panel_right, r = fminf(wm_find_left, sz.x);
         ImGui::SetNextWindowPos(ImVec2(o.x + (l + r) * 0.5f, o.y + pad), ImGuiCond_Always, ImVec2(0.5f, 0));
         ImGui::SetNextWindowBgAlpha(0.8f);
         ImGui::Begin("##wmcap", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing);
         ImGui::SetWindowFontScale(pk);
-        if (ui_font_bold) ImGui::PushFont(ui_font_bold);
-        ImGui::TextUnformatted("神圣罗马帝国");
-        if (ui_font_bold) ImGui::PopFont();
-        ImGui::SameLine();
         if (ui_pad_prompts()) ui_pad_text("{LSTICK} 移动指针，按住 {A} 拖动，{RSTICK} 缩放。{BACK} 或 {Y} 关闭。", true);
         else ImGui::TextDisabled("拖动移动，滚轮缩放。M 或 Esc 关闭。");
         if (travel.active) {                                   /* the journey under way */

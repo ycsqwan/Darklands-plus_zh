@@ -27,6 +27,7 @@ extern "C" {
 #include "../runtime/game.h"
 #include "../runtime/config.h"
 #include "../mods/gamemodel.h"
+#include "../mods/styles.h"
 #include "../mods/nscreen.h"
 extern "C" int combat_improved(void);
 #include "../runtime/gamevars.h"
@@ -223,6 +224,23 @@ const GamePic *ns_figure_head(int cache, const char *code, const unsigned char *
     *uv0 = ImVec2(f.hx0, f.hy0); *uv1 = ImVec2(f.hx1, f.hy1);
     return g;
 }
+/* member m's head, sz tall from p0 (ui/richtext.h): in the game's own pixels, 1.2 times as tall as wide */
+bool ui_member_head(ImDrawList *dl, int m, ImVec2 p0, float sz, ImU32 tint)
+{
+    if (m < 0 || m > 4) return false;
+    char code[8]; gm_member_figure_code(m, code, sizeof code);
+    unsigned char mp[24]; gm_member_palette(m, mp);
+    ImVec2 u0, u1;
+    const GamePic *g = ns_figure_head(60 + m, code, mp, &u0, &u1);
+    if (!g) return false;
+    dl->AddImage((ImTextureID)(intptr_t)g->tex, p0, ImVec2(p0.x + sz / 1.2f, p0.y + sz), u0, u1, tint);
+    return true;
+}
+std::string ui_member_name(int m)
+{
+    char nm[24]; gm_member_name(m, nm, sizeof nm);
+    return ns_gtext(nm);
+}
 /* a member's figure beside a battle */
 static const GamePic *figure(int m)
 {
@@ -263,17 +281,22 @@ static const char *order_word(char c, int place, bool shortw)
     return nullptr;
 }
 
-/* in a battle, on the picture's lower left: how a member with a missile weapon opens a fight, a bow
-   (shoots) or a sword (melee), switched with a click (mods/orders.c, battle.volley); the clicks come
-   through partypanel_click (ui_event), not the game */
+/* in a battle, on the picture's lower left: the member's way of fighting until given an order (mods/styles.c,
+   carried out by mods/ways.c); a click on it opens the chooser beside the box. The clicks come through
+   partypanel_click (ui_event), not the game */
 extern "C" void plat_mouse_game(int *x, int *y);
-extern "C" int orders_member_mode(int m);
-extern "C" void orders_member_mode_set(int m, int shoot);
+extern "C" int orders_member_style(int m);
+extern "C" void orders_style_changed(int m);
+void ui_cover(ImVec2 a, ImVec2 b);                      /* (ui/margins.cpp: one of our panels over the field) */
 static struct { float x0, y0, x1, y1; int m; } mode_btn[5]; static int mode_btns, mode_btns_frame = -100;
-/* in a battle (battle.panel_select): a click on a member's box chooses them to be given orders, as
+static int chooser_m = -1;                                      /* the member whose way is being chosen; -1 none */
+static struct { float x0, y0, x1, y1; int st; } choice[STYLE_CHOICES]; static int choices, choices_frame = -100;
+/* in a fight (battle.panel_select): a click on a member's box chooses them to be given orders, as
    1 to 5 do (s016 1ef8:0a2c; twice in a moment, the view also goes to them: mods/battlescroll.c),
    and a right-click opens their sheet, as F1 to F5 or the game's click on the box do (s022
-   1ef8:0000 with the box's row, then s019 1ef8:0b9e for each member able to fight, as combat_input) */
+   1ef8:0000 with the box's row, then s019 1ef8:0b9e for each member able to fight, as combat_input).
+   Walking a castle, mine or dungeon with no enemy engaged (real_combat 0) the orders are the party's
+   (walk, halt, as a group, single file), and a click opens the sheet, as in a town */
 static void choose_member(int m, int, int, int) { ns_call(16, 0x1ef8, 0x0a2c, 1, m); }
 static void open_sheet(int m, int, int, int)
 {
@@ -292,16 +315,22 @@ extern "C" int partypanel_click(int wx, int wy)
 {
     (void)wx; (void)wy;
     int gx, gy; plat_mouse_game(&gx, &gy);
+    if (chooser_m >= 0) {                                       /* (the chooser open: a click anywhere closes it, and is not the game's) */
+        if (ImGui::GetFrameCount() - choices_frame <= 2)
+            for (int k = 0; k < choices; k++)
+                if (gx >= choice[k].x0 && gx <= choice[k].x1 && gy >= choice[k].y0 && gy <= choice[k].y1) {
+                    style_set(chooser_m, choice[k].st); orders_style_changed(chooser_m);
+                    break;
+                }
+        chooser_m = -1;
+        return 1;
+    }
     if (ImGui::GetFrameCount() - mode_btns_frame <= 2)
         for (int k = 0; k < mode_btns; k++)
-            if (gx >= mode_btn[k].x0 && gx <= mode_btn[k].x1 && gy >= mode_btn[k].y0 && gy <= mode_btn[k].y1) {
-                int m = mode_btn[k].m, v = orders_member_mode(m);
-                if (v >= 0) orders_member_mode_set(m, !v);
-                return 1;
-            }
+            if (gx >= mode_btn[k].x0 && gx <= mode_btn[k].x1 && gy >= mode_btn[k].y0 && gy <= mode_btn[k].y1) { chooser_m = mode_btn[k].m; return 1; }
     int m = box_at();
     if (m < 0) return 0;
-    ns_defer(choose_member, m, 0, 0, 0);
+    ns_defer(g_rb(GV_real_combat) == 1 ? choose_member : open_sheet, m, 0, 0, 0);
     return 1;
 }
 extern "C" int partypanel_rclick(int wx, int wy)
@@ -463,20 +492,27 @@ extern "C" void partypanel_draw(void)
                     ImGui::SetTooltip("在 %s:%s 生效", name.c_str(), tip.c_str());
             }
         }
-        /* shoot or melee (battle.volley): a bow or a sword on the picture's lower left */
-        if (battle && !out && st == 1 && config_get_int("battle.volley_toggle", 1)) {
-            int mode = orders_member_mode(m);
-            if (mode >= 0) {
-                float bx = px0 + 3.6f, by = py1 - 3.8f, r = 3.3f;
-                bool hov = P.over(bx - r, by - r, bx + r, by + r);
-                P.dl->AddCircleFilled(NsDraw::w(bx, by), (r + 0.5f) * P.k, hov ? IM_COL32(150, 112, 56, 245) : IM_COL32(18, 13, 9, 230));
-                P.dl->AddCircle(NsDraw::w(bx, by), (r + 0.5f) * P.k, IM_COL32(170, 132, 70, 255), 0, fmaxf(1.0f, 0.35f * P.k));
-                ui_draw_order_icon(P.dl, NsDraw::w(bx, by), r * 1.9f * P.k, mode ? OI_MISSILE : OI_ATTACK);
-                if (mode_btns_frame != ImGui::GetFrameCount()) { mode_btns = 0; mode_btns_frame = ImGui::GetFrameCount(); }
-                if (mode_btns < 5) mode_btn[mode_btns++] = { bx - r, by - r, bx + r, by + r, m };
-                if (hov) ImGui::SetTooltip(mode ? "%s 以远程武器开局：点击敌人后，在射线上无阻碍时 %s 射击，\\n待敌人逼近后再近战。点击此处：从一开始就进行近战。"
-                                                : "%s 以近战武器开局：点击敌人后，%s 靠近并进入近战。\\n点击此处：先射击，待敌人逼近后再近战。",
-                                           name.c_str(), name.c_str());
+        if (battle && !out && P.over(px0, py0, px1, py1) && !config_get_int("original", 0) && config_get_int("battle.panel_select", 1)) {   /* (what a click on the box does here) */
+            char t[200];
+            if (g_rb(GV_real_combat) == 1) snprintf(t, sizeof t, "点击：为 %s 下达指令。\n右键：%s 的角色面板（F%d）。", name.c_str(), name.c_str(), m + 1);
+            else snprintf(t, sizeof t, "点击：%s 的角色面板（F%d）。", name.c_str(), m + 1);
+            ns_tip(t, 26);
+        }
+        /* the way of fighting (battle.volley_toggle): its picture on the picture's lower left; a click: the chooser */
+        if (battle && !out && st == 1 && config_get_int("battle.volley_toggle", 1) && combat_improved()) {
+            int now = orders_member_style(m);
+            float bx = px0 + 3.6f, by = py1 - 3.8f, r = 3.3f;
+            bool hov = P.over(bx - r, by - r, bx + r, by + r), open = chooser_m == m;
+            P.dl->AddCircleFilled(NsDraw::w(bx, by), (r + 0.5f) * P.k, hov || open ? IM_COL32(150, 112, 56, 245) : IM_COL32(18, 13, 9, 230));
+            P.dl->AddCircle(NsDraw::w(bx, by), (r + 0.5f) * P.k, IM_COL32(170, 132, 70, 255), 0, fmaxf(1.0f, 0.35f * P.k));
+            ui_draw_style_icon(P.dl, NsDraw::w(bx, by), r * 1.9f * P.k, now);
+            if (mode_btns_frame != ImGui::GetFrameCount()) { mode_btns = 0; mode_btns_frame = ImGui::GetFrameCount(); }
+            if (mode_btns < 5) mode_btn[mode_btns++] = { bx - r, by - r, bx + r, by + r, m };
+            if (hov && !open) {
+                char t[640];
+                if (now == ST_OFF) snprintf(t, sizeof t, "%s 处于手动模式：%s\n点击选择一种作战方式。", name.c_str(), style_brief(now));
+                else snprintf(t, sizeof t, "%s 以 %s 的方式作战，直到你下达指令：\n%s\n点击可另选一种方式。", name.c_str(), style_name(now), style_brief(now));
+                ns_tip(t, 26);
             }
         }
         if (st == 3) {
@@ -484,16 +520,25 @@ extern "C" void partypanel_draw(void)
             P.dl->AddLine(NsDraw::w(px0 + 2, py0 + 2), NsDraw::w(px1 - 2, py1 - 2), IM_COL32(170, 40, 30, 230), fmaxf(1.5f, 0.6f * P.k));
             P.dl->AddLine(NsDraw::w(px1 - 2, py0 + 2), NsDraw::w(px0 + 2, py1 - 2), IM_COL32(170, 40, 30, 230), fmaxf(1.5f, 0.6f * P.k));
         }
-        /* Endurance, Strength, Divine Favor */
+        /* Endurance, Strength, Divine Favor: each its shield, a little faded, and its name in full */
         static const char *LBL[3] = { "耐力", "力量", "神恩" };
-        static const int ATT[3] = { 0, 1, 6 };
+        static const int ATT[3] = { ATTR_END, ATTR_STR, ATTR_DF };
         static const ImU32 COL[3] = { IM_COL32(104, 132, 244, 255), IM_COL32(96, 184, 76, 255), IM_COL32(230, 200, 76, 255) };
         for (int r = 0; r < 3; r++) {
             float ry = y0 + 10.0f + r * 9.3f, bx0 = 19.5f, bx1 = 56.6f;
             int cur, mx; gm_member_attr(m, ATT[r], &cur, &mx);
             char v[24];
             if (r == 2) snprintf(v, sizeof v, "%d", cur); else snprintf(v, sizeof v, "%d/%d", cur, mx);
-            P.text(P.fo, NsDraw::FS_SMALL, bx0, ry - 0.6f, DIM, LBL[r]);
+            {   /* the shield, a little darker than elsewhere: a sign, not a value (darkened, not faded: faded, its
+                   shadow and the parts of its charge showed through each other, a heart as two scoops on a cone) */
+                int v0 = P.dl->VtxBuffer.Size;
+                ui_key_icon(P.dl, NsDraw::w(bx0 + 1.9f, ry + 1.8f), 3.1f * P.k, ATT[r]);
+                ui_darken_since(P.dl, v0, out ? 0.45f : 0.7f);
+            }
+            float lx = bx0 + 5.0f, room = bx1 - lx - P.width(P.fo, NsDraw::FS_SMALL, v) - 1.2f, gs = NsDraw::FS_SMALL;
+            float lw = P.width(P.fo, gs, LBL[r]);
+            if (lw > room && lw > 0) gs *= fmaxf(0.75f, room / lw);          /* (a long name in a narrow box: a size smaller) */
+            P.text(P.fo, gs, lx, ry - 0.6f + (NsDraw::FS_SMALL - gs) * 0.6f, DIM, LBL[r]);
             P.text(P.fo, NsDraw::FS_SMALL, 0, ry - 0.6f, out ? GREY : CREAM, v, bx1);
             float f = mx > 0 ? fminf(1.0f, fmaxf(0.0f, (float)cur / mx)) : 0;
             P.rect(bx0, ry + 5.0f, bx1, ry + 7.2f, IM_COL32(64, 52, 40, 255), 0.8f);
@@ -502,10 +547,55 @@ extern "C" void partypanel_draw(void)
             if (r < 2 && !out && cur < mx && mx > 0)
                 P.rect(bx0 + (bx1 - bx0) * f, ry + 5.0f, bx1, ry + 7.2f, IM_COL32(236, 230, 214, 255), 0.8f);
             if (f > 0) P.rect(bx0, ry + 5.0f, bx0 + (bx1 - bx0) * f, ry + 7.2f, out ? IM_COL32(120, 112, 104, 255) : COL[r], 0.8f);
-            if (cur > mx && mx > 0) P.text(P.fo, NsDraw::FS_SMALL, bx0 + P.width(P.fo, NsDraw::FS_SMALL, LBL[r]) + 0.8f, ry - 0.6f, GOLD, "+");
+            if (cur > mx && mx > 0) P.text(P.fo, NsDraw::FS_SMALL, 0, ry - 0.6f, GOLD, "+", bx1 - P.width(P.fo, NsDraw::FS_SMALL, v) - 0.6f);
         }
         if (st == 5 || gm_member_elsewhere(m)) P.text(P.fo, NsDraw::FS_SMALL, 3.2f, y0 + 31.5f, GREY, st == 5 ? "away" : "elsewhere");
         draw_notes(P, m, 1.6f, y0 + 9.0f, 58.4f, y0 + 38.4f);              /* (a skill grown ... over the box's lower part) */
     }
     draw_notes(P, 5, 1.6f, 60.0f, 58.4f, 140.0f);
+    /* the chooser of a member's way of fighting, beside their box: what a way is (and is not), then each way's
+       picture, name and what it does; the way they have now marked, and the one their weapons suggest */
+    if (chooser_m >= 0 && (!battle || chooser_m >= size || gm_member_status(chooser_m) != 1 || !combat_improved())) chooser_m = -1;
+    if (chooser_m >= 0) {
+        int m = chooser_m, own = style_of(m), sug = style_suggested(m);
+        char nm[32]; gm_member_name(m, nm, sizeof nm);
+        std::string name = ns_gtext(nm), head = name + "'s way of fighting";
+        const float w = 150.0f, tx = 14.0f, tw = w - tx - 3.0f;
+        float rh[STYLE_CHOICES], h = 2.0f + 7.0f + P.para_height(P.fo, NsDraw::FS_SMALL, w - 6.0f, STYLE_NOTE) + 2.5f;
+        for (int k = 0; k < STYLE_CHOICES; k++) { rh[k] = 1.4f + 6.6f + P.para_height(P.fo, NsDraw::FS_SMALL, tw, style_brief(STYLE_ORDER[k])) + 1.6f; h += rh[k]; }
+        h += 1.5f;
+        float x0 = 61.0f, y0 = 40.0f * m + 1.2f;
+        if (y0 + h > 198.0f) y0 = 198.0f - h;
+        if (y0 < 1.0f) y0 = 1.0f;
+        /* (in a window of its own, without inputs: over the field and its marks, under the tooltips) */
+        ImVec2 wa = NsDraw::w(x0 - 1.0f, y0 - 1.0f), wb = NsDraw::w(x0 + w + 1.0f, y0 + h + 1.0f);
+        ImGui::SetNextWindowPos(wa); ImGui::SetNextWindowSize(ImVec2(wb.x - wa.x, wb.y - wa.y));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+        ImGui::Begin("##waychooser", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoSavedSettings
+                     | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoNav);
+        ui_cover(wa, wb);                                         /* (the pointer on it: not on the field) */
+        ImDrawList *bg = P.dl; P.dl = ImGui::GetWindowDrawList();
+        P.rect(x0, y0, x0 + w, y0 + h, IM_COL32(26, 19, 13, 248), 2);
+        P.frame(x0, y0, x0 + w, y0 + h, IM_COL32(170, 132, 70, 255), 2);
+        float y = y0 + 2.0f;
+        P.text(P.f, NsDraw::FS_NAME, x0 + 3.0f, y, CREAM, head, -1, x0 + w - 2.0f);
+        y += 7.0f;
+        y += P.para(P.fo, NsDraw::FS_SMALL, x0 + 3.0f, y, w - 6.0f, DIM, STYLE_NOTE) + 2.5f;
+        if (choices_frame != ImGui::GetFrameCount()) { choices = 0; choices_frame = ImGui::GetFrameCount(); }
+        for (int k = 0; k < STYLE_CHOICES; k++) {
+            int stl = STYLE_ORDER[k];
+            float ry = y, ry1 = y + rh[k] - 0.6f;
+            bool hov = P.over(x0 + 1.0f, ry, x0 + w - 1.0f, ry1), cur = stl == own;
+            if (cur) P.rect(x0 + 1.2f, ry, x0 + w - 1.2f, ry1, IM_COL32(92, 66, 30, 255), 1.2f);
+            else if (hov) P.rect(x0 + 1.2f, ry, x0 + w - 1.2f, ry1, IM_COL32(60, 44, 26, 255), 1.2f);
+            ui_draw_style_icon(P.dl, NsDraw::w(x0 + 7.0f, ry + 5.0f), 9.0f * P.k, stl);
+            P.text(P.f, NsDraw::FS_NAME, x0 + tx, ry + 1.4f, cur ? GOLD : CREAM, style_name(stl));
+            if (stl == sug) P.text(P.fo, NsDraw::FS_SMALL, 0, ry + 2.2f, GREY, "default", x0 + w - 2.6f);
+            P.para(P.fo, NsDraw::FS_SMALL, x0 + tx, ry + 8.0f, tw, cur ? CREAM : DIM, style_brief(stl));
+            if (choices < STYLE_CHOICES) choice[choices++] = { x0 + 1.0f, ry, x0 + w - 1.0f, ry1, stl };
+            y += rh[k];
+        }
+        P.dl = bg;
+        ImGui::End(); ImGui::PopStyleVar(2);
+    }
 }

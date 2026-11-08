@@ -3,15 +3,33 @@
 //   {Strength}             Strength's shield alone, in place of the word (its name under the pointer)
 //   {Strength:30 of 35}    the shield, then the value: where a value is given, changed or asked for
 //   {Edged}{Impact} +15    shields side by side share the value after them, a bracket under the group
+//   {@2} {@2:54}           a party member's head (2: the member's place in the party, 0..4), its value after it;
+//                          the member's name under the pointer (rich_member writes one)
+//   {~Virtue} {~Virtue:12} the shield struck through in red: too little of it (a saint's or a relic's Virtue)
+//   {*Fire} {*Damage:+4}   what is at work's roundel (ui_effect_icon, the margin's "Blessings and potions"): Fire,
+//                          Armor, Armor Quality, Missile Armor, Weapon Quality, Damage, Penetration, Travel, Woods
+//                          Travel, No Death, Stays (ui/effects.cpp); its words kept beside it, its name under the pointer
+// With display.coins on, an amount of money in words ("3 groschen", "12pfs", "2 florins") is written with its
+// coin instead of the word (money_words).
 // A name is the character sheet's (ui_key_of: "Edged Weapons" or "Edged", "Speak Latin" or "Latin",
 // "Reputation", "Fame", "Age"); anything else between braces is written as it stands. Every text the native
 // screens (NsDraw's text, para: the name under the pointer), their tooltips (ns_tip), the margins'
 // (margin_tip) and ui_rich_text write takes them; tools/check_docs.py checks the names.
 #pragma once
 #include "imgui.h"
+#include "skillicons.h"
 #include <string>
 
-bool rich_has(const char *s);                                   /* the text holds a shield */
+bool rich_has(const char *s);                                   /* the text holds a shield, a head or (coins on) an amount in words */
+enum { RICH_MEMBER = 64, RICH_EFFECT = 80, RICH_STRUCK = UI_KEY_STRUCK }; /* a head's key: RICH_MEMBER + the member's place; a roundel's
+                                                                   RICH_EFFECT + EI_*; a struck shield's its key | RICH_STRUCK */
+std::string rich_member(int m, const std::string &value = "");  /* "{@m}" or "{@m:value}" */
+std::string rich_effect(int ei, const std::string &value = ""); /* "{*Fire}" or "{*Fire:90}": EI_* (ui/effects.h) */
+std::string rich_key_name(int key);                             /* the shield's name or the member's */
+/* member m's head (the figure beside a battle: its head and shoulders), sz tall (as wide as the game's pixels
+   make it: sz / 1.2) with its top left at p0 (ui/partypanel.cpp) */
+bool ui_member_head(ImDrawList *dl, int m, ImVec2 p0, float sz, ImU32 tint = IM_COL32_WHITE);
+std::string ui_member_name(int m);                              /* the member's short name (UTF-8) */
 /* the size it takes in font f at size fs (pixels), wrapped at wrap pixels (0: only at '\n') */
 ImVec2 rich_size(ImFont *f, float fs, float wrap, const char *s);
 /* drawn at pos (its top left) in colour col; returns its size */

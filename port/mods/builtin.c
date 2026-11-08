@@ -147,6 +147,7 @@ void mods_init(void)
     { void musicpack_init(void); musicpack_init(); }
     { void looks_init(void); looks_init(); }
     fixes_init();
+    { void hirelings_init(void); hirelings_init(); }
     { void aging_init(void); aging_init(); void losses_init(void); losses_init(); }
     saves_init();
     assist_init();
@@ -166,6 +167,7 @@ void mods_init(void)
     { void lodgeview_init(void); lodgeview_init(); }
     { void enemyview_init(void); enemyview_init(); }
     { void mapmsg_init(void); mapmsg_init(); }
+    { void relics_init(void); relics_init(); }
     { void memberlooks_init(void); memberlooks_init(); }
     { void ammo_init(void); ammo_init(); }
     autopause_init();

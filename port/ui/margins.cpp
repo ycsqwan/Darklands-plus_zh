@@ -2,6 +2,7 @@
 // game otherwise keeps behind menus: the date and hour, where the party is, the purse, the
 // tasks the party has taken on (with their deadlines), and on the other side the town the party
 // is in, the blessings and potions working on the party, and who carries too much.
+#include <math.h>
 #include <stdio.h>
 #include <float.h>
 #include <string.h>
@@ -43,6 +44,7 @@ extern ImFont *ui_font_overlay;          /* ui.cpp: the text over and beside the
 #include "money.h"
 #include "margins_parts.h"
 extern "C" int encounters_card_active(void);
+extern "C" int encounters_in_street(void);
 extern "C" int encounters_builtin(int i);
 extern "C" void ui_open_goto(void);
 extern "C" int citynav_available(void);
@@ -192,9 +194,11 @@ static void place_quests(int cur);
 static const char *TOWN_OFFER_TIP[2] = {
     "大学：可学习新的圣人与炼金术配方、获取稀有炼金材料、打造更优质的哲人石，还可聘请教师（需具备{拉丁语}知识与敏锐头脑）。",
     "大教堂：为{神恩}（或许还有{美德}）捐款、为教士跑腿（取圣物）、讲述守护圣人的故事、提供庇护所。" };
+/* (the wares as the shops' barter calls sell them: ui/journal.cpp SHOPS - the blacksmith every weapon, armor and
+   shield, 0x040000ff; the swordsmith every hand weapon, 0x0f) */
 static const struct { int shop, icon; const char *wares; } NOTABLE_SHOPS[] = {
-    { 2, TI_SWORD, "weapons" }, { 3, TI_ARMOUR, "盔甲与盾牌" }, { 5, TI_BOW, "弓、弩与枪械" },
-    { 0, TI_SMITH, "weapons" }, { 6, TI_TOOLS, "锤、狼牙棒、连枷与长柄武器（长矛、戟、标枪、杖）" },
+    { 2, TI_SWORD, "武器" }, { 3, TI_ARMOUR, "盔甲与盾牌" }, { 5, TI_BOW, "弓、弩与枪械" },
+    { 0, TI_SMITH, "武器、盔甲与盾牌" }, { 6, TI_TOOLS, "锤、狼牙棒、连枷与长柄武器（长矛、戟、标枪、杖）" },
     { 8, TI_CLOTH, "衣物与软质盔甲（棉衣、皮革、带钉皮革、煮皮甲）" } };   /* (the clothmaker: only with the cardopts fix, which opens its shopfronts by day) */
 enum { NOTABLE_Q = 30 };
 static const char *TOWN_OFFER_WORD[2] = { "大学", "大教堂" };
@@ -209,7 +213,7 @@ extern "C" u32 plat_ticks_ms(void);
 extern "C" int ns_showing(void);
 static bool margin_town_row;                               /* (the margin's own row of the town's offers: the teachers too) */
 static int skill_of(int m, int k) { return (s8)g_rb((u16)(G_MEMBER(m) + G_M_SKILLS + k)); }
-struct Learner { std::string name; int v; };       /* (name "": the party, its best) */
+struct Learner { int m; int v; };                  /* (m -1: the party, its best) */
 static bool teach_learners(int k, int to, std::vector<Learner> *out)
 {
     int best = -1;
@@ -220,11 +224,11 @@ static bool teach_learners(int k, int to, std::vector<Learner> *out)
         if (k <= 3) { v = 0; for (int j = 0; j <= 3; j++) v = std::max(v, skill_of(m, j)); }
         else if (k <= 6) { v = 0; for (int j = 4; j <= 6; j++) v = std::max(v, skill_of(m, j)); }
         else v = skill_of(m, k);
-        if (each) { if (v < to && out) { char nm[24]; gm_member_name(m, nm, sizeof nm); char nu[48]; ui_text_utf8(nm, nu, sizeof nu); out->push_back({ nu, v }); } else if (v < to) best = 0; }
+        if (each) { if (v < to && out) out->push_back({ m, v }); else if (v < to) best = 0; }
         else best = std::max(best, v);
     }
     if (each) return out ? !out->empty() : best == 0;
-    if (best >= 0 && best < to && out) out->push_back({ "", best });
+    if (best >= 0 && best < to && out) out->push_back({ -1, best });
     return best >= 0 && best < to;
 }
 /* a teacher in a row: the place's icon, the skills' shields, how far they teach (dim when nobody would
@@ -261,8 +265,8 @@ static void teacher_row(const TchSource &t, float is, bool lines)
         ui_skill_icon(dl, ImVec2(b.x + s2 * 0.45f, b.y + lh * 0.5f), s2 * 0.9f, t.skill[j]);
         ImGui::Dummy(ImVec2(s2, lh)); ImGui::SameLine(0, gap);
         std::string w;
-        for (const Learner &l : L) w += (w.empty() ? "" : ", ") + (l.name.empty() ? std::string("队伍的最佳") : l.name) + " " + std::to_string(l.v);
-        if (L.empty()) ImGui::TextDisabled("没人愿意学习"); else ImGui::TextColored(ImVec4(0.15f, 0.42f, 0.15f, 1), "%s", w.c_str());
+        for (const Learner &l : L) w += (w.empty() ? "" : "  ") + (l.m < 0 ? "队伍的最佳 " + std::to_string(l.v) : rich_member(l.m, std::to_string(l.v)));
+        if (L.empty()) ImGui::TextDisabled("没人愿意学习"); else ui_rich_textf_c(ImVec4(0.15f, 0.42f, 0.15f, 1), "%s", w.c_str());
     }
     ImGui::Unindent(is + gap);
 }
@@ -503,6 +507,23 @@ void mclick(ImVec2 a, ImVec2 b, std::function<void()> f)
     if (mclicks_frame != ImGui::GetFrameCount()) { mclicks.clear(); mclicks_frame = ImGui::GetFrameCount(); }
     mclicks.push_back({ a, b, f });
 }
+/* the interface's own panels over the battlefield this frame (the order strip, a member's way chooser): the
+   pointer on one is on the interface, not on the field - no "Can't walk there", no foe's info, no crossed
+   blades on the pointer (mods/orders.c, ui/battleoverlay.cpp) */
+static std::vector<std::pair<ImVec2, ImVec2>> covers; static int covers_frame = -100, covers_prev_frame = -100;
+static std::vector<std::pair<ImVec2, ImVec2>> covers_prev;
+void ui_cover(ImVec2 a, ImVec2 b)
+{
+    if (covers_frame != ImGui::GetFrameCount()) { covers_prev.swap(covers); covers_prev_frame = covers_frame; covers.clear(); covers_frame = ImGui::GetFrameCount(); }
+    covers.push_back({ a, b });
+}
+extern "C" int ui_pointer_on_cover(void)
+{
+    ImVec2 m = ImGui::GetIO().MousePos;
+    int f = ImGui::GetFrameCount();
+    auto in = [&](const std::vector<std::pair<ImVec2, ImVec2>> &v) { for (const auto &c : v) if (m.x >= c.first.x && m.x < c.second.x && m.y >= c.first.y && m.y < c.second.y) return true; return false; };
+    return (f - covers_frame <= 1 && in(covers)) || (f - covers_prev_frame <= 2 && in(covers_prev));
+}
 extern "C" int margins_click(int x, int y)
 {
     if (ImGui::GetFrameCount() - mclicks_frame <= 2)
@@ -537,22 +558,121 @@ extern "C" int ui_nearest_town(void)                /* in the wilds: the nearest
 }
 
 #include "repwatch.h"
+#include "marks.h"
 static bool goto_hint, camp_hint;
 extern "C" void plat_press_key(int scancode);
-/* a small campfire: two crossed logs, the flames over them (the map's "C: camp here") */
-static void campfire_icon(ImDrawList *dl, ImVec2 c, float s);
-void ui_campfire_icon(ImDrawList *dl, ImVec2 c, float s) { campfire_icon(dl, c, s); }   /* (the icon sheet, uiconstyles:2) */
-static void campfire_icon(ImDrawList *dl, ImVec2 c, float s)
+/* the blessings and potions at work (ui/effects.cpp effects_now), a row a member; false when none (the town's
+   margin, and the battle's under its enemies: what is at work goes on in a fight). Each thing at work is a
+   picture and a short value: an attribute or a skill raised (or lowered) its shield, the rest a roundel
+   (ui_effect_icon) with a saint's halo or a potion's flask at its foot; one attribute's or skill's boosts
+   (two essences drunk) as one, their sum; what every member has alike on one line at the foot; how long
+   it lasts at the row's end, the rest under the pointer */
+bool margin_effects(int size, bool separator)
 {
-    float u = s / 20.0f;
-    auto P = [&](float x, float y) { return ImVec2(c.x + x * u, c.y + y * u); };
-    ImU32 wood = IM_COL32(120, 74, 36, 255), wood_dk = IM_COL32(70, 40, 18, 255);
-    dl->AddLine(P(-8, 8), P(8, 3), wood_dk, 3.6f * u); dl->AddLine(P(-8, 3), P(8, 8), wood_dk, 3.6f * u);
-    dl->AddLine(P(-8, 8), P(8, 3), wood, 2.4f * u); dl->AddLine(P(-8, 3), P(8, 8), wood, 2.4f * u);
-    ImVec2 f1[3] = { P(-6, 4), P(0, -10), P(6, 4) }, f2[3] = { P(-3.5f, 4), P(0.5f, -5), P(3.5f, 4) }, f3[3] = { P(-1.6f, 4), P(0, -1), P(1.6f, 4) };
-    dl->AddTriangleFilled(f1[0], f1[1], f1[2], IM_COL32(200, 70, 20, 255));
-    dl->AddTriangleFilled(f2[0], f2[1], f2[2], IM_COL32(240, 150, 40, 255));
-    dl->AddTriangleFilled(f3[0], f3[1], f3[2], IM_COL32(255, 230, 140, 255));
+    std::vector<Eff> e = effects_now(size);
+    if (e.empty()) return false;
+    if (separator) ImGui::Separator();
+    heading("祝福与药剂");
+    auto span = [](long h) { char b[24]; if (h < 48) snprintf(b, sizeof b, "%ld 小时", h); else snprintf(b, sizeof b, "%ld 天", (h + 12) / 24); return std::string(b); };
+    auto hours = [](long h) { char b[32]; if (h < 48) snprintf(b, sizeof b, "%ld 小时", h); else snprintf(b, sizeof b, "%ld 天", (h + 12) / 24); return std::string(b); };
+    struct Chip { int kind, k, icon, src, amount; std::string val, tip; long lo, hi; };
+    auto same = [](const Chip &c, const Eff &x) {
+        if (c.kind != x.kind) return false;
+        if (x.kind == 0x48 || x.kind == 0x49) return c.k == x.k && (c.amount < 0) == (x.amount < 0);   /* (a boost and a saint's lowering apart) */
+        return c.k == x.k && c.icon == x.icon && c.val == x.val && c.src == x.src;
+    };
+    std::vector<Chip> per[5];
+    for (const Eff &x : e) {
+        if (x.m < 0 || x.m >= 5) continue;
+        Chip *c = 0;
+        for (Chip &o : per[x.m]) if (same(o, x)) { c = &o; break; }
+        if (!c) { per[x.m].push_back({ x.kind, x.k, x.icon, x.src, 0, x.val, "", x.left, x.left }); c = &per[x.m].back(); }
+        bool stat = (x.kind == 0x48 || x.kind == 0x49) && x.k >= 0;
+        if (stat) c->amount += x.amount;
+        c->lo = std::min(c->lo, x.left); c->hi = std::max(c->hi, x.left);
+        if (!c->tip.empty()) c->tip += "\n";
+        c->tip += (stat ? std::string(x.amount > 0 ? "+" : "") + std::to_string(x.amount) : x.what) + "：剩余 " + hours(x.left);
+    }
+    for (int m = 0; m < 5; m++) for (Chip &c : per[m]) if ((c.kind == 0x48 || c.kind == 0x49) && c.k >= 0) {   /* (the sum, and its parts under the pointer when more than one) */
+        char v[16]; snprintf(v, sizeof v, "%+d", c.amount); c.val = v;
+        std::string nm = c.kind == 0x48 ? gm_attr_name(c.k) : gm_skill_name(c.k);
+        c.tip = c.tip.find('\n') == std::string::npos ? nm + " " + c.tip : nm + " " + v + "，其中\n" + c.tip;
+    }
+    /* what every member has alike (a saint's help for all, the same potion for each): the party's line */
+    int nm_present = 0; bool pres[5] = {};
+    for (int m = 0; m < size && m < 5; m++) if (g_rb(G_MEMBER(m))) { pres[m] = true; nm_present++; }
+    std::vector<Chip> all;
+    if (nm_present > 1) {
+        int first = -1; for (int m = 0; m < 5 && first < 0; m++) if (pres[m]) first = m;
+        for (size_t i = 0; i < per[first].size(); i++) {
+            Chip c = per[first][i]; bool everyone = true;
+            for (int m = 0; m < 5 && everyone; m++) {
+                if (!pres[m] || m == first) continue;
+                bool has = false;
+                for (const Chip &o : per[m]) if (o.kind == c.kind && o.k == c.k && o.icon == c.icon && o.val == c.val && o.src == c.src) has = true;
+                everyone = has;
+            }
+            if (!everyone) continue;
+            for (int m = 0; m < 5; m++) {
+                if (!pres[m]) continue;
+                for (size_t j = 0; j < per[m].size(); j++) {
+                    const Chip &o = per[m][j];
+                    if (o.kind == c.kind && o.k == c.k && o.icon == c.icon && o.val == c.val && o.src == c.src) {
+                        c.lo = std::min(c.lo, o.lo); c.hi = std::max(c.hi, o.hi);
+                        per[m].erase(per[m].begin() + (long)j); break;
+                    }
+                }
+            }
+            all.push_back(c); i--;                      /* (taken out of the first member's too) */
+        }
+    }
+    float lh = ImGui::GetTextLineHeight(), is = lh * 1.15f, gap = lh * 0.35f, right = ImGui::GetCursorScreenPos().x + ImGui::GetContentRegionAvail().x;
+    ImDrawList *dl = ImGui::GetWindowDrawList();
+    bool first = false;
+    auto place = [&](float w) { if (!first) { ImGui::SameLine(0, gap); if (ImGui::GetCursorScreenPos().x + w > right) ImGui::NewLine(); } first = false; };
+    auto chip = [&](const Chip &c, const char *who) {
+        bool stat = (c.kind == 0x48 || c.kind == 0x49) && c.k >= 0;
+        float iw = is * (c.src ? 1.25f : 1.1f);          /* (room for the halo or flask at the roundel's foot) */
+        float tw = c.val.empty() ? 0 : ImGui::CalcTextSize(c.val.c_str()).x, w = iw + (tw > 0 ? lh * 0.12f + tw : 0);
+        place(w);
+        ImVec2 a = ImGui::GetCursorScreenPos();
+        ImGui::Dummy(ImVec2(w, lh));
+        ImVec2 ctr(a.x + is * 0.55f, a.y + lh * 0.5f);
+        if (stat) { if (c.kind == 0x48) ui_attr_icon(dl, ctr, is * 0.9f, c.k); else ui_skill_icon(dl, ctr, is * 0.9f, c.k); }
+        else ui_effect_icon(dl, ctr, is * 0.9f, c.icon, c.src);
+        if (tw > 0) dl->AddText(ImVec2(a.x + iw + lh * 0.12f, a.y), stat && c.amount < 0 ? IM_COL32(170, 50, 30, 255) : ImGui::GetColorU32(ImGuiCol_Text), c.val.c_str());
+        if (item_hovered()) margin_tip(((who ? std::string(who) : std::string()) + c.tip).c_str());
+    };
+    auto when = [&](long lo, long hi) {
+        std::string t = span(lo); if (span(hi) != t) t += " 至 " + span(hi);
+        place(ImGui::CalcTextSize(t.c_str()).x + lh);
+        ImGui::TextDisabled("(%s)", t.c_str());
+        if (item_hovered()) margin_tip(lo == hi ? ("将于 " + hours(lo) + "后结束。").c_str() : ("最早的一项将于 " + hours(lo) + "后结束，最晚的一项于 " + hours(hi) + "后。").c_str());
+    };
+    for (int m = 0; m < 5; m++) {
+        if (per[m].empty()) continue;
+        long lo = -1, hi = -1;
+        for (const Chip &c : per[m]) { if (lo < 0 || c.lo < lo) lo = c.lo; if (c.hi > hi) hi = c.hi; }
+        {   /* who: the member's head (the name under the pointer) */
+            ImVec2 a = ImGui::GetCursorScreenPos();
+            ImGui::Dummy(ImVec2(is / 1.2f, lh));
+            ui_member_head(dl, m, ImVec2(a.x, a.y + (lh - is) * 0.5f), is);
+            if (item_hovered()) margin_tip(member_name(m).c_str());
+        }
+        first = false;
+        for (const Chip &c : per[m]) chip(c, 0);
+        when(lo, hi);
+    }
+    if (!all.empty()) {
+        long lo = -1, hi = -1;
+        for (const Chip &c : all) { if (lo < 0 || c.lo < lo) lo = c.lo; if (c.hi > hi) hi = c.hi; }
+        ImGui::TextDisabled("全体");
+        if (item_hovered()) margin_tip("每位成员都一样。");
+        first = false;
+        for (const Chip &c : all) chip(c, "每位成员：");
+        when(lo, hi);
+    }
+    return true;
 }
 static void right_panel(int size)
 {
@@ -560,7 +680,7 @@ static void right_panel(int size)
     int cur = (s16)g_rw(G_CUR_LOC);
     bool any = false, near = false;
     if (cur < 0 && game_mode() == GM_MAP) { cur = ui_nearest_town(); near = true; camp_hint = true; }
-    else if (cur >= 0 && encounters_card_active() && !encounters_builtin(encounters_card_active() - 1)) near = true;    /* (a new encounter on the road out of town; not the restored hospice, a place in town) */
+    else if (cur >= 0 && encounters_card_active() && !encounters_builtin(encounters_card_active() - 1) && !encounters_in_street()) near = true;    /* (a new encounter on the road out of town; not the restored hospice or one in the streets, in town) */
     if (cur >= 0 && cur < (int)gamedata.cities.size()) {
         const City &c = gamedata.cities[cur];
         goto_hint = !near && citynav_available() && config_get_int("assist.city_goto", 1);   /* (at the foot, as the left margin's hints) */
@@ -613,7 +733,7 @@ static void right_panel(int size)
                    two points, up to 9% (buy_price, sell_price s032; above 0 the game's integer
                    rounding leaves the prices as they are) */
                 std::string t = "城镇对队伍的看法；队伍在此地的所作所为会影响其评价（卡片会注明何时发生），而城镇的许多卡片都会对其加以权衡。"
-                                "当数值低于0时，商店会要求更多、支付更少（从约-20开始，最高可至9%）。";
+                                "当数值低于0时，商店会要求更多、支付更少：每低于0两点，增减1%，最高9%。";
                 std::vector<RepChange> L; repwatch_list(cur, L);
                 if (!L.empty()) {
                     t += "\\n\\n自本游戏加载以来的变化：";
@@ -693,54 +813,15 @@ static void right_panel(int size)
             any = true;
         }
     }
-    std::vector<Eff> e = effects_now(size);
-    if (!e.empty()) {
-        if (any) ImGui::Separator();
-        heading("祝福与药剂");
-        /* one row a member: what is at work - an attribute or a skill raised (or lowered) as its shield and
-           how much, the rest in words - then how long it lasts (from the soonest to the last) */
-        auto span = [](long h) { char b[24]; if (h < 48) snprintf(b, sizeof b, "%ld 小时", h); else snprintf(b, sizeof b, "%ld 天", (h + 12) / 24); return std::string(b); };
-        float lh = ImGui::GetTextLineHeight(), is = lh * 1.15f, gap = lh * 0.35f, right = ImGui::GetCursorScreenPos().x + ImGui::GetContentRegionAvail().x;
-        ImDrawList *dl = ImGui::GetWindowDrawList();
-        for (int m = 0; m < 5; m++) {
-            long lo = -1, hi = -1; bool any_m = false;
-            for (const Eff &x : e) if (x.m == m) { any_m = true; if (lo < 0 || x.left < lo) lo = x.left; if (x.left > hi) hi = x.left; }
-            if (!any_m) continue;
-            std::string when = span(lo); if (span(hi) != when) when += " to " + span(hi);
-            ImGui::TextUnformatted((member_name(m) + ":").c_str());
-            bool first = false;
-            auto place = [&](float w) { if (!first) { ImGui::SameLine(0, gap); if (ImGui::GetCursorScreenPos().x + w > right) ImGui::NewLine(); } first = false; };
-            for (const Eff &x : e) {
-                if (x.m != m) continue;
-                if ((x.kind == 0x48 || x.kind == 0x49) && x.k >= 0 && x.amount) {
-                    char v[16]; snprintf(v, sizeof v, "%+d", x.amount);
-                    float w = is + lh * 0.15f + ImGui::CalcTextSize(v).x;
-                    place(w);
-                    ImVec2 a = ImGui::GetCursorScreenPos();
-                    ImGui::Dummy(ImVec2(w, lh));
-                    ImVec2 c(a.x + is * 0.5f, a.y + lh * 0.5f);
-                    if (x.kind == 0x48) ui_attr_icon(dl, c, is * 0.9f, x.k); else ui_skill_icon(dl, c, is * 0.9f, x.k);
-                    dl->AddText(ImVec2(a.x + is + lh * 0.15f, a.y), x.amount < 0 ? IM_COL32(170, 50, 30, 255) : ImGui::GetColorU32(ImGuiCol_Text), v);
-                    if (item_hovered()) margin_tip((std::string(x.kind == 0x48 ? gm_attr_name(x.k) : gm_skill_name(x.k)) + " " + v + ": " + span(x.left) + " left.").c_str());
-                } else {
-                    float w = ImGui::CalcTextSize(x.what.c_str()).x;
-                    place(w);
-                    ImGui::TextUnformatted(x.what.c_str());
-                }
-            }
-            place(ImGui::CalcTextSize(when.c_str()).x + lh);
-            ImGui::TextDisabled("(%s)", when.c_str());
-        }
-        any = true;
-    }
-    if (!any) { ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled)); ImGui::TextWrapped("工作中没有祝福或药水。"); ImGui::PopStyleColor(); }
+    if (margin_effects(size, any)) any = true;
+    if (!any) { ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled)); ImGui::TextWrapped("No blessings or potions at work."); ImGui::PopStyleColor(); }
     if (camp_hint) {                                                /* on the map: the original's C, to camp in the wild */
         float sp = ImGui::GetStyle().ItemSpacing.y, lh = ImGui::GetTextLineHeight(), hh = lh * 1.4f + sp * 2;
         float foot = ImGui::GetWindowHeight() - ImGui::GetStyle().WindowPadding.y - hh;
         if (foot > ImGui::GetCursorPosY() + sp * 2) ImGui::SetCursorPosY(foot);
         ImGui::Separator();
         ImVec2 p = ImGui::GetCursorScreenPos();
-        campfire_icon(ImGui::GetWindowDrawList(), ImVec2(p.x + lh * 0.7f, p.y + lh * 0.7f), lh * 1.4f);
+        ui_campfire_icon(ImGui::GetWindowDrawList(), ImVec2(p.x + lh * 0.7f, p.y + lh * 0.7f), lh * 1.4f);
         ImGui::SetCursorScreenPos(ImVec2(p.x + lh * 1.6f, p.y + lh * 0.2f));
         ImGui::TextDisabled("%s", ui_pad_prompts() ? "在此扎营" : "C：在此扎营");
         if (ImGui::IsItemHovered()) { ImGui::SetMouseCursor(ImGuiMouseCursor_Hand); margin_tip("点击（或按 C）可在野外扎营：休息、治疗、炼制药水、祈祷。应有人看守营地。"); }
@@ -861,6 +942,7 @@ static void night_streets(bool night)
 {
     int cur = (s16)g_rw(G_CUR_LOC);
     if (!night || game_mode() != GM_CARD || cur < 0 || cur >= (int)gamedata.cities.size() || config_get_int("original", 0)) return;
+    if (encounters_card_active() && !encounters_in_street()) return;     /* (a new encounter on a boat or the road: not in the streets) */
     int st = 0, sw = 0, n = 0;
     for (int m = 0; m < 5; m++) if (gm_member_status(m) == 1) { st += gm_member_skill(m, 15); sw += gm_member_skill(m, 16); n++; }  /* (party_avg_skill: the members on their feet) */
     if (!n) return;

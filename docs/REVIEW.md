@@ -10,14 +10,14 @@ last one stopped and what it missed.
 ## 1. The whole, first: walk it as each kind of reader
 
 Play through, as a player would, with the one-time windows shown (the test sessions hide them: start with
-`DL_TIPS=1 DL_WELCOME=1 DL_NEWS=1 DL_MT32_PROMPT=1`), and take a screenshot at each step:
+`DL_TIPS=1 DL_WELCOME=1 DL_MT32_PROMPT=1`), and take a screenshot at each step:
 
 - **A new player**: the first start (the MT-32 window, the intro, the welcome on the start screen, the guide's
   note), a new party, the first town, the first card, the first battle (its tips), the loot, the inn, travel,
   saving, quitting. Is every step explained where it happens, once, in plain words? Is anything said twice in
   two ways?
 - **A player of the original** on the Full Original and Purist presets: does anything of Darklands+ still show?
-- **A returning player** of an earlier version: what is new, and does anything they knew move without a word?
+- **A returning player** of an earlier version: does anything they knew move without a word?
 - **A maintainer** opening the code for the first time (docs/DEVELOPERS.md, CODE_MAP.md): can they find where a
   thing on screen is drawn, and the switch and the reason for it, in a few minutes?
 - **A modder** (docs/MODDING.md): does the example mod still work as written?
@@ -226,3 +226,235 @@ covered and found, and what it could not check.
   the button is held): it now takes the orders' own pointer test. Left as words: the switches' and built-in
   mods' descriptions (they also make docs/SWITCHES.md), and the sheet's Skills page and character creation,
   where each shield's name is learned.
+- 2026-10-27 (1.3.1 and 1.4): the translation, checked as a whole. The dwarves' door (GitHub issue 2) came from
+  one gap in recomp16.py: a relocated immediate of cmp was translated without the load segment (only mov and
+  push had it), so the game's comparisons of stored routine pointers never matched: a card's opened wall, the
+  battle save's routine numbers (every trigger came back a pit) and the traps enemies spring. Fixed at that one
+  place (imm_val) rather than at the 13 sites, and tools/reloc_check.py (in the release check) now lists any
+  relocation in the program the translation does not add the load segment to: none left but one word of data
+  after the runtime's exit call. Old battle saves are put right as they load (saves.c), not by a second rule in
+  the game's restore. The pathfinding's "no way after eight asks" had grown three exceptions in a day; they are
+  one account now (pathfix.c). Edge scrolling held the frame only for drags: the hold moved to the view's redraw
+  itself (battlescroll.c view_redraw_hook), so every way of scrolling gets it. Saves past 99: the DOS layer's
+  8.3 rule hid them; one alias (dos_name_alias) at path resolution, one reader of the save in play
+  (saves_cur_name) in place of seven.
+- 2026-10-28 (1.4): the combat AI given a shape. Between orders the members' behaviour had grown as switches
+  and exceptions (a bow-or-sword toggle, the player's melee remembered in one array, "by our doing" in another,
+  a rescue check inside the bow's return): it is now one idea, each member's way of fighting (styles.c: eight
+  ways, kept by name), with an order of the player's taking the way's place for the rest of the fight (one
+  array, ov), and each step of the round (idle shooters, idle fighters, the stale foe, the bow's return, the
+  stances) asking only the way. It moved out of orders.c (the clicks) into ways.c. docs/MERGING.md's switch
+  table, written by hand at 1.2, had 17 switches since retired and lacked 125: it is now made from the switches
+  and the sources (switch_map.py, by check_docs --fix), and its classes and presets are those of options.h.
+  The same day the ways went from eight to four and Manual (the maintainer's call: anything else is an
+  order); Holdfast lives on only as what a walk or Halt order of the player's leaves (ST_HELD), and the
+  Bodyguard's walking and the parrying stances went with their ways.
+- 2026-11-01 (1.4.5): a structural pass after the round of fixes (the code sweep; the pictures only for what
+  this round added). sheetview.cpp had grown past 1,600 lines with two things in it: the character sheet's
+  pages, and the parse of a saint's help into chips with their ranking against the other saints, which the
+  prayer screen, the margins and the tooltips also read (saint_effects_text). The parse moved to
+  ui/saintchips.cpp (saintchips.h: the chips, the filter's saint_effect / saint_touches / saint_key_count);
+  the page drawing stays. ui/saints.cpp held both the saints' descriptions and what is at work on the party
+  (the event table read into effects_now): the latter moved to ui/effects.cpp beside effects.h, with the
+  roundels' names (EFFECT_NAME, read by check_docs for {*Fire}) that rich text had kept. One home for the
+  campfire picture (ui/marks.cpp: the margin's C, the overland view's stop at 20:00, the icon sheet; it was
+  margins.cpp's with a wrapper). The struck shield is one function (ui_key_icon_struck) for the relic's row,
+  the rich text's {~Virtue} and ui_shield_value (UI_KEY_STRUCK), not three hand-drawn strokes. A load from a
+  native screen had left ns_unwinding set (the stack crept 4 bytes a battle tick until the game crashed):
+  cleared in hook_run, the one place every hook passes, rather than in the hooks that read it. Not done: the
+  play-through as each kind of reader and the sweeps of words and switches (the changelog and the new
+  switch's texts were read; COPY.md regenerated, not read through); fixes.c (2,755 lines) and encounters.c
+  (1,909) are past the mark but each is one subject (the fixes' table, the encounters' engine).
+- 2026-11-01 (evening, 1.4.5): standing order 4 over the loads in a battle, at his word ("several patchwork
+  solutions with saves corrupting when loaded from battle"). Three roots found and the patches over them taken
+  out. (1) The mods read item definitions from the game's copy in memory, which a battle or a dungeon overwrites:
+  Ingredients of one quality took nearly everything for an ingredient on such a load and set it to 25 (since
+  1.4), and relics_frame had been mending the relics, which hid it. The mods now read DARKLAND.LST through
+  gamedata (gm_itemdef_u8/u16); the gear in use is mended once from the members' own records of it. (2) The
+  riddle-load detour (a load inside the card screen handed to the game's own, 43d6aa2) went: its cause, a stale
+  ns_unwinding, is cleared in hook_run; 12 riddle loads, no crash. (3) Seven ways of noticing a load (three
+  hooks on the save's reading, one only while quick saves were on; four modules polling a time set whenever
+  any .SAV was opened, the Load list too) became one: saves_on_loaded. Left as they are: the events read from
+  events.tmp in a battle (that is where the game keeps them then), pack.c keeping both loads around the game's
+  own equip_weight (the game's code reads its definitions there), and the repair of old battle saves' trigger
+  routines (data, not a path).
+- 2026-11-01 (night, after 1.4.5): a structural pass and a look round after the single-file fix and the words
+  sweep. One rule now says who moves a member: a follower in single file is the game's until real combat breaks
+  the line (ways.c in_line; the game gives each follower the one before it at every step of the leader). The
+  ways' automation and the step aside for a line (orders_may_move, read by battlerules.c) both ask it, so no
+  module of ours fights the game's single-file step over a member (his Moresnet log: "member 1's foe 0 fell"
+  every moment of a fight). The camp's after-camp risk is said once in lodgeview.cpp. Words: docs/COPY.md read
+  through by a second reader for lines that leave a rule vague or state it wrongly; two wrong (a heavy load's
+  blows, armor's effect on a blow) and some twenty vague ones fixed, each checked against the code or the
+  decompilation. Left: the "Many / Some / A few encounters" tiers (not checked), "about a day" for the saints'
+  help (durations not checked), and the cathedral donation's Virtue (margins.cpp says "maybe", citynav.cpp
+  does not; the donation's code, s056 1abb:0212, is not decompiled). Then traced and fixed: a battle save made
+  while the party walked loads with the members marked as walking (cbt_moving 1) and no order (his dksaveb4):
+  the battle's start clears the orders but not that flag, and cbt_step walks only on an order with the walk
+  bit, so they stood for good, while the ways left them alone as members walking. The ways' tick now sets
+  such a member standing (order 0 and walking can only be this).
+- 2026-11-02 (night, 1.4.6-RC5): the dwarf king's door again (issue 9). The ladder notice of RC4 answered the
+  wrong question; the player's trouble was the card behind the riddle. Traced at run time: the door's trigger
+  (type 8, s014 19cd:24a8), its riddle card, the card's -3 and the wall removal on the battle's restart (s023
+  1ef8:0b6e) all run as in the original. The cause is the riddle table (s009 182c:1cb4), sampled by calling it:
+  battlefield 0x0b (the red-hat king's mine, $MineS00) section 8, the king's door, draws $MineT24..T35, and
+  T24/T25 lead to $MineB02, the "go away" card section 10 always brings. Fix kingdoor hooks B02 (the card
+  before it, prev_screen) rather than the table, so mines already built, his save among them, are mended too.
+  Also $MineB03 never set $NamedOneName ("It is  again"): cardslips. Not checked: whether a random mine level
+  ever holds the disabled enemy group that $MineB00's "his minions charge forward" (-4) wakes; in his mine
+  there was none (one group, not disabled), so that card would bring no fight there.
+- 2026-11-03 (1.4.6-RC6): every prayer by a relic's bearer crashed, since 1.4.5 (his dksavebe: "interp: opcode
+  df"). relics.c's saint hook wrote the favor back by SP after hook_call_original, when the call's return had
+  moved SP up 4: the word it hit was saint_finish's saved BP, so BP came back as the favor and saint_pray
+  returned through a frame that was not there. Why nothing caught it: release_check opened the prayer screen and backed out; the relic
+  tests asked a saint's chance from our own code (ns_call_ptr), where the stray word fell on scratch space; no
+  check ever prayed. Now: release_check prays (a relic's bearer, Pray now); tools/check_hooks.py, run by
+  release_check, lists any argument read or written by SP after the original (it finds the old line and no
+  other); hook_run logs a hook point that leaves SP below its entry or BP changed ("left the stack wrong",
+  release_check fails on it; the old relic code sets it off at the prayer screen's hook). Also: Pray now
+  passes -1, the leader to the game's routines, and sainttexts took -1 for nobody and gave the game's help.
+- 2026-11-04 (1.4.6-RC7): a structural check of this batch, asked for: are these fixes, or quirks patched one by
+  one? Fixed where they arise: (a) auto-travel that stalled near Graz, or kept turning into Graz (his log: "last
+  step 1000", an encounter at every step). A night in camp's encounter made the next step's encounter certain
+  (the weight hook in travel.c). It then waited for a card it was allowed to replace, which a unique card, any card not in the
+  list, or a robber knight's keep's (step result 2000, s030 1462:0c44) never was, so every step stayed
+  certain. (Corrected the next day: 2000 comes only near the keeps, the one kind of place with a second card.) Now
+  the step made certain is the encounter's own, and the flag goes with it. (b) Go to: the place table held
+  guesses (barracks, prison, town square, bowyers). Every hub card's option flags were read line by line, and
+  each rule now names its card; the Go to sweep has no failures. (c) Rested: one rule in the model (can[0],
+  lodgeview.c), which the view and the set-to-work after each day both read; the view had made the test
+  twice. (d) Twin places: one test (gamedata loc_is_twin) for both maps. (e) Item 0, the Hand Axe: two
+  "id > 0" tests (the What came of it snapshot, the room check when buying) took it for no item; a sweep found
+  no other. Withdrawn: a replan around the next tile after 40 steps without getting nearer, drafted for the
+  Graz stall before (a) was found. The stall came from the encounters, not the map, so a second guess at it is
+  not kept. Patches, said so: "changed from 99 to 99" is dropped at the side message hook (the game's practice
+  routine reports a change of nothing). The Game menu is put back if found overwritten. That one's cause is
+  not known: one report (a title "MeetA01", greyed). The game writes that entry only once, at start (s000
+  0e76:083e, no other write in the disassembly). The log now names the card on screen when it happens. Left
+  as it is, the largest piece of patchwork: Go to's table is still a hand-kept copy of what the hub cards
+  offer. The end state is to read the cards' own option conditions at run time (citynav already parses their
+  lines).
+- 2026-11-04 (1.4.6-RC8): a deep sweep, asked for ("make every lasting fix you can think of"), by three audits
+  read against the code: state that can stick, writes outside what they mean to touch, and copies of the game's
+  own data. Found and fixed at the cause: the "MeetA01" menu was text_expand (s043 150b:06fe) filling a card's
+  text into msg_buf (DS:9085, 900 bytes) with no limit, and three of 1.4.5's encounters came out at 906 and more,
+  over the menu bar's variables and table (the Game title pointer took "ma" of "...and march.", 0x616d, which is
+  "$MeetA01"+1). Now: text_expand is hooked (cardview.c expand_guard_hook: the bytes after msg_buf kept and put
+  back, the text cut at 899); encounters.c check() rejects a block that can come out longer (each $variable at
+  its longest), and datamods.c cuts a mod's block past 899 (the raw copy on text_expand's stack, 900 bytes, has
+  the return address after it); five blocks shortened; the menu guard of RC7 removed. Prayers: saint_screen asks
+  who a prayer is for only when made from the sheet; a card's (saint_pray_party) and P passed -1, the leader to
+  the game's routines: fix prayfor (asked as the sheet's; -1 at saint_finish becomes the one who prays). State:
+  losses.c's battle counter went to -1 after a load in a battle (after_load set 0, the unwinding then took one):
+  no more "Lost for good" notices; travel.c kept the old game's camp at 20:00 and pending trip across a load;
+  saves.c kept a card menu's switches across visits. Copies: the saints' and potions' "how many encounters ask"
+  counted only the decompiled card scripts (five read in the disassembly now added) and none of the mods'
+  encounters (now counted from what is loaded: encounters_asks_saint/item); relics.c's table of each saint's
+  least favor gave way to asking the saint's function; Hardarmor's armour by grade is one function; the shops'
+  wares in the margin and the finder follow the barter masks; travel.c reads DARKLAND.MAP through the data mods,
+  and the UI's game data is read again when the mods change. Go to's list now follows what the hub cards on show
+  offer (and a walk that finds no way), logged as "goto: ...". Also: an encounter's `injure -1` is the leader
+  (the game's routine takes -2 but not -1), and its robberies keep item counts in bounds whatever the itemcount
+  fix's switch. Left: journal.cpp's stock forecast caps a city's size at 8 where the game reads a ninth row (only
+  a modded city of size 10+); the encounters' enemy names are ENM indexes as the game ships them (a mod that
+  reorders ENM would mislead); cardhints_data.h's 283 reasons, offices.c's rules and the place-type labels are
+  not checked against the cards.
+- 2026-11-04 (1.4.6-RC10): asked how to find bugs before a release rather than after it. Two tools, both kept:
+  mods/checks.c watches each frame for what must never happen (the menu bar's title pointers changed, a member's
+  item count out of range, money below 0, the place or party size out of range, the date going back without a
+  load, 285 of the 300 notes in use, 12 map steps in a row each an encounter) and writes one
+  "check:" line with the card, screen, place, tile and date; the first of a session also makes a report zip and
+  tells the player (ui_check_noticed). A value must stay out of range two seconds (the opening has no party: the
+  first soak run caught the check firing at every start; a load passes through such frames; the second, a
+  quickload taken for the date going back, twice: no date is looked at while a load of ours is asked for or
+  under way, saves_load_under_way, nor for five seconds after any load; DL_CHECKS_LOG traces the dates), and the
+  party's checks wait for a party seen since the title (the Windows build sat over two seconds on the start's
+  cards with none). A review by a second reader (2026-11-04) took out the check of the party on water: a saint's
+  water-as-land help that runs out mid-crossing leaves the party walking on water as the original allows (s030
+  1462:1300 stops only a step from land), so it would have reported a fault in plain play; a date read back is
+  forgotten once the date is where it was; the florins (unsigned past 32767, as the rest of the code reads them)
+  are no longer checked for below 0. tools/soaktest.py plays for N minutes through nctl (cards' options at
+  random, Go to and leaving towns, journeys to near towns, F12, the sheet, fights on auto) and fails on any
+  "check:", FATAL, hook or encounter error, or a state that does not change for 15 actions; it replaces
+  monkey.py (random cards, journeys and battles, no checks) and can start from a player's save (--load). release_check.py
+  now fails on "check:", "cards: ... cut at" and "goto: ... not found". Found at the cause: the river trap
+  near Graz was travel.c's weight hook making every step an encounter while one was due, on a river too, where
+  s030's card draw has none and the step goes nowhere; now only on land, one try per tile (the final soak run
+  lost four steps by a bridge near a town, where the draw found no card: the next step from that tile is now the
+  game's own), given up after six tries. The pointer's hot spot was learnt from where the game's sprite stood while the mouse stood still;
+  inside our own screens the game's sprite stands still too, so the map's (5, 0) stayed: now read from the
+  game's own variables (DS:6ef6/6ef8), the gauntlet always (0, 0) (its fingertip is its top left pixel). The
+  map's (5, 0) is the original's own slip: s030 takes a click at the mouse itself (1462:02e6, mouse less 0x41,
+  0x15, the tiles' origin), so there too the fingertip stood 5 pixels left of the click.
+  The last soak run found a real one: a save made during a card's text (the soak's quicksave, during a failed
+  climb at a city's wall at night, $CityW01, whose loop shows its menu again) left the menu with no text and no
+  options. save_game (s037 1462:2a68, its "Saving Game" box) wrote over the start of the card's .msg text (DS:a895;
+  udsdump before and after) and msg_buf: saves.c's save_hook keeps both across every save (reproduced, then 3 of
+  3 such menus whole).
+  Content: 33 new encounters asked for saints, potions or things no original card asks for; replaced by ones
+  the original cards ask for. The original's counts are now in one place (saintinfo.c: saint_info_cards_game,
+  potion_cards_game, item_unasked_game; nsdraw.cpp's copy of the potions' table went), and enccheck with ENC_DIR
+  fails on an encounter that asks for one of those (release_check builds and runs it on port/content).
+- 2026-11-05 (1.4.6-RC13): his RC12 reports. Looked back at the hardest of them for patchwork. The freeze in a
+  mine came from the port, not the game: dl_poll hands over the ticks due after a slow frame together, and
+  wait_ticks (root 0000:4402, show_message's pause) waits for its tick byte to equal start + n, so it could step
+  past and wait 256 more. The answer is at the cause, in the one place the ticks are emulated (runtime/bios.c,
+  installed before the mods): the same wait counting the ticks gone by. Only two callers use that byte so; no
+  other loop compares a clock by equality (the battle's compare with >=). The relic and the minerals (fixes
+  dwarfrelic, carditems) are each one hook on the game's own path (the loot's distribution, the item records'
+  adding), not a patch on the card; minechests clears pictures at level_switch, where the floor is built. The
+  stall log (no key or click asked for 2.5 s while frames are drawn) found the freeze in the Wine check of the RC
+  and stays as a diagnostic, with the native stack (module + offset on Windows; the runtime's resolve with an
+  unstripped link of the same build). The alchemy list's marks moved from formula to potion in keep.c, one
+  storage, old marks read once. The game's messages over our screens: one layout function for the three kinds.
+  Not checked: a translated game's message headings (the outcome and the shield go by the English words).
+- 2026-11-06 (1.4.6-RC16): his RC14 report, a loss notice in camp under the clock and F12 under both. The cause
+  was layering, not the notice: the clock (and the game's own message) are drawn on ImGui's foreground list, over
+  every window, and the notice took the focus each frame, over F12. One rule now, in ui.cpp's frame, in the order
+  ui_event hands out events: what is drawn over everything gives way to any window over the game (windows_up),
+  and the notice waits behind the windows that take events before it (F12, the welcome, the tips), its OK guard
+  starting again when it shows. The cards' saints: the 99% favor is reckoned by the Saints page's own function
+  (sheetview.c pray_member, now shared), not a copy. The new toolchain (mingw-w64 g++ 13) no longer brings
+  math.h through other headers: the eight files that use its functions include it.
+  Ammunition (his wish): the three switches (endless ammunition, endless thrown weapons, thrown weapons given
+  back) became one choice, assist.endless (1 endless, 2 given back, 0 the original's), its values the old
+  group's so saved settings keep their meaning; ammo.c owns the mode and sets the modules' variables, loot.c's
+  give-back takes arrows and quarrels as it took thrown weapons. A choice can now be a list with words for each
+  (OF_LIST, choice_desc). Found while at it: a group switch named its group by its place in BUNDLES, so taking
+  one out shifted the next (map.overland_marks); options_sync_bundles now says at start when one does not match.
+  Also the covers drawn over everything (loading, Go to) give way to a window over the game, as the clock does:
+  the first battle's notice, come up during a load, stood under "Loading...".
+- 2026-11-06 (1.4.6, rebuilt): he still could not keep a world map section open, on RC15 and 1.4.6. I had
+  called it fixed from a test where the right panel was already wide. With his settings (both sections folded,
+  the panel narrow) it reproduced at once: the press on the arrow opened the section, the panel, anchored at its
+  right edge, grew to the left, the title came under the press position, and the release closed it again. The
+  RC15 patch tested the press position against the node where it was now; the fix keeps the decision itself,
+  made when the button went down (third_party/imgui TreeNodeBehavior, dlp_arrow_press_id), so a node that
+  moves under the pointer cannot turn a press on the arrow into a click on the label. The panel also keeps its
+  open width when folded, so it no longer jumps. Lesson: test a report from the player's own settings file.
+- 2026-11-07 (1.4.6, rebuilt again): three of his reports. (1) Leaving Helmond put the party right of it.
+  overland_open's west clamp set the marker to 0x82 - (x - 8), a pixel per tile instead of 16 (nine places
+  with x < 8). Fixing that alone left the party a tile east of the icon: the view draws column 0 as column 1
+  ("if (col == 0) col = 1") while the marker's tile is counted from the view's column, so any view at column 0
+  (that placement, or a scroll west, which clamps at 0) drew the party a tile east of where the game had it.
+  Not patched at the one placement: the view's first column is made 1 (and its row, which overland_open also
+  lets be 0) in a hook on the view's drawing, the tile kept (fix westedge, 1462:1c76 and 1462:20d2). Checked
+  against leaving Nesse (x 37): the party on the icon in both. (2) The battle flicker, open since RC13: about a
+  third of a running battle's pictures were taken during combat_draw, which takes the pointer off and redraws
+  the people on the screen itself (dumped: the pointer gone in four of ten). plat_present now keeps the last
+  whole picture while combat_draw runs, as it already did after a view scroll (one mechanism, battlescroll.c's
+  draw hook). (3) The alchemy seals' digits read as counts: they carry the flasks' grade mark instead (chevrons,
+  or dots, by display.potion_grade). His "world map tabs still shut" report was made on build 1200 (the first
+  1.4.6 zip), before the fix in 1201; 1201 tested under Wine at his 3840x2160, 150% and his ini: both sections
+  stay open from the arrow and from the title.
+- 2026-11-07 (1.4.6, build 1203 reports): the hold during combat_draw made battles stutter, "worse than the
+  flicker", fast-forwarded or not: it kept the window's last picture while a frame was drawn, so a frame
+  finished and drawn over again before a picture fell outside combat_draw was never shown. The elegant form of
+  the same idea: keep the last whole picture (when combat_draw finishes, and at every picture taken outside it
+  or the view-moved hold) and show that while the battle's picture is not whole. One mechanism now serves both
+  holds (platform_sdl.c, keep_whole); measured in a test battle: 15 frames drawn and 15 shown every 2 s, with
+  half the pictures taken mid-draw. And the encounters' rep_change (new since 1.4.5) clamped to 99 a Nurnberg
+  at 168 after a good deed (-69): cards ($Polit00) and events take the opinion past 99 and the game's own
+  chance is then 0; a change now moves toward its limit only, never back. His builds: his logs show build
+  1200 until 1203 was installed (1201 never ran), likely two downloads of the same file name: the zips he gets
+  now carry their build number in the name.

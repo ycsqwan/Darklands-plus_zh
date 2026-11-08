@@ -7,6 +7,7 @@
 #include "../runtime/game.h"
 #include "../runtime/gamevars.h"
 #include "gamemodel.h"
+#include "relics.h"
 #include "../runtime/config.h"
 
 int gm_party_size(void) { int n = (s16)g_rw(G_PARTY_SIZE); return n < 0 ? 0 : n > 5 ? 5 : n; }
@@ -75,12 +76,14 @@ int gm_ammo_hidden(void) { return ammo_infinite && !config_get_int("original", 0
 /* a thing each member keeps for themselves with the shared pack, listed with them and never in the
    party's pack: potions; arrows, quarrels and balls when they run out (assist.infinite_ammo off);
    javelins, throwing axes, darts and throwing knives when those run out (assist.infinite_thrown off) -
-   a shooter's are their own to spend */
+   a shooter's are their own to spend; a relic that is no weapon (rules.relics: what it does is its
+   carrier's, mods/relics.c; a weapon relic is its wielder's, in use) */
 extern int thrown_infinite;
 int gm_member_own(int id, int type)
 {
     if (gm_is_potion(id)) return 1;
     if (config_get_int("original", 0)) return 0;
+    if (relics_on() && relic_is(id & 0xfff) && !relic_is_weapon(id & 0xfff)) return 1;
     if (!ammo_infinite && gm_is_ammo(id)) return 1;
     if (!thrown_infinite && type >= 0x17 && type <= 0x1a) return 1;
     return 0;
@@ -161,6 +164,11 @@ int gm_pack_target(int id, int qual, int prefer, int allow)
         for (int j = 0; j < gm_item_count(k) && !stacks; j++) { GmItem g; if (gm_item(k, j, &g) && g.id == id && g.qual == qual && g.count < 255) stacks = 1; }
         int score = stacks ? 1000 : 2 * (64 - gm_item_count(k)) + (k == prefer);
         if (gm_member_own(id, gm_itemdef_type(id)) && gm_member_uses(k, id)) score += 5000;   /* (arrows that run out: to the one who shoots them) */
+        if (relics_on() && relic_is(id) && !relic_is_weapon(id) && relic_bearer_ok(k, id)) {   /* (a relic: to one with the Virtue it asks, who has none as good) */
+            int better = 0;
+            for (int j = 0; j < gm_item_count(k); j++) { GmItem g; if (gm_item(k, j, &g) && relic_is(g.id) && !relic_is_weapon(g.id) && relic_favor(g.id) >= relic_favor(id)) better = 1; }
+            score += better ? 2000 : 5000;
+        }
         if (score > best) { best = score; bm = k; }
     }
     return bm;
@@ -179,8 +187,7 @@ int gm_room_for(int m, int id, int qual)
 {
     int n = gm_item_count(m);
     if (n < 64) return 1;
-    u32 d = g_itemdef(id & 0xfff);
-    int type = d ? rb((u16)(d >> 16), (u16)((u16)d + 0x1e)) : -1;
+    int type = gm_itemdef_type(id);
     for (int j = 0; j < n; j++) {
         u16 o = G_ITEM(m, j);
         if (rw(G_FAR2E38, o) == (u16)id && rb(G_FAR2E38, (u16)(o + 2)) == type && rb(G_FAR2E38, (u16)(o + 3)) == qual && rb(G_FAR2E38, (u16)(o + 4)) < 0xff) return 1;
@@ -188,9 +195,23 @@ int gm_room_for(int m, int id, int qual)
     return 0;
 }
 
+/* item id's definition, byte or word at off (the type +0x1e, the shop categories +0x20/+0x22, the weight +0x25, the
+   quality +0x26 ...): DARKLAND.LST's (ui/gamedata.cpp), not the game's copy in memory, which a battle or a dungeon
+   overwrites (its pointers then lead to other data: every thing came out an ingredient, mods/loot.c); the game's
+   copy only if the list could not be read. -1 unknown */
+int gamedata_item_raw(int id, int off, int size);
 static u32 itemdef(int id) { return g_itemdef(id & 0xfff); }
-void gm_itemdef_name(int id, char *out, int n) { u32 d = itemdef(id); if (!d) { out[0] = 0; return; } g_str((u16)(d >> 16), (u16)d, out, n); }
-int gm_itemdef_type(int id) { u32 d = itemdef(id); return d ? rb((u16)(d >> 16), (u16)((u16)d + 0x1e)) : -1; }
+static int mem_def(int id, int off, int size)
+{
+    if (g_rb(GV_in_battle) == 1) return -1;                /* (not in memory there) */
+    u32 d = itemdef(id); if (!d) return -1;
+    return size == 2 ? rw((u16)(d >> 16), (u16)((u16)d + off)) : rb((u16)(d >> 16), (u16)((u16)d + off));
+}
+int gm_itemdef_u8(int id, int off) { int v = gamedata_item_raw(id & 0xfff, off, 1); return v >= 0 ? v : mem_def(id, off, 1); }
+int gm_itemdef_u16(int id, int off) { int v = gamedata_item_raw(id & 0xfff, off, 2); return v >= 0 ? v : mem_def(id, off, 2); }
+int gamedata_item_name(int id, char *out, int n);   /* (ui/gamedata.cpp: the name as the lists show it) */
+void gm_itemdef_name(int id, char *out, int n) { u32 d = itemdef(id); if (d && gamedata_item_name(id & 0xfff, out, n)) return; if (!d) { out[0] = 0; return; } g_str((u16)(d >> 16), (u16)d, out, n); }
+int gm_itemdef_type(int id) { return gm_itemdef_u8(id, 0x1e); }
 /* member m's missile weapon looses thing id: the arrows of its bow, the quarrels of its crossbow, the
    balls of its gun (far 20a5:7822[weapon]), or the thrown weapon itself */
 int gm_member_uses(int m, int id)
@@ -200,12 +221,13 @@ int gm_member_uses(int m, int id)
     if (e.missile < 0 || e.missile > 0x3f || t < 0) return 0;
     return e.missile == t || rb(G_FAR20A5, (u16)(0x7822 + e.missile)) == t;
 }
-int gm_itemdef_weight(int id) { u32 d = itemdef(id); return d ? rb((u16)(d >> 16), (u16)((u16)d + 0x25)) : 0; }
-int gm_itemdef_no_trade(int id) { u32 d = itemdef(id); return d ? (rb((u16)(d >> 16), (u16)((u16)d + 0x24)) & 0x80) != 0 : 1; }
+int gm_itemdef_weight(int id) { int w = gm_itemdef_u8(id, 0x25); return w < 0 ? 0 : w; }
+int gm_itemdef_no_trade(int id) { int f = gm_itemdef_u8(id, 0x24); return f < 0 ? 1 : (f & 0x80) != 0; }
 int gm_itemdef_cats(int id, unsigned long *cats)
 {
-    u32 d = itemdef(id); if (!d) return 0;
-    *cats = (unsigned long)rw((u16)(d >> 16), (u16)((u16)d + 0x20)) | ((unsigned long)rw((u16)(d >> 16), (u16)((u16)d + 0x22)) << 16);
+    int a = gm_itemdef_u16(id, 0x20), b = gm_itemdef_u16(id, 0x22);
+    if (a < 0 || b < 0) return 0;
+    *cats = (unsigned long)a | ((unsigned long)b << 16);
     return 1;
 }
 
@@ -215,6 +237,16 @@ void gm_member_attr(int m, int k, int *cur, int *max)
     if (m < 0 || m >= 5 || k < 0 || k > 6) return;
     *cur = (s8)g_rb((u16)(G_MEMBER(m) + G_M_ATTR_CUR + k));
     *max = (s8)g_rb((u16)(G_MEMBER(m) + G_M_ATTR_MAX + k));
+}
+int gm_temp_boost(int kind, int m, int idx)
+{
+    int t = 0;
+    for (int i = 0; i < G_NEVENTS; i++) {
+        u32 e = g_event(i); if (!e) continue;
+        u16 s = (u16)(e >> 16), o = (u16)e;
+        if ((s16)rw(s, (u16)(o + 0x22)) == kind && (s16)rw(s, (u16)(o + 0x1a)) == m && (s16)rw(s, o) == idx) t += (s16)rw(s, (u16)(o + 0x1e));
+    }
+    return t;
 }
 int gm_shield_defence(int type, int q, int missile)
 {

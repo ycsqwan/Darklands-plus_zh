@@ -1,5 +1,5 @@
 /* testcmds.c - the test commands that look at or change the game's state, for the scripted
- * sessions (port/tools/nctl.py "ucmd NAME:ARGS", release_check.py, monkey.py): a battle at the next
+ * sessions (port/tools/nctl.py "ucmd NAME:ARGS", release_check.py, soaktest.py): a battle at the next
  * card, hits, items, saves, the native screens' actions, dumps of what the game holds ...
  * platform_sdl.c keeps those that act as the system would (keys, clicks, the wheel, a controller)
  * and hands every other step here. Not part of play: nothing calls these but a script. */
@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cpu.h"
+#include "../mods/travel.h"
 #include "hle.h"
 #include "../ui/ui.h"
 #include "../mods/hdart.h"
@@ -141,7 +142,16 @@ int testcmd_run(const char *cmd, const char *arg)
         else if (!strcmp(cmd, "umaxattr")) { int m = 0, a = 0, v = 1; sscanf(arg, "%d,%d,%d", &m, &a, &v); if (m >= 0 && m < 5 && a >= 0 && a < 7) g_wb((u16)(G_MEMBER(m) + G_M_ATTR_MAX + a), (u8)v); }   /* test: an attribute's maximum */
         else if (!strcmp(cmd, "ureload")) { int m = 0, t = 100; sscanf(arg, "%d,%d", &m, &t); u16 now = g_rw(GV_combat_clock); g_wb((u16)(GV_cbt_action + m), 9); g_ww((u16)(0xd948 + 2 * m), (u16)(now + 10 - t / 3)); g_ww((u16)(0xdabd + 2 * m), (u16)(now + t / 3)); g_ww((u16)(0xdaa3 + 2 * m), (u16)(now + t)); }   /* test: member m reloading (a third done) */
         else if (!strcmp(cmd, "uhall")) { void halloffame_open(void); int halloffame_record(void); if (arg[0] == 'r') fprintf(stderr, "hall record: %d\n", halloffame_record()); else halloffame_open(); }   /* test */
+        else if (!strcmp(cmd, "ufloor")) { void levelmap_dump(void); levelmap_dump(); }   /* test: the floor shown, its doors, ways out and handlers, in the log */
         else if (!strcmp(cmd, "ulevelmap")) { void levelmap_toggle(void); levelmap_toggle(); }   /* test: Tab in a battle */
+        else if (!strcmp(cmd, "ulvwalk")) { extern int levelwalk_x, levelwalk_y, levelwalk_floor; int x = 0, y = 0; sscanf(arg, "%d,%d", &x, &y); levelwalk_x = x; levelwalk_y = y; levelwalk_floor = (s8)g_rb(GV_floor_shown); }   /* test: a click on the level map (Tab) at x, y (map pixels): the party walks there */
+        else if (!strcmp(cmd, "udoorat")) { int levelwalk_door_at(int, int); int x = 0, y = 0; sscanf(arg, "%d,%d", &x, &y); fprintf(stderr, "udoorat %d,%d: %d\n", x, y, levelwalk_door_at(x, y)); }   /* test: the door a click at game x, y would take (-1 none) */
+        else if (!strcmp(cmd, "udoorscan")) {          /* test: the door a click would take at each game pixel (every other one), as text in file arg: a letter a door (a = 0), '.' none */
+            int levelwalk_door_at(int, int); FILE *f = fopen(arg, "w");
+            if (f) { for (int y = 0; y < 200; y += 2) { for (int x = 0; x < 320; x += 2) { int d = levelwalk_door_at(x, y); fputc(d < 0 ? '.' : 'a' + d % 26, f); } fputc('\n', f); } fclose(f); }
+            fprintf(stderr, "udoorscan %s\n", arg); }
+        else if (!strcmp(cmd, "udoorwalk")) { int levelwalk_door(int); int n = atoi(arg); fprintf(stderr, "udoorwalk %d: %d\n", n, levelwalk_door(n)); }   /* test: as a click on door n (ufloor's number): the walk to it, the door used there */
+        else if (!strcmp(cmd, "udoor")) { int n = 0, o = 1; sscanf(arg, "%d,%d", &n, &o); u16 a[3] = { (u16)n, (u16)o, 1 }; game_call_far(23, 0x1ef8, 0x04ac, 3, a); }   /* test: door n (ufloor's number) opened (o 1) or shut (0): door_set, s023 1ef8:04ac */
         else if (!strcmp(cmd, "artexport")) { char m[400]; hdart_export(m, sizeof m); fprintf(stderr, "%s\n", m); }
         else if (!strcmp(cmd, "artrescan")) hdart_rescan();
         else if (!strcmp(cmd, "ufight")) {              /* test: a battle (type, seed[, 3 x (enemy type, quality, number)]) at the next card */
@@ -183,6 +193,16 @@ int testcmd_run(const char *cmd, const char *arg)
                 fprintf(stderr, "\n");
             }
             eval_free(snap);
+        }
+        else if (!strcmp(cmd, "urelic")) {              /* test: member m's least favor and chance with favor x for saint s, through saint_fns (relics.c's discount in them) */
+            int m = 0, st = 0, x = 20; sscanf(arg, "%d,%d,%d", &m, &st, &x);
+            u16 tseg = (u16)(LOADSEG + 0x290e), off = rw(tseg, (u16)(0x2937 + 4 * st)), seg = rw(tseg, (u16)(0x2937 + 4 * st + 2));
+            void *snap = eval_snapshot();
+            u16 a2[3] = { (u16)m, 0, 2 }; int least = (s16)game_call_ptr(seg, off, 3, a2, 0); eval_restore(snap);
+            u16 a7[3] = { (u16)m, (u16)x, 7 }; int ch = (s16)game_call_ptr(seg, off, 3, a7, 0); eval_restore(snap);
+            eval_free(snap);
+            int relic_discount(int, int, int *); int code = 0, d = relic_discount(m, st, &code);
+            fprintf(stderr, "relic test: member %d saint %d: least %d, chance with %d favor %d (relic %#x takes off %d)\n", m, st, least, x, ch, code, d);
         }
         else if (!strcmp(cmd, "uchronfill")) { void journal_test_chronicle(int); journal_test_chronicle(atoi(arg)); }   /* test: n made-up texts in the chronicle (memory only) */
         else if (!strcmp(cmd, "usubtab")) { extern int ui_want_subtab; ui_want_subtab = atoi(arg); }   /* test: the sub-tab to open next (the journal's: 7 the chronicle) */
@@ -276,6 +296,7 @@ int testcmd_run(const char *cmd, const char *arg)
         else if (!strcmp(cmd, "utip")) { void tips_show(int); tips_show(atoi(arg)); }   /* test: a tip window: 1 the start screen's (the New Player Guide), 2 the first battle's, 3 the welcome */
         else if (!strcmp(cmd, "uplaylist")) { void playlist_play(const char *, int); void playlist_seek(int); int n = 0, ms = -1; char dv[16] = "fm"; sscanf(arg, "%d,%d,%15s", &n, &ms, dv);   /* test: the soundtrack's player: piece n (n,-1,DEVICE: on that device, fm by default; n,ms: move to ms in the piece playing) */
             if (ms >= 0) playlist_seek(ms); else playlist_play(dv, n); }
+        else if (!strcmp(cmd, "ustyle")) { int i = 0, v = -1; sscanf(arg, "%d,%d", &i, &v); void style_test_set(int, int); void orders_style_changed(int); style_test_set(i, v); orders_style_changed(i); fprintf(stderr, "styles: test: member %d's way %d\n", i, v); }   /* test: member i's way of fighting (mods/styles.h ST_*), this session only */
         else if (!strcmp(cmd, "uattack")) { int i = 0, t = 5; sscanf(arg, "%d,%d", &i, &t); void orders_test_attack(int, int); orders_test_attack(i, t); }   /* test (in battle): member i attacks t hand to hand (the player's order) */
         else if (!strcmp(cmd, "uhold")) { int i = 0, on = 1; sscanf(arg, "%d,%d", &i, &on); void orders_test_hold(int, int); orders_test_hold(i, on); }   /* test (in battle): member i told to hold */
         else if (!strcmp(cmd, "uoption")) {               /* test: a switch set as the settings set it (its own effect applied): key=value (uopt is the text click, platform_sdl.c; uset sets the value alone) */
@@ -307,10 +328,11 @@ int testcmd_run(const char *cmd, const char *arg)
         else if (!strcmp(cmd, "ulooks")) { int looks_count(void), looks_usable(int); int n = looks_count(), u = 0; for (int k = 0; k < n; k++) u += looks_usable(k); fprintf(stderr, "looks: %d of %d usable\n", u, n); }   /* test: analyse every figure (DL_LOOKS_DUMP) */
         else if (!strcmp(cmd, "uenc")) {                /* test: the next wilderness encounter is new encounter N (mods/encounters.c) */
             void encounters_force(int); int encounters_count(void); const char *encounters_title(int);
-            if (!arg[0]) { int n = encounters_count(); for (int k = 0; k < n + 8 && k < 128; k++) if (*encounters_title(k)) fprintf(stderr, "encounter %d: %s\n", k, encounters_title(k)); }
+            if (!arg[0]) { int n = encounters_count(); for (int k = 0; k < n + 8 && k < 256; k++) if (*encounters_title(k)) fprintf(stderr, "encounter %d: %s\n", k, encounters_title(k)); }
             else encounters_force(atoi(arg));
         }
         else if (!strcmp(cmd, "uwar")) { int l = -1, st = -1; sscanf(arg, "%d,%d", &l, &st); void war_test(int, int); war_test(l, st); }   /* test: the cities at war today; uwar:LOC,STATE forces one (mods/war.c) */
+        else if (!strcmp(cmd, "uarrive")) { void encounters_test_arrive(void); encounters_test_arrive(); }   /* test: the next arrival card (0x5a; ujumpcard:0x5a) counts as one by boat, for the boat encounters */
         else if (!strcmp(cmd, "ujumpcard")) { void cutcards_jump(int); cutcards_jump((int)strtol(arg, 0, 0)); }   /* test: the town's next street menu is the game's card N */
         else if (!strcmp(cmd, "ugamecard")) { void cutcards_force(int); cutcards_force((int)strtol(arg, 0, 0)); }   /* test: the next random encounter on the map is the game's card N */
         else if (!strcmp(cmd, "upolit")) {              /* test: a political season starts here (mods/politics.c; the setup s039 1462:0558 and its fix-ups) */
@@ -318,6 +340,7 @@ int testcmd_run(const char *cmd, const char *arg)
             fprintf(stderr, "politics started at %d: %d\n", (s16)g_rw(G_CUR_LOC), politics_test_start());
         }
         else if (!strcmp(cmd, "upolitage")) { void politics_test_age(int); politics_test_age(atoi(arg)); }   /* test: the season here began N days earlier */
+        else if (!strcmp(cmd, "uchoose")) { void cardview_choose(int); cardview_choose(atoi(arg)); }   /* test: the card's option N chosen (by its number, as Go to does) */
         else if (!strcmp(cmd, "ufind")) { void worldmap_test_find(const char *); worldmap_test_find(arg); }   /* test: the world map's Find, the text then Enter */
         else if (!strcmp(cmd, "uquicksave")) { void saves_quick_save(void); saves_quick_save(); }
         else if (!strcmp(cmd, "uquickload")) { void saves_quick_load(void); saves_quick_load(); }
@@ -333,6 +356,11 @@ int testcmd_run(const char *cmd, const char *arg)
             while (h >= 24) { h -= 24; if (++d > D[mo]) { d = 1; if (++mo >= 12) { mo = 0; y++; } } }
             g_ww(G_CUR_HOUR, (u16)h); g_ww(G_CUR_DAY, (u16)d); g_ww(G_CUR_MONTH, (u16)mo); g_ww(G_CUR_YEAR, (u16)y);
             fprintf(stderr, "clock %d:00 day %d month %d year %d\n", h, d, mo, y);
+        }
+        else if (!strcmp(cmd, "uingr")) { void loot_test_ingredients(int); loot_test_ingredients(atoi(arg)); }   /* test: which of member m's records count as ingredients now */
+        else if (!strcmp(cmd, "udsdump")) {            /* debug: the whole of DGROUP (64 KB) into a file, to compare two moments */
+            FILE *f = fopen(arg, "wb");
+            if (f) { for (unsigned o = 0; o < 0x10000; o++) fputc(g_rb((u16)o), f); fclose(f); fprintf(stderr, "dgroup dumped to %s\n", arg); }
         }
         else if (!strcmp(cmd, "uww")) {                /* test: a word of DGROUP (hex offset), set to v when given, then shown */
             unsigned of = 0; int v = 0; int n = sscanf(arg, "%x,%d", &of, &v);
@@ -353,6 +381,18 @@ int testcmd_run(const char *cmd, const char *arg)
         else if (!strcmp(cmd, "upoke")) {               /* debug: byte at link-time seg:off (+LOADSEG) */
             unsigned sg = 0, of = 0, v = 0; sscanf(arg, "%x,%x,%x", &sg, &of, &v);
             wb((u16)(LOADSEG + sg), (u16)of, (u8)v);
+        }
+        else if (!strcmp(cmd, "ustate")) {             /* test (tools/soaktest.py): where the game stands, in one line */
+            int game_mode(void), assist_in_card_menu(void); extern int ns_screen; void travel_party_tile(int *, int *);
+            int px = -1, py = -1; travel_party_tile(&px, &py);
+            char cn[16]; g_str(G_DGROUP, GV_card_name, cn, sizeof cn);
+            extern TravelState travel; int citynav_busy(void), encounters_card_active(void);
+            int cardview_test_options(int *, int), op[20], no = assist_in_card_menu() ? cardview_test_options(op, 20) : 0;
+            char os[80] = "-"; for (int k = 0, w = 0; k < no && w < 70; k++) w += snprintf(os + w, sizeof os - w, k ? ",%d" : "%d", op[k]);
+            int citynav_available(void);
+            fprintf(stderr, "state: mode %d screen %d card %s menu %d options %s place %d tile %d,%d day %d hour %d travel %d goto %d enc %d members %d nav %d\n",
+                    game_mode(), ns_screen, cn, assist_in_card_menu(), os, (s16)g_rw(G_CUR_LOC), px, py,
+                    (s16)g_rw(G_CUR_DAY), (s16)g_rw(G_CUR_HOUR), travel.active, citynav_busy(), encounters_card_active(), (s16)g_rw(G_PARTY_SIZE), citynav_available());
         }
         else if (!strcmp(cmd, "umode")) { int game_mode(void); fprintf(stderr, "mode %d\n", game_mode()); }   /* 1 card 2 map 3 screen 4 battle */
         else if (!strcmp(cmd, "ugroups")) {             /* test: the enemy groups of the place's levels, the combatants */
@@ -391,6 +431,7 @@ int testcmd_run(const char *cmd, const char *arg)
         }
         else if (!strcmp(cmd, "ualchemy")) { extern int uscreen_pending, uscreen_a, uscreen_b; uscreen_a = 0; uscreen_b = 8; sscanf(arg, "%d,%d", &uscreen_a, &uscreen_b); uscreen_pending = 1; }   /* test: the alchemy screen (member, hours) at the next card menu */
         else if (!strcmp(cmd, "uunpause")) { int p = g_rb(0xa695) == 1; if (p) { void bios_kbd_inject(u16); bios_kbd_inject(0x3920); } fprintf(stderr, "unpause: %s\n", p ? "was paused" : "running"); }   /* test: a battle running (Space only if it is paused: ai_paused) */
+        else if (!strcmp(cmd, "upaused")) fprintf(stderr, "paused: ai_paused %d real_combat %d choice pending %d\n", g_rb(0xa695), g_rb(GV_real_combat), g_rb(0xd6f1));   /* test: is the battle paused */
         else if (!strcmp(cmd, "umenu")) { int m = 0, i = 0, j = -1; sscanf(arg, "%d,%d,%d", &m, &i, &j); void menuview_request(int, int, int); menuview_request(m, i, j); }   /* test: menu m's entry i (sub-entry j) chosen, as a click on it does */
         else if (!strcmp(cmd, "ulib")) {                /* test: the saints the library at location k teaches */
             int k = atoi(arg), o[4]; int gm_library_saints(int loc, int out[4]); gm_library_saints(k, o);
@@ -406,8 +447,10 @@ int testcmd_run(const char *cmd, const char *arg)
             int k = -1; sscanf(arg, "%d", &k);
             for (int i = 0; i < 300; i++) { u32 e = ev_far(i); if (!e) continue; u16 sg = (u16)(e >> 16), o = (u16)e;
                 if (k != -1 && (s16)rw(sg, (u16)(o + 0x22)) != k) continue;
-                fprintf(stderr, "event %d: kind %#x type0 %d owner %d loc %d value %d tag %d aux %d %d\n", i, (s16)rw(sg, (u16)(o + 0x22)), (s16)rw(sg, o), (s16)rw(sg, (u16)(o + 0x1a)),
-                        (s16)rw(sg, (u16)(o + 0x1c)), (s16)rw(sg, (u16)(o + 0x1e)), (s16)rw(sg, (u16)(o + 0x28)), (s16)rw(sg, (u16)(o + 0x2a)), (s16)rw(sg, (u16)(o + 0x2c))); }
+                fprintf(stderr, "event %d: kind %#x type0 %d owner %d loc %d value %d tag %d aux %d %d from %d:00 %d/%d/%d to %d:00 %d/%d/%d\n", i, (s16)rw(sg, (u16)(o + 0x22)), (s16)rw(sg, o), (s16)rw(sg, (u16)(o + 0x1a)),
+                        (s16)rw(sg, (u16)(o + 0x1c)), (s16)rw(sg, (u16)(o + 0x1e)), (s16)rw(sg, (u16)(o + 0x28)), (s16)rw(sg, (u16)(o + 0x2a)), (s16)rw(sg, (u16)(o + 0x2c)),
+                        (s16)rw(sg, (u16)(o + 0x0a)), (s16)rw(sg, (u16)(o + 0x0c)), (s16)rw(sg, (u16)(o + 0x0e)) + 1, (s16)rw(sg, (u16)(o + 0x10)),
+                        (s16)rw(sg, (u16)(o + 0x12)), (s16)rw(sg, (u16)(o + 0x14)), (s16)rw(sg, (u16)(o + 0x16)) + 1, (s16)rw(sg, (u16)(o + 0x18))); }
         }
         else if (!strcmp(cmd, "uoriginal")) { void ui_set_original_c(int); ui_set_original_c(atoi(arg)); }   /* test: the original game (the Full Original preset's "original") on (1) or off (0) */
         else if (!strcmp(cmd, "ualcrisk")) { int r = 0, n = 200; sscanf(arg, "%d,%d", &r, &n); alc_risk_test(r, n); }   /* test: n failed brews of risk r here: the accidents */
@@ -484,11 +527,16 @@ int testcmd_run(const char *cmd, const char *arg)
         else if (!strcmp(cmd, "ulivecard")) { void citynav_test_live(void); citynav_test_live(); }   /* test: the card's text as loaded against MSGFILES */
         else if (!strcmp(cmd, "ucitylines")) { void citynav_check_lines(void); citynav_check_lines(); }   /* test: every hub card line through the Go to rules; unmatched ones logged */
         else if (!strcmp(cmd, "ureport")) { void ui_report_test(void); ui_report_test(); }   /* test: the report's zip made (ui/report.cpp), nothing opened */
-        else if (!strcmp(cmd, "usaintchips")) { void sheetview_check_saint_chips(void); sheetview_check_saint_chips(); }   /* test: every saint's help through the Saints page's parse; parts it did not know logged */
+        else if (!strcmp(cmd, "usaintchips")) { void saintchips_check(void); saintchips_check(); }   /* test: every saint's help through the Saints page's parse; parts it did not know logged */
         else if (!strcmp(cmd, "ugoto")) { void citynav_go(int); citynav_go(atoi(arg)); }   /* test: Go to place N in the city */
         else if (!strcmp(cmd, "uhelp")) { void ui_toggle_help(void); ui_toggle_help(); }
         else if (!strcmp(cmd, "ugotowin")) { void ui_open_goto(void); ui_open_goto(); }       /* test: the Go to window (G) */
         else if (!strcmp(cmd, "umap")) { void ui_toggle_map(void); ui_toggle_map(); }
+        else if (!strcmp(cmd, "uterrain")) { void travel_test_terrain(int, int, int); int x = 0, y = 0, t = 24; sscanf(arg, "%d,%d,%d", &x, &y, &t); travel_test_terrain(x, y, t); }   /* test: tile x, y of the travel planner's map made terrain t (the game's own unchanged: a way it refuses) */
+        else if (!strcmp(cmd, "utraveltile")) { int travel_to_tile(int, int, int, const char *); int x = 0, y = 0; sscanf(arg, "%d,%d", &x, &y); fprintf(stderr, "utraveltile %d,%d: %d\n", x, y, travel_to_tile(x, y, -1, "test tile")); }   /* test: auto-travel to map tile x, y (as a Ctrl+click) */
+        else if (!strcmp(cmd, "uleavetravel")) {       /* test: from a town's streets, the world map's "Leave and travel" to place loc */
+            void travel_after_leaving(int, const char *); void citynav_leave_town(void); int l = atoi(arg);
+            travel_after_leaving(l, "test"); citynav_leave_town(); fprintf(stderr, "uleavetravel %d\n", l); }
         else if (!strcmp(cmd, "utravel")) {             /* test: auto-travel to place loc (the world map's Travel there); the time as it sets off */
             int travel_to_loc(int, const char *), travel_minutes_loc(int, int *, int *); int l = atoi(arg);
             fprintf(stderr, "utravel %d: %d minutes planned, %d (day %d hour %d)\n", l, travel_minutes_loc(l, 0, 0), travel_to_loc(l, "test"), (s16)g_rw(G_CUR_DAY), (s16)g_rw(G_CUR_HOUR)); }

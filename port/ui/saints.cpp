@@ -1,7 +1,7 @@
 // saints.cpp - the saints as Darklands+ tells them (the character sheet's Saints, the prayer screen,
 // the tooltips): where a description's legend ends and its promise begins, the game's description
-// with what the help really does (mods/saintinfo.h), whether encounters call on a saint; and the
-// blessings and potions at work now and how long they last (effects_now: the margin's "In force").
+// with what the help really does (mods/saintinfo.h), whether encounters call on a saint. (What is at
+// work on the party, the blessings and potions: ui/effects.cpp.)
 #include <stdio.h>
 #include <string.h>
 #include <string>
@@ -12,7 +12,6 @@
 ImU32 ns_tier_colour(int n);   /* ui/nsdraw.cpp */
 #include "ui.h"
 #include "gamedata.h"
-#include "effects.h"
 #include "../mods/fixes.h"
 #include "../mods/saintinfo.h"
 extern "C" {
@@ -21,109 +20,6 @@ extern "C" {
 #include "../mods/gamemodel.h"
 }
 
-
-/* hours since year 0 (the game's calendar: 365 days, no leap years; month from 0, day from 1) */
-static long abs_hours(int y, int mo, int d, int h)
-{
-    static const int DAYS[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-    long days = (long)y * 365;
-    for (int i = 0; i < mo && i < 12; i++) days += DAYS[i];
-    return (days + d) * 24 + h;
-}
-
-/* the running temporary effects: events of kind 0x48 (attribute: a saint's boost, or the
-   lowering some saints bring with it), 0x49 (skill), 0x4a (weapon potion); +0 what, +0x1a member,
-   +0x1e amount, +0x12 end (hour, day, month, year) */
-static std::vector<Eff> effects_table(int size)
-{
-    std::vector<Eff> v;
-    long now = abs_hours((s16)g_rw(G_CUR_YEAR), (s16)g_rw(G_CUR_MONTH), (s16)g_rw(G_CUR_DAY), (s16)g_rw(G_CUR_HOUR));
-    for (int i = 0; i < G_NEVENTS; i++) {
-        u32 p = g_event(i);
-        if (!p) continue;
-        u16 sg = (u16)(p >> 16), o = (u16)p;
-        int kind = (s16)rw(sg, (u16)(o + 0x22));
-        if (kind == 0x43) {                                 /* a companion's stay (add_member: type0 the slot; its end, the day they leave) */
-            int m = (s16)rw(sg, o);
-            long left = abs_hours((s16)rw(sg, (u16)(o + 0x18)), (s16)rw(sg, (u16)(o + 0x16)), (s16)rw(sg, (u16)(o + 0x14)), (s16)rw(sg, (u16)(o + 0x12))) - now;
-            if (m >= 0 && m < size && left > 0 && left < 24L * 365 * 50) v.push_back({ m, "随队伍同行", left, kind });
-            continue;
-        }
-        if (kind < 0x48 || kind > 0x4a) continue;
-        int m = (s16)rw(sg, (u16)(o + 0x1a)), k = (s16)rw(sg, o), t = (s16)rw(sg, (u16)(o + 0x1e));
-        if (m < 0 || m >= size || t == 0 || (t < 0 && kind == 0x4a)) continue;     /* (a saint's lowering of an attribute: negative) */
-        long left = abs_hours((s16)rw(sg, (u16)(o + 0x18)), (s16)rw(sg, (u16)(o + 0x16)), (s16)rw(sg, (u16)(o + 0x14)), (s16)rw(sg, (u16)(o + 0x12))) - now;
-        if (left <= 0) continue;
-        char b[96];
-        if ((kind == 0x48 && k >= 0 && k < 7) || (kind == 0x49 && k >= 0 && k < 19)) {
-            snprintf(b, sizeof b, "%+d %s", t, kind == 0x48 ? gm_attr_name(k) : gm_skill_name(k));
-            Eff e = { m, b, left, kind }; e.k = k; e.amount = t;
-            v.push_back(e);
-            continue;
-        }
-        if (kind == 0x4a) {
-            /* +0: 0x69 Deadly Blade; 0x6d Hardarmor (its grade), 0x16d a saint's armour, 0x16e a saint's
-               armour quality, 0x174 a saint's fire protection (armourday); 0x74 Firewall (armourday);
-               0x6b Greatpower marked by greatpower; else an inventory index:
-               Strongedge (3..5) or Greatpower (14/22/30) */
-            /* (a saint's, mods/sainttexts.c: 0x16f-0x173 armour and weapon quality, 0x175 armour against
-               missiles, 0x177 / 0x178 the party's travel faster) */
-            static const struct { int k; const char *f; } SAINTLY[] = {
-                { 0x16d, "%+d 护甲（来自圣人）" }, { 0x16e, "穿着的护甲 %+d 品质（来自圣人）" },
-                { 0x16f, "金属盔甲 %+d 品质（来自圣人）" }, { 0x170, "皮革与布制护甲 %+d 品质（来自圣人）" },
-                { 0x171, "武器 %+d 品质（来自圣人）" }, { 0x172, "锋利武器 %+d 品质（来自圣人）" },
-                { 0x173, "刀剑、狼牙棒、长柄武器、弩和枪 %+d 品质（来自圣人）" },
-                { 0x174, "防火保护%d（来自圣人）" }, { 0x175, "%+d 护甲对投射物的防护（来自圣人）" },
-                { 0x177, "队伍行进速度提升%d%%（来自圣人）" }, { 0x178, "队伍在树林中的行进速度提升%d%%（来自圣人）" },
-                { 0x179, "伤口不会致死（来自圣人）" } };
-            bool done = false;
-            if ((k == 0x177 || k == 0x178) && (t == 50 || t == 100)) {   /* (the speed in words) */
-                snprintf(b, sizeof b, "队伍行进%s%s（来自圣人）", t == 100 ? "速度提升一倍" : "速度提升一半", k == 0x178 ? "在树林中" : "");
-                Eff e = { m, b, left, kind }; e.k = k; e.amount = t; v.push_back(e); continue;
-            }
-            for (const auto &x : SAINTLY) if (k == x.k) { snprintf(b, sizeof b, x.f, t); Eff e = { m, b, left, kind }; e.k = k; e.amount = t; v.push_back(e); done = true; break; }
-            if (done) continue;
-            int item = k == 0x69 || k == 0x6b || k == 0x6d || k == 0x74 ? k : t <= 5 ? 0x6a : 0x6b;
-            std::string n = item < (int)gamedata.items.size() ? game_text(gamedata.items[item].name.c_str(), 64) : "药剂";
-            if (item == 0x69) snprintf(b, sizeof b, "%s：%+d伤害", n.c_str(), t);
-            else if (item == 0x6a) snprintf(b, sizeof b, "%s：%+d穿透力", n.c_str(), t);
-            else if (item == 0x6d) { static const int T[4] = { 0, 1, 2, 2 }, Q[4] = { 0, 20, 25, 30 }; int g = t < 1 ? 1 : t > 3 ? 3 : t;
-                snprintf(b, sizeof b, "%s：护甲 %+d 厚度，%+d 品质", n.c_str(), T[g], Q[g]); }
-            else if (item == 0x74) snprintf(b, sizeof b, "%s：防火保护%d", n.c_str(), t);
-            else if (fix_is_on("greatpower")) snprintf(b, sizeof b, "%s：武器品质 %+d", n.c_str(), t);
-            else if (!(t >> 4)) snprintf(b, sizeof b, "%s：%+d穿透力", n.c_str(), t & 15);
-            else snprintf(b, sizeof b, "%s：%+d伤害，%+d穿透力", n.c_str(), t >> 4, t & 15);
-        } else continue;
-        v.push_back({ m, b, left, kind });
-    }
-    /* of the protections that do not add up (fire, the party's speed), only the strongest of each member's */
-    std::vector<Eff> out;
-    for (size_t i = 0; i < v.size(); i++) {
-        const Eff &e = v[i];
-        bool weaker = false;
-        if (e.kind == 0x4a && (e.k == 0x174 || e.k == 0x177 || e.k == 0x178))
-            for (size_t j = 0; j < v.size() && !weaker; j++) {
-                const Eff &o = v[j];
-                if (j != i && o.m == e.m && o.kind == 0x4a && o.k == e.k &&
-                    (o.amount > e.amount || (o.amount == e.amount && (o.left > e.left || (o.left == e.left && j < i))))) weaker = true;
-            }
-        if (!weaker) out.push_back(e);
-    }
-    return out;
-}
-/* what is at work now. While a battle has closed the cards the event table holds only what the
-   battle made (mods/fixes.c): what was at work when it began is kept from then and shown with it
-   (its hours as they were; a battle takes minutes) */
-std::vector<Eff> effects_now(int size)
-{
-    static std::vector<Eff> before; static int before_seed = -1;
-    int seed = (u16)g_rw(G_PARTY_SEED);
-    std::vector<Eff> v = effects_table(size);
-    if (!fixes_cards_down()) { before = v; before_seed = seed; return v; }
-    if (seed != before_seed) return v;                      /* (a game loaded in a battle: nothing from before) */
-    for (const Eff &e : before) if (e.m < size) v.push_back(e);
-    return v;
-}
 
 static std::string lower(std::string s) { std::transform(s.begin(), s.end(), s.begin(), ::tolower); return s; }
 

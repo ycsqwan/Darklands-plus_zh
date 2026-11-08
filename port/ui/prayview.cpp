@@ -34,8 +34,8 @@ extern "C" void prayview_draw(void)
         tx = 63 + sw + 4;
     }
     float tw = 316 - tx, y = 4;
-    std::string who = ns_gtext(p.names[p.who < 0 || p.who > 4 ? 0 : p.who]);
-    y += P.para(fo, NsDraw::FS_SMALL, tx, y, tw, soft, who + (p.party ? "为全队召唤圣人：" : "召唤圣人：")) + 0.5f;
+    std::string who = rich_member(p.who < 0 || p.who > 4 ? 0 : p.who);   /* (the one who prays: their head, ui/richtext.h) */
+    y += P.para(fo, NsDraw::FS_SMALL, tx, y, tw, soft, who + (p.party && !p.choose ? "为全队召唤圣人：" : "召唤圣人：")) + 0.5f;
     {   /* the name, and after it the Virtue the saint asks (greyed when the one who prays has less) */
         std::string nm = known ? gamedata.saints[p.saint].name : "?", vt = std::to_string(p.vmin);
         const float VIS = 5.4f, VGS = NsDraw::FS_BODY;
@@ -49,8 +49,9 @@ extern "C" void prayview_draw(void)
             float bw = P.shield_value(bx, by, VIS, UI_KEY_SKILL + SKILL_VIRTUE, vt, VGS, soft);
             if (p.virtue < p.vmin) ui_dim_since(P.dl, v0, 0.38f);
             if (P.over(bx, by - 3.5f, bx + bw, by + 3.5f)) {
-                char t[200]; snprintf(t, sizeof t, "此圣人向祈祷者索取 {美德} %d。%s 的：%d%s", p.vmin, who.c_str(), p.virtue,
-                                      p.virtue < p.vmin ? "，太低：再多的神恩也无济于事。" : ".");
+                char t[240]; snprintf(t, sizeof t, "此圣人向祈祷者索取 {美德} %d。%s%s", p.vmin,
+                                      rich_member(p.who < 0 || p.who > 4 ? 0 : p.who, std::to_string(p.virtue)).c_str(),
+                                      p.virtue < p.vmin ? "，太低：再多的 {神恩} 也无济于事。" : "。");
                 ns_tip(t, 22);
             }
             if (!beside) h += 7;
@@ -58,6 +59,8 @@ extern "C" void prayview_draw(void)
         y += h + 0.5f;
     }
     if (p.day[0]) y += P.para(fo, NsDraw::FS_SMALL, tx, y, tw, dim, std::string("圣人之日：") + p.day) + 1.5f;
+    if (p.relic_df > 0 && p.relic)                            /* a relic borne (mods/relics.c): what it takes off, already counted below */
+        y += P.para(fo, NsDraw::FS_SMALL, tx, y, tw, NsDraw::GREEN, ns_item_name(p.relic) + "：此次祈祷少消耗 {神恩:" + std::to_string(p.relic_df) + "}。") + 1.5f;
     if (known) {
         /* what the help really does (mods/saintinfo.h), where the text says otherwise, then the text */
         y += P.para(fo, NsDraw::FS_BODY, tx, y, tw, IM_COL32(26, 64, 132, 255), saint_effects_text(p.saint)) + 0.5f;
@@ -125,9 +128,10 @@ extern "C" void prayview_draw(void)
         else {
             P.text(fo, NsDraw::FS_SMALL, x, yy, soft, "为……祈祷：");
             float px = x + P.width(fo, NsDraw::FS_SMALL, "为……祈祷：") + 3, py = yy - 1.5f;
-            for (int m = 0; m < 5; m++) {
-                if (!p.present[m]) continue;
-                std::string nm = ns_gtext(p.names[m]);
+            for (int k = 0; k < 5; k++) {
+                int m = k == 0 ? p.who : k <= p.who ? k - 1 : k;     /* (the one who prays first) */
+                if (m < 0 || m > 4 || !p.present[m]) continue;
+                std::string nm = rich_member(m);              /* (a head a button: the name under the pointer) */
                 float w = P.width(fo, NsDraw::FS_SMALL, nm) + 6;
                 if (px + w > 316) { px = x; py += 10; }
                 if (P.button(px, py, px + w, py + 8.5f, nm, IM_COL32(40, 92, 34, 235))) ns_push(PV_PRAY, m, 0, 0);

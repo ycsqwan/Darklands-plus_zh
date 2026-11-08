@@ -43,7 +43,7 @@ static const struct { const char *key, *why; } WHY[] = {
     /* the party and its items */
     { "inventory.shared", "在队员之间转移多余物品纯属徒劳；即使为队伍准备一个统一的背包，每位队员的装备仍会计入负重。" },
     { "store.shared", "每个城镇都设有储物室，导致储存的物品几乎等同于丢失。" },
-    { "assist.inn_earn", "休息的队员放松下来毫无收获；唯有努力赚取才是玩家始终需要亲手做出的明智选择。" },
+    { "assist.inn_earn", "游戏会让所有人休息，而休息只能恢复耐力：力量或神恩若未完全恢复，当天就毫无进展，完全休息的人更是一无所获。更好的选择必须每次入住都逐人亲手做出。" },
     { "assist.best_leader", "原版只测试队长，因此玩家每次换卡前都得手动更换队长。" },
     { "assist.chances", "原版只有在按住Shift键时才会显示机会，且每次只提供一个选项。" },
     { "assist.card_help", "卡片能接受哪些圣人和物品，只有《Darklands Companion》才知道。" },
@@ -54,23 +54,24 @@ static const struct { const char *key, *why; } WHY[] = {
     { "assist.teachers", "老师很容易被忽略：原作中没有任何地方说明某个选项会带来一位圣人。" },
     { "assist.city_goto", "在城镇里到达某个地点需要在菜单中点击很多次，而这些选择其实都不是真正的选项。" },
     { "assist.docks_map", "船只的目的地只是名称，没有地图。" },
+    { "assist.card_outcomes", "原作的卡片常常在不知不觉间改变技能、属性、城镇的看法或名望；这里会把改动显示出来。" },
     { "journal.enabled", "玩家其他时候只能在纸上做笔记。" },
     { "journal.chronicle", "原作并不记录旅程。" },
-    { "assist.return_thrown", "每场战斗后收集投掷武器纯属浪费时间。" },
-    { "assist.endless", "数箭矢、收标枪都是记账，不是游戏；敌人还是会耗光。" },
+    { "rules.relics", "说明书上说，圣物会降低向其圣人祈祷所需的神恩，前提是持有者的美德足够；游戏从未实现这一点，所以这算半修正：对两句话的善意解读。仅限其本主圣人太过狭隘，因此这里对任何祈祷都生效。圣物本会像任何武器一样磨损，而大教堂会收下最先献上的那件圣物，却未说明献上后有何效果。" },
+    { "rules.ingredients_one_quality", "同类材料有两种品质时被重复列出，而品质除了价格之外没有任何影响。" },
+    { "assist.endless", "数箭矢、收标枪都是记账，不是游戏；敌人还是会耗光。折中方案保留原作的损耗，但省去拾取的麻烦。" },
     { "map.overland_marks", "原作的陆地视图既不标注任何名称，也不显示任务。" },
-    { "assist.infinite_ammo", "数箭矢是记账，不是游戏；敌人还是会耗光。" },
-    { "assist.infinite_thrown", "投掷武器也是如此。" },
     { "rules.aging", "创造角色时会设定年龄，但游戏中不会体现，所以用年长的角色开局后期无需额外花费；这样就把年龄当作一种成本。" },
+    { "rules.hirelings_stay", "有玩家要求让同伴陪伴整个游戏，而不是每次约定的天数到期后重新雇佣；这是个作弊功能，因此作为实验性选项，默认关闭。" },
     { "assist.loss_alerts", "原作中永久性的损失都是悄然发生的。" },
     { "assist.more_jobs", "职业被写进了游戏的表格，却从未真正提供给玩家。" },
     /* battles */
     { "battle.pause_down", "（属于战斗暂停的一部分）" },
     { "battle.pause_hurt", "（属于战斗暂停的一部分）" },
     { "battle.pause_foes", "（属于战斗暂停的一部分）" },
-    { "battle.improved", "在下达指令之间，原作中的队员要么闲站着，要么战斗表现很差（射手会冲进近战，没有火力线就僵住）；这正是玩家每次都会下达的指令。" },
+    { "battle.improved", "在下达指令之间，原作中的队员要么闲站着，要么战斗表现很差（射手会冲进近战，没有火力线就僵住）；这正是玩家每次都会下达的指令，且按每位队员所选的方式进行。" },
     { "battle.click_attack", "（属于更易操作的战斗控制的一部分）" },
-    { "battle.volley_toggle", "（属于更易操作的战斗控制的一部分）" },
+    { "battle.volley_toggle", "无论是否显示，各方式都会运行；图标会说明每位队员将做什么，也是切换的地方。" },
     { "battle.panel_select", "（属于更易操作的战斗控制的一部分）" },
     { "battle.quick_orders", "（属于更易操作的战斗控制的一部分）" },
     { "battle.next_member", "（属于更易操作的战斗控制的一部分）" },
@@ -99,6 +100,7 @@ static const struct { const char *key, *why; } WHY[] = {
     /* travel */
     { "travel.auto", "一步步在陆地视图上移动需要按很多键，而这些选择其实都不是真正的选项。" },
     { "travel.fast", "这也是个人喜好问题。" },
+    { "travel.camp_at_8", "从 20:00 起，营地的一天持续 9 小时；从 21:00 起则持续 32 小时：按时扎营意味着全程盯着时钟。有玩家提出了这个需求。" },
     { "map.names", "原作的陆地视图什么都没标注。" },
     { "map.quest_marks", "任务通向何方，只有在玩家的笔记里才有记载。" },
     { "map.offers_unvisited", "更容易：那些队伍本不可能掌握的知识。" },
@@ -141,9 +143,11 @@ const char *const OPTIONS_RETIRED[] = {
     "assist.wheel_lists", "assist.menu_click", "input.gamepad",   /* controls: always, but in the original game (the controller always) */
     "editor.show",                   /* the Editor tab: always, but in the original game */
     "assist.loot_all",               /* the loot's and shops' keys: always, as the other keys */
+    "display.pointer_drawn",         /* the gauntlet pointer drawn anew (1.4's test builds): the game's own pointer only */
     "display.integer_scale",         /* whole-number scaling: three ways to scale instead (Sharp pixels, Rounded edges, Soft) */
     "display.idle_rest",             /* the game waits without spinning: always */
     "sound.hit_sounds",              /* hits make a sound: the fix "hitsound" */
+    "assist.infinite_ammo", "assist.infinite_thrown", "assist.return_thrown",   /* one choice instead, Ammunition (assist.endless: 1 endless, 2 given back, 0 the original's) */
     0 };
 
 const char *option_why(const Option *o)

@@ -19,6 +19,8 @@
 void plat_hold(int ms);
 #include "gamemodel.h"
 #include "prayview.h"
+#include "relics.h"
+#include "fixes.h"
 
 PrayModel pray_model;
 static int pv_on = 1;
@@ -57,6 +59,7 @@ static void build(void)
     p->vmin = H(p->saint, p->who, 0, 4); p->xmin = H(p->saint, p->who, 0, 2);
     if (!p->chance && p->vmin > 0 && p->vmin < 100) { if (p->virtue < p->vmin) p->why = 1; else if (p->df < p->xmin) p->why = 2; }
     for (int m = 0; m < 5; m++) { p->present[m] = gm_member_present(m) && gm_member_status(m) != 0; gm_member_name(m, p->names[m], sizeof p->names[m]); }
+    p->relic_df = relic_discount(p->who, p->saint, &p->relic);   /* (already in the least favor and the chance: the saint's function asks it) */
     p->seq++;
 }
 
@@ -73,7 +76,7 @@ static void screen_hook(void)                 /* saint_screen(who, saint, party)
     g_ww(GV_saved_back_font, g_rw(GV_back_win_font)); g_ww(GV_saved_screen_font, g_rw(GV_screen_win_font));
     g_ww(GV_pray_box_shown, 0); g_ww(0x8878, 0);
     int t = H(p->saint, p->who, 0, 6);
-    p->choose = p->party ? (t & 2) : (t & 1);
+    p->choose = fix_is_on("prayfor") ? (t & 3) != 0 : p->party ? (t & 2) : (t & 1);   /* (prayfor: a card's prayer asked as the sheet's) */
     g_ww(GV_pray_choose, (u16)p->choose);
     int df = H(p->saint, p->who, 0, 2);
     if ((s8)g_rb(D_MAXDF(p->who)) < df) df = 0;
@@ -97,7 +100,7 @@ static void screen_hook(void)                 /* saint_screen(who, saint, party)
         if (ns_call(GF_key_pressed, 0)) {
             int k = ns_get_key();
             if (k == 0x11b || k == 0x2044 || k == 0x2064) r = -1;
-            else if (k == 0x1950 || k == 0x1970) { if (H(p->saint, p->who, (s16)g_rw(GV_pray_df), 7)) { g_ww(GV_pray_target, 0xffff); r = 1; } }
+            else if (k == 0x1950 || k == 0x1970) { if (H(p->saint, p->who, (s16)g_rw(GV_pray_df), 7)) { g_ww(GV_pray_target, fix_is_on("prayfor") ? (u16)p->who : 0xffff); r = 1; } }
             else if (k == 0x0d2b || k == 0x0d3d || k == 0x324d || k == 0x326d || k == 0x4e2b || k == 0x4800) ns_push(PV_MORE, 0, 0, 0);
             else if (k == 0x0c2d || k == 0x264c || k == 0x266c || k == 0x4a2d || k == 0x5000) ns_push(PV_LESS, 0, 0, 0);
             else if (k == 0x1000) { ns_call(GF_saint_finish, 2, p->who, p->saint); ns_call(GF_quit_to_dos, 0); }
@@ -118,7 +121,7 @@ static void screen_hook(void)                 /* saint_screen(who, saint, party)
             case PV_PRAY:
                 if (!H(p->saint, p->who, cur, 7)) break;
                 if (a.a >= 0 && (a.a >= gm_party_size() || !gm_member_present(a.a))) break;
-                g_ww(GV_pray_target, (u16)a.a);
+                g_ww(GV_pray_target, (u16)(a.a < 0 && fix_is_on("prayfor") ? p->who : a.a));   /* (prayfor: no one chosen, the one who prays) */
                 r = 1;
                 break;
             case PV_CANCEL: r = -1; break;

@@ -48,8 +48,8 @@ extern "C" int saves_restart;
    the game's Save and Load, redrawn, from the right-click menu) */
 extern "C" void saves_prefs(void)
 {
-    bool in_game = game_mode() != GM_OTHER;
     bool on = saves_on != 0;
+    ImGui::PushTextWrapPos(0.0f);
     if (ImGui::Checkbox("快速存档、快速载入与自动存档", &on)) saves_enable(on);
     { bool rs = saves_restart != 0;
       if (ImGui::Checkbox("当队伍旅程结束时，返回主菜单（原版游戏将退出）", &rs)) { saves_restart = rs; config_set_int("saves.restart_on_end", rs); } }
@@ -64,22 +64,18 @@ extern "C" void saves_prefs(void)
         ImGui::SameLine(0, UIS(30)); ImGui::SetNextItemWidth(UIS(160));
         if (ImGui::SliderInt("快速存档已保留", &saves_keep_quick, 1, 9)) config_set_int("saves.keep_quick", saves_keep_quick);
         ImGui::Unindent(UIS(20));
-        if (in_game) {
-            if (ImGui::Button("现在存档")) { saves_quick_save(); ui_toggle(); }
-            ImGui::SameLine();
-            ImGui::TextDisabled("作为快速存档，当游戏下次允许存档时（不在商店或对话中）。");
-        }
     }
     ImGui::TextDisabled("存档与载入：通过游戏菜单（右键），或按 Alt+S 和 Alt+L。快速存档与快速载入也在菜单栏的 Darklands+ 菜单中。");
+    ImGui::PopTextWrapPos();
 }
 
 extern "C" void tab_saves(void)
 {
     if (nlist < 0 || plat_ticks_ms() - listed_at > 3000) refresh();
     bool in_game = game_mode() != GM_OTHER;
-    char cur[16]; g_str(G_DGROUP, 0xa680, cur, sizeof cur);
+    char cur[16]; saves_cur_name(cur, sizeof cur);
     if (nlist == 0) { ImGui::TextDisabled("尚未有存档。"); return; }
-    ImGui::Text("%d 个存档%s，最新优先", nlist, nlist == 1 ? "" : "s");
+    ImGui::Text("%d 个存档，最新优先", nlist);
     ImGui::SameLine(); if (ImGui::SmallButton("刷新")) refresh();
     if (!in_game) ImGui::TextDisabled("从这里载入仅在游戏运行时有效；在此之前，请在标题界面使用载入功能。");
     if (!ImGui::BeginTable("saves", 5, ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerH, ImVec2(0, 0)))

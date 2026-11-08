@@ -84,8 +84,8 @@ already: Darklands+ finds them by their contents (any file names) in Munt's ROM 
 DOSBox Staging's mt32-roms folder, or in a "roms" folder next to darklands.exe or in the
 Darklands folder. When none are found, Darklands+ says so when it starts and lets you choose
 their folder (or "Don't remind me again"); F12 > Settings > Sound can name the folder too. With
-both a CM-32L and an MT-32 pair the MT-32 plays (on the CM-32L the battle sounds turn into
-chimes).
+both a CM-32L and an MT-32 pair the MT-32 plays, unless F12 > Settings > Sound says CM-32L (a
+few battle sounds come out differently on it).
 
 BATTLE SOUNDS
 The mods folder of this download holds "Battle sounds (0 A.D. recordings)": real sounds of
@@ -94,11 +94,19 @@ it in F12 > Mods (F12 > Settings > Sound sets the volume). The recordings are fr
 Games, CC BY-SA 3.0 (mods\Battle sounds\CREDITS.txt).
 
 NEW ENCOUNTERS
-The mods folder also holds "New encounters": sixteen new wilderness encounters (the gallows
-oak, a herb-wife, flagellants, a robber knight's toll bridge, kobolds at a mine, deserters,
-a knight's feud and more),
+The mods folder also holds "New encounters": 160 new encounters, 90 in the wild (the gallows
+oak, flagellants, a robber knight's toll bridge, kobolds at a mine, the Devil's bridge, the
+Wild Hunt and more), 34 in the towns' streets, 18 on the river boats and 18 at camp,
 balanced against the game's own and coming up among them. Tick it in F12 > Mods; a small red
 seal marks a new encounter's card. F12 > Mods sets how often they come up.
+
+REPLACEMENT ART
+An image art\NAME.png replaces the game's picture NAME, at any size (F12 > Mods shows where the art
+folder is; a mod can carry one too). Draw it at 4:3, 1600 x 1200 for the full-screen pictures
+(320 x 200): the game's pixels are shown 1.2 times as tall as wide. F12 > Mods > "Export the
+original pictures" writes every original into art\original as a template, with README.txt (the
+sizes, and what a card's frame and the party's panel cover) and a guide to lay over a card's
+picture; "Show the name of the picture under the mouse" tells you which picture is which.
 
 MAKING MODS (in the Darklands folder)
   mods\My mod\mod.txt               first line: the name shown in F12 > Mods
@@ -115,8 +123,10 @@ MAKING MODS (in the Darklands folder)
 IF SOMETHING GOES WRONG
 Darklands+ writes darklands_port.log into the game folder. If the first start fails, the log says
 why; darklands_port_previous.log keeps the session before. Report problems on GitHub
-(github.com/bouchacha/Darklands-plus, Issues) with the log of the session where it happened and,
-if you can, a save from just before the problem. To redo the translation, delete
+(github.com/bouchacha/Darklands-plus, Issues): F12 > About > Report a problem makes a zip with the
+logs and your two newest saves, and opens the form. Darklands+ makes one by itself when it sees
+something that must never happen. For a fault that is hard to repeat, tick "Detailed log, for
+testing" there first. To redo the translation, delete
 darklands_game.dll. Some antivirus programs distrust files that a compiler has just made: if
 yours removes or blocks darklands_game.dll, allow that file (it is made from your own
 DARKLAND.EXE by the TinyCC in darklands_plus\tcc).

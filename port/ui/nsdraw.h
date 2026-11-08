@@ -3,6 +3,7 @@
  * share, and the hit tests against the game's pointer and its clicks (mods/nscreen.h). */
 #ifndef DL_NSDRAW_H
 #define DL_NSDRAW_H
+#include <math.h>
 #include "imgui.h"
 #include "ornament.h"
 #include <string.h>
@@ -238,15 +239,18 @@ static inline void ns_tip(const char *text, float width_em) { ui_rich_tip_taken(
 
 static inline std::string ns_item_name(int id) { const ItemDef *d = ns_itemdef(id); return d ? game_text(d->name.c_str(), d->name.size()) : "?"; }
 /* a quality worth showing: equipment and tools; not for the things a shop always sells at 25
- * (throwing axes, javelins, darts, arrows, quarrels, balls, ingredients) unless one differs, nor
- * for a potion (its grade is the dots on its flask), nor for an instrument (the one thing that
- * asks for one, St. Cecilia, asks only whether one is carried: count_items_flags 0x20000000,
- * s039 165c:1024) */
+ * (throwing axes, javelins, darts, arrows, quarrels, balls) unless one differs, nor for a potion
+ * (its grade is the dots on its flask), an ingredient (alchemy takes them by kind and number alone,
+ * s033 1462:1630: their quality is only in their price; found ones at 35 looked the better for a
+ * brew, 1.4-RC7), or an instrument (the one
+ * thing that asks for one, St. Cecilia, asks only whether one is carried: count_items_flags
+ * 0x20000000, s039 165c:1024) */
 static inline bool ns_shows_quality(int id, int q)
 {
     const ItemDef *d = ns_itemdef(id);
-    if (!d || d->kind == K_POTION || d->kind == K_INSTRUMENT) return false;
-    bool fixed = (d->type >= 0x17 && d->type <= 0x19) || (d->type >= 0x40 && d->type <= 0x42) || d->kind == K_INGREDIENT;
+    if (!d || d->kind == K_POTION || d->kind == K_INSTRUMENT || d->kind == K_INGREDIENT) return false;
+    if (d->kind == K_RELIC) return q != 25 && q != 99;         /* (the maintainer's rule: a relic's quality unless it is the plain 25 or the 99 of a holy thing) */
+    bool fixed = (d->type >= 0x17 && d->type <= 0x19) || (d->type >= 0x40 && d->type <= 0x42);
     if (fixed) return q != 25;
     return d->kind == K_WEAPON || d->kind == K_MISSILE || d->kind == K_ARMOR || d->kind == K_SHIELD || d->kind == K_POTION ||
            d->kind == K_TOOL;
@@ -261,7 +265,9 @@ std::string ns_quality_tag(int id, int qual);
    lockpicks, instruments; goods nothing asks for), "" for others */
 std::string ns_item_use(int id);
 float ns_ingredient_row(NsDraw &P, float x0, float y, float x1, int id);   /* an ingredient: the potions it goes into, as pictures; the height taken */
-int ns_item_section(int id);              /* the section of the items list: 1 potions, 2 spare equipment, 3 utility, 4 trophies and quest things, 5 ingredients */
+int ns_item_section(int id);              /* the section of the items list: 1 potions, 2 spare equipment, 3 utility, 4 trophies and quest things, 5 ingredients, 6 relics */
+#define NS_NSECT 7                           /* (0 "Equipped" and those six) */
+static inline int ns_section_at(int k) { static const int O[6] = { 1, 6, 2, 3, 4, 5 }; return k >= 0 && k < 6 ? O[k] : 0; }   /* the k-th listed, after "Equipped" */
 const char *ns_item_section_name(int sec);   /* (0 "Equipped") */
 int ns_slot_of(int id);                    /* where a thing is worn or held: 1 body, 2 limbs, 3 shield, 4 weapon in hand, 5 missile weapon; 0 none */
 int ns_load_with(int id, int m);           /* member m's load with thing id worn in its slot instead; -1 not worn */

@@ -189,7 +189,7 @@ static const DestInfo DEST[D_N] = {
     { "外国商人", "来自远方商人的凉亭：可买卖的商品。", 0, -1, -1, TI_FOREIGN },
     { "锻剑师", "锻剑师巷：武器与锻剑师公会。", 0, -1, 2, TI_SWORD },
     { "锻甲师", "锻甲师路：盔甲与盾牌，以及锻甲师公会。", 0, -1, 3, TI_ARMOUR },
-    { "弓箭匠", "弓箭匠与枪匠广场：弓、弩与枪及其公会。", 0, -1, -2, TI_BOW },
+    { "弓箭匠", "弓箭匠与枪匠广场：弓、弩与枪及其公会。", 0, -1, 5, TI_BOW },
     { "锻铁匠", "锻铁匠街：武器与锻铁匠公会。", 0, -1, 0, TI_SMITH },
     { "士兵之路", "商店与推车挤满了士兵与随营人员，还有这条街的领头人。", 0, -1, -1, TI_SOLDIERS },
     { "珠宝匠", "", 0, -1, 7, TI_FOREIGN },
@@ -203,16 +203,16 @@ static const DestInfo DEST[D_N] = {
     { "美第奇银行", "美第奇代表：银行票据，与富格尔银行相同。", 1, -1, -1, TI_MEDICI },
     { "汉萨同盟", "北方商镇联盟的办公机构：接受报酬的任务。礼貌询问时，他们会根据队伍在汉萨中的地位来评判；大胆询问时，则依据其在此地的声誉与名气。礼貌领取奖励也能提升这一地位。", 1, -1, -1, TI_HANSE },
     { "当铺", "富格尔家族的借贷所：种类繁多的日常用品，以及几乎任何出售物品都能换取的现金。", 0, 9, -1, TI_PAWN },
-    { "大教堂", "弥撒（为所有人带来些许神恩）；捐献钱包的三分之一（领袖的神恩）；守护圣人的故事；为教士跑腿（一件圣物）；庇护所。", 2, 4, -1, TI_CATHEDRAL },
+    { "大教堂", "弥撒（为所有人带来神恩，宗教与拉丁语越多越多）；捐献钱包的三分之一（领袖的神恩）；守护圣人的故事；为教士跑腿（一件圣物）；庇护所。", 2, 4, -1, TI_CATHEDRAL },
     { "教堂", "定时弥撒（为所有人带来神恩，宗教与拉丁文越多越佳）；告解（领袖的神恩，数小时）；缴纳十分之一的钱包税（所有人的神恩已满）；当城镇与你为敌时的庇护所。", 2, -1, -1, TI_CHURCH },
     { "修道院", "僧侣图书馆（宗教、拉丁文）及祈求神恩的祷告。", 2, 7, -1, TI_MONASTERY },
     { "大学", "新的圣人与待学的炼金术配方、稀有炼金材料、更好的哲人石。工作人员期待掌握拉丁文并具备敏锐头脑。", 3, 8, -1, TI_UNIVERSITY },
     { "临终关怀所", "修女照料病患：施舍、陪伴工作一天（治愈术）、付费或免费治疗伤口（若她们接纳你）。仅白天开放。", 3, -1, -1, TI_PHYSICIAN },
     { "旅店", "提供餐饮与床位、新闻与传闻、马厩、储藏室；也可留宿学习或训练。", 4, -1, -1, TI_INN },
-    { "城市广场", "通知、闲话与新闻。", 4, 1, -1, TI_SQUARE },
+    { "城市广场", "通知、闲话与新闻。", 4, -1, -1, TI_SQUARE },
     { "市政厅", "市议会：觐见领主，地牢中的囚犯。", 1, 1, -1, TI_TOWNHALL },
-    { "监狱", "城市的监狱。", 4, 1, -1, TI_PRISON },
-    { "兵营", "城市守卫的总部：招募队伍成员，武器训练。", 4, 1, -1, TI_BARRACKS },
+    { "监狱", "城市的监狱。", 4, -1, -1, TI_PRISON },
+    { "兵营", "城市守卫的总部：招募队伍成员，武器训练。", 4, -1, -1, TI_BARRACKS },
     { "要塞", "领主的要塞：觐见领主，地牢中的囚犯。", 1, 2, -1, TI_FORTRESS },
     { "码头", "前往其他城镇的船只，需付费（每艘船在指定日期启航）。", 4, 11, -1, TI_DOCKS },
     { "贫民窟", "危险的贫民窟：流言蜚语，以及一间价格低廉的房间。", 4, 6, -1, TI_SLUMS },
@@ -411,10 +411,57 @@ static void trail_add(const char *fmt, ...)
 }
 #define LOG(...) trail_add(__VA_ARGS__)
 
+/* ---------------------------------------------------------------- what the cards themselves show
+ * Go to's list (present_at) says what a town's cards offer from the town's data, rule by rule, as read
+ * in the card scripts. The cards on show say it too, and they have the last word: by day, a hub card
+ * whose line leads straight to a place shows that the town has it, and a walk that finds no way to a
+ * listed place shows that it has not. Either is written in the log ("goto: ..."), and the list for that
+ * town follows it until a save is loaded. Places that come and go (the prison, Soldiers' Road, the
+ * hospice, the physician of small towns, a fix's Clothmakers' Street) are only logged. */
+static std::map<int, std::map<int, bool>> learned;                 /* town -> place -> there or not */
+static unsigned learned_load;
+static bool is_night(void);
+static bool learnable(int d) { return d != D_PRISON && d != D_SOLDIERS && d != D_HOSPITAL && d != D_PHYSICIAN && d != D_CLOTH && d != D_LEAVE; }
+extern "C" unsigned saves_loaded_ms;                             /* (mods/saves.c: when the last save was loaded) */
+static void learned_fresh(void)
+{
+    if (learned_load != saves_loaded_ms) { learned_load = saves_loaded_ms; learned.clear(); }
+}
+static bool present_rules(int d, int cur);
+static void learn(int town, int d, bool there, const char *how)
+{
+    learned_fresh();
+    auto &t = learned[town];
+    auto it = t.find(d);
+    if (it != t.end() && it->second == there) return;
+    bool listed = present_rules(d, town);
+    if (listed != there) {
+        char nm[24] = ""; u32 r = g_location(town);
+        if (r) g_str((u16)(r >> 16), (u16)((u16)r + 0x26), nm, sizeof nm);
+        fprintf(stderr, "goto: %s %s %s, which Go to's list %s (%s)%s\n", nm, there ? "has" : "has no", DEST[d].label,
+                listed ? "shows" : "leaves out", how, learnable(d) ? ": the list follows the cards" : "");
+    }
+    if (learnable(d)) t[d] = there;
+}
+/* a hub card's options on show (the lines the game laid out): the places they lead to straight away */
+static void observe_hub(int hub, const std::vector<std::string> &line, const std::string &card)
+{
+    if (is_night()) return;                                 /* (by night the stalls and offices are shut: not what the town has) */
+    int town = (s16)g_rw(G_CUR_LOC);
+    for (const std::string &t : line) {
+        int to = rule_for(hub, t);
+        if (to == 100 + H_SQUARE) to = D_SQUARE;
+        if (to < 0 || to >= D_N) continue;
+        learn(town, to, true, card.c_str());
+    }
+}
+
 static void stop(const char *why)
 {
     LOG("stop: %s\n", why ? why : "");
     bool failed = why && strcmp(why, "stopped.") && goal >= 0;
+    if (failed && !strcmp(why, "not found in this city.") && !is_night() && (visited & ((1u << H_MAIN) | (1u << H_SIDE))))   /* (the main or side streets passed: their ways were all tried) */
+        learn((s16)g_rw(G_CUR_LOC), goal, false, "a walk there found no way");
     if (failed && !logon) { fprintf(stderr, "Go to %s failed (%s). The walk:\n%s", DEST[goal].label, why, trail.c_str()); fflush(stderr); }
     if (goal >= 0 && why) { char m[160]; snprintf(m, sizeof m, "前往 %s：%s", DEST[goal].label, why); ui_notice(m); }
     goal = -1;
@@ -486,7 +533,6 @@ static void click_line(int i)
    card at the gate ($Selec00 ...) answered with the plain way out ("simply walk out", "leave"),
    never a sneak or a bribe: when there is none, the player chooses */
 static int leaving; static u32 leaving_t;
-extern "C" int citynav_walking(void) { return goal >= 0 || leaving; }   /* (the pointer's hourglass: ui/overlay_text.cpp) */
 extern "C" void citynav_go(int dest);
 static bool walk_out_option(const std::string &t)
 {
@@ -524,8 +570,30 @@ extern "C" void citynav_leave_town(void)
     leaving = 1; leaving_t = plat_ticks_ms();
 }
 
+/* each frame: a hub card's options on show, walking or not (observe_hub) */
+static void watch_hubs(void)
+{
+    static std::string seen_key;
+    if (!in_city() || !assist_in_card_menu() || g_rb(GV_card_box_shown)) { seen_key.clear(); return; }
+    std::string card = card_now();
+    int hub = hub_of(card);
+    if (hub == H_NONE) return;
+    int blk = (s16)g_rw(GV_shown_block), n = (s8)g_rb(GV_card_layout);
+    char kb[64]; snprintf(kb, sizeof kb, "%s/%d/%d/%d", card.c_str(), blk, n, (s16)g_rw(G_CUR_LOC));
+    if (seen_key == kb || n <= 0 || n > 20) return;
+    if (!cards_loaded) load_cards();
+    std::vector<std::string> blocks = card_blocks(card);
+    if (blk < 0 || blk >= (int)blocks.size()) return;
+    std::vector<std::string> opts = block_options(blocks[blk]);
+    std::vector<std::string> line(n);
+    for (int i = 0; i < n; i++) { int o = (s8)g_rb((u16)(GV_card_layout_opt + i)); line[i] = o >= 0 && o < (int)opts.size() ? opts[o] : ""; }
+    seen_key = kb;
+    observe_hub(hub, line, card);
+}
+
 extern "C" void citynav_tick(void)
 {
+    watch_hubs();
     hdtext_fast_fades = goal >= 0 || leaving;              /* the cards' fades at once while walking */
     if (leaving && goal < 0) { if (!cards_loaded) load_cards(); leaving_tick(); return; }
     if (goal < 0) return;
@@ -665,10 +733,15 @@ extern "C" void citynav_draw_cover(void)
 }
 
 /* ---------------------------------------------------------------- the list */
-/* Whether the city's cards offer a place, as the card scripts decide (s045..s050):
- * - a building bit of DARKLAND.CTY or a shop quality;
+/* Whether the city's cards offer a place, as the card scripts decide (s045..s050; each hub card's option
+ * flags were checked line by line against this, 2026-11-04):
+ * - a building bit of DARKLAND.CTY or a shop quality (the bowyer: +0x67 only, shopq[5]);
+ * - the town square: every town (the churches' line to it tests nothing; the streets' test bit 0);
+ * - the prison: only while someone of the party is held there (event 0x4d at the town, begun), both squares;
+ * - the barracks: never ($CityS00/01 switch its line off and only ever switch it off again: a cut place);
+ * - Soldiers' Road: never in 483.07 ($MilCr00 the same); with rules.war (mods/war.c opens it) while byte
+ *   +0x14 of the location record is 1 or 2;
  * - the Fugger, Medici and Hanse offices: bytes +0x15..+0x17 of the location record;
- * - Soldier's Road: byte +0x14 of the location record is 1 or 2 (rarely so);
  * - the physician and Astrologists' Lane: in small cities only some games have them
  *   (from the city's seed, the game's seed and, for the physician, the year);
  * - the hospital and Jewelers' Avenue are never offered (their options stay switched off),
@@ -679,17 +752,42 @@ extern "C" void citynav_draw_cover(void)
 static bool never(int d)
 {
     if (d == D_CLOTH) return !fix_is_on("cardopts");
+    if (d == D_BARRACKS) return true;
+    if (d == D_SOLDIERS) return !config_get_int("rules.war", 0) || config_get_int("original", 0);
     if (d == D_HOSPITAL) return !cutcards_hospice_on();          /* (by day: the restored hospice, mods/cutcards.c) */
     return d == D_JEWEL || d == D_HERBAL;   /* (the herbalists' road is only on $CivCr01, a card the game never loads) */
 }
+/* event_at (0x4d, town), s029 0e76:3878: an event of kind 0x4d (one of the party held in the prison) at the
+   town that has begun */
+static bool someone_held(int town)
+{
+    static const u16 NOW[4] = { G_CUR_HOUR, G_CUR_DAY, G_CUR_MONTH, G_CUR_YEAR };
+    for (int i = 0; i < G_NEVENTS; i++) {
+        u32 e = g_event(i);
+        if (!e || g_ev(e, G_EV_KIND) != 0x4d || g_ev(e, G_EV_LOC) != town) continue;
+        int begun = 1;
+        for (int k = 3; k >= 0; k--) { int a = g_ev(e, G_EV_START + 2 * k), n = (s16)g_rw(NOW[k]); if (a != n) { begun = a < n; break; } }
+        if (begun) return true;
+    }
+    return false;
+}
+static bool present_rules(int d, int cur);
 static bool present_at(int d, int cur)
+{
+    learned_fresh();
+    auto t = learned.find(cur);
+    if (t != learned.end()) { auto it = t->second.find(d); if (it != t->second.end()) return it->second; }
+    return present_rules(d, cur);
+}
+/* as the rules read in the card scripts have it (the comment above never()) */
+static bool present_rules(int d, int cur)
 {
     if (never(d)) return false;
     if (cur < 0 || cur >= (int)gamedata.cities.size()) return true;
     const City &c = gamedata.cities[cur];
     if (DEST[d].building >= 0 && !(c.buildings >> DEST[d].building & 1)) return false;
     if (DEST[d].shop >= 0 && !c.shopq[DEST[d].shop]) return false;
-    if (DEST[d].shop == -2 && !c.shopq[4] && !c.shopq[5]) return false;
+    if (d == D_PRISON && !someone_held(cur)) return false;
     u32 lr = g_location(cur);
     if (lr) {
         u16 ls = (u16)(lr >> 16), lo = (u16)lr;

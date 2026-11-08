@@ -10,14 +10,13 @@ extern const unsigned char FONT_MEDIUM[], FONT_SEMIBOLD[], FONT_ALEGREYA[], FONT
 extern const unsigned int FONT_MEDIUM_SIZE, FONT_SEMIBOLD_SIZE, FONT_ALEGREYA_SIZE, FONT_FELL_SIZE, FONT_MEDIEVAL_SIZE, FONT_ATKINSON_SIZE, FONT_FRAKTUR_SIZE, FONT_GRENZE_SIZE, FONT_COMIC_SIZE, FONT_CJK_SIZE;
 extern ImFont *ui_font_cjk, *ui_font_cjk_hi;   /* ui/ui.cpp: the translated text, one pixel font for every Han glyph */
 extern "C" { int mt32_available(void); int mt32_is_open(void); void plat_restart(void); }
-std::string news_key(void);
 void welcome_window(void);
 extern "C" { void tips_init(void); int tips_open(void); void ui_open_tab(int t); }
 void tips_frame(void);
 bool tips_never_box(bool *never);       /* ui/tips.cpp: "Never show again", from the fourth start */
 extern "C" int orders_click_attack;
 void help_window(void);
-void tab_about(void); void news_window(void); void mt32_window(void);
+void tab_about(void); void mt32_window(void);
 extern "C" int citynav_window(void);
 extern "C" int citynav_available(void);
 extern "C" void citynav_draw_cover(void);
@@ -50,10 +49,13 @@ extern "C" { int marchview_is_on(void); void marchview_set(int on); }
 extern "C" void lodgeview_draw(void);
 extern "C" int lodgeview_showing(void), lodgeview_camping(void);
 extern "C" int savesview_showing(int *loading);
+extern "C" int savesview_opts_open(void);
+extern "C" void savesview_opts_close(void);
 extern "C" { int lodgeview_is_on(void); void lodgeview_set(int on); }
 extern "C" void enemyview_draw(void);
 extern "C" { int enemyview_is_on(void); void enemyview_set(int on); }
 extern "C" void mapmsg_draw(void);
+extern "C" void choose_draw(void);
 extern "C" { int mapmsg_is_on(void); void mapmsg_set(int on); }
 extern "C" { int infoview_is_on(void); void infoview_set(int on); }
 extern "C" { int rosterview_is_on(void); void rosterview_set(int on); }
@@ -70,7 +72,7 @@ void gamepics_set_renderer(SDL_Renderer *r);
 extern "C" { int lootview_showing(void); int lootview_is_on(void); void lootview_set(int on); }
 extern "C" { int sheetview_showing(void); int sheetview_is_on(void); void sheetview_set(int on); }
 extern "C" { int barterview_is_on(void); void barterview_set(int on); int barterview_showing(void); }
-extern "C" { extern int battlescroll_on, battlescroll_rest; void battlescroll_set(int, int); extern int loot_return_thrown; extern int ammo_infinite; void ammo_set(int v); extern int thrown_infinite; void thrown_set(int v); }
+extern "C" { extern int battlescroll_on, battlescroll_rest; void battlescroll_set(int, int); extern int ammo_infinite; extern int thrown_infinite; }
 extern "C" void halloffame_close(void);
 extern "C" int halloffame_record(void);
 void halloffame_set_renderer(SDL_Renderer *r);
@@ -104,6 +106,7 @@ extern "C" void levelmap_frame(void);
 extern "C" void levelmap_draw(void);
 extern "C" int ui_alert_open(void);
 void ui_alert_draw(void);
+void ui_alert_hold(void);
 extern "C" int overlay_click(int x, int y), overlay_click_up(int x, int y);
 extern "C" int ns_showing(void);
 extern "C" int margins_click(int x, int y);           /* ui/margins.cpp: the battle's order buttons */

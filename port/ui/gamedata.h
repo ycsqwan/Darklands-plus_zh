@@ -13,10 +13,18 @@ struct ItemDef {
     std::string plain;               // as shown, without where an armour is worn ("Chainmail")
     int type = 0, flags = 0, flags2 = 0, weight = 0, quality = 0, value = 0;
     int flags5 = 0, rarity = 0;      // flag byte +0x24 (0x80: not sold in shops), rarity 0..12
+    int relic_virtue = 0, relic_df = 0;   // a relic's: +0x28 the Virtue its bearer needs, +0x2a the Divine Favor it takes off a prayer (mods/relics.c)
+    unsigned char raw[46] = {};      // the record as DARKLAND.LST has it (gamedata_item_raw: the mods read it here, not in the game's memory)
     unsigned cats() const { return (unsigned)flags | ((unsigned)flags2 << 16); }
     ItemKind kind = K_OTHER;
     bool mineral = false;
 };
+
+/* worn or wielded (the load counts only these: equip_weight s031 18e7:140a): weapons, missile weapons,
+   armour, shields, and the relics that are weapons (St. George's Greatsword, St. Hubert's Bow ...) */
+static inline bool item_wieldable(const ItemDef *d) { return d && (d->kind == K_WEAPON || d->kind == K_MISSILE || d->kind == K_ARMOR || d->kind == K_SHIELD || (d->kind == K_RELIC && d->type >= 0 && d->type <= 62)); }
+/* a weapon by its type (the combat tables, far 20a5: 63 weapon types), a weapon relic too */
+static inline bool item_weaponlike(const ItemDef *d) { return d && d->type >= 0 && d->type <= 62 && (d->kind == K_WEAPON || d->kind == K_MISSILE || d->kind == K_RELIC); }
 
 struct FormulaIngr { int count, item; };
 struct Formula {
@@ -47,6 +55,7 @@ struct GameData {
     std::vector<std::string> formula_game_names;   // as the game writes them (match the game's text with these)
     std::vector<Formula> formulas;   // 3 per potion (potion item 95 + f/3)
     std::vector<City> cities;
+    std::vector<std::string> loc_names;   // every place's own name (DARKLAND.LOC +0x26), as the game writes it
     bool loaded = false;
 };
 
@@ -62,6 +71,7 @@ static inline bool shop_open_ever(int k) { return k != 4 && k != 7 && k != 8; }
 
 extern GameData gamedata;
 void gamedata_load(const char *dir);
+void gamedata_follow_mods(const char *dir);   /* each frame: read again when the mods in use change */
 /* the names as shown, from the game's: in full where the game cut them short for its 20 letters
    ("Studded Lthr", "Illum. Gospel", "St.Gregory Thaumaturg.", "Raimundus Ls'"), and armour by where
    it is worn ("Chainmail (body)" for "V:Chainmail"); settings display.full_names and
@@ -72,6 +82,7 @@ std::string gamedata_spell_text(const std::string &t);
 /* a place's name as shown: a city's in full (DARKLAND.CTY), else the location's own (+0x26, a few
    of them cut short by the game's 11 letters: written out); "" for none */
 std::string loc_display_name(int loc);
+bool loc_is_twin(int loc);              /* the same place twice in the game's list (the maps show the first) */
 int town_seed(int loc);                     /* a town's number for its cards (loc_query 0x21: the city's +0x56 + party_seed) */
 extern "C" int town_stone_offer(int loc, int university);   /* the Philosopher's Stone quality its alchemist (0) or university (1) sells */
 const char *kind_name(ItemKind k);          /* a kind's name, for a list of them ("Weapons") */
@@ -80,4 +91,4 @@ const char *kind_name_one(ItemKind k);      /* for one thing ("Weapon") */
 size_t saint_effect_at(const std::string &text);
 void ui_saint_info(int s);                      // the description, what the help really does, where they differ (ImGui, wrapped)
 const char *saint_encounters_line(int s);        // whether encounters let a member call on saint s
-std::string saint_effects_text(int s);           // what saint s's help does, an effect a line, names as shields and a shared value once (ui/richtext.h)
+std::string saint_effects_text(int s);           // what saint s's help does, an effect a line, names as shields and a shared value once (ui/richtext.h; ui/saintchips.cpp)

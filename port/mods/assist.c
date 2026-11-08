@@ -18,6 +18,7 @@
 #include "../runtime/gamevars.h"
 #include "../runtime/config.h"
 #include "assist.h"
+#include "saves.h"
 #include "nscreen.h"
 #include "cardview.h"
 #include <stdio.h>
@@ -62,6 +63,7 @@ int assist_best_at_attr(int k)
     return best >= 0 ? best : cur;
 }
 int assist_bargainer(void) { return assist_best_leader && !config_get_int("original", 0) ? assist_best_at_attr(5) : (s8)g_rb(G_LEADER); }
+static void leader_after_load(void) { saved_leader = stand_in = -1; }   /* a game loaded (saves_on_loaded): its leader is its own */
 void assist_leader_restore(void)
 {
     if (saved_leader < 0) return;
@@ -201,6 +203,7 @@ static void card_menu_hook(void)        /* s043 150b:1142 card_menu(win, win2) *
         return;
     }
     hook_call_original();
+    if (unw_active) { cm_depth--; if (!cm_depth) card_chances.active = 0; return; }   /* (a game loaded from the menu bar: no choice was made, and the leader is the save's) */
     chronicle_choice((s16)AX);           /* and the option chosen */
     leader_for_choice((s16)AX);
     cm_depth--;
@@ -505,6 +508,7 @@ static void gate_walk_hook(void)
 
 void assist_init(void)
 {
+    saves_on_loaded(leader_after_load);
     hook_install(58, 0x191a, 0x0470, gate_walk_hook);
     assist_card_help = config_get_int("assist.card_help", 1);
     assist_card_keys = config_get_int("assist.card_keys", 1);

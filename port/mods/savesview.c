@@ -44,8 +44,8 @@ static void default_comment(char *out, int n)
 {
     int cur = (s16)g_rw(G_CUR_LOC);
     char place[24] = "";
-    u32 r = cur >= 0 ? g_location(cur) : 0;
-    if (r) g_str((u16)(r >> 16), (u16)((u16)r + 0x26), place, sizeof place);
+    void gamedata_loc_name(int loc, char *out, int n);   /* (ui/gamedata.cpp: from DARKLAND.LOC, not the game's memory, which in a battle in a mine held rubbish) */
+    if (cur >= 0) gamedata_loc_name(cur, place, sizeof place);
     for (int i = 0; place[i]; i++) if ((unsigned char)place[i] < 32 || (unsigned char)place[i] > 126) place[i] = ' ';
     int day = (s16)g_rw(G_CUR_DAY), mon = (s16)g_rw(G_CUR_MONTH);
     char b[64]; snprintf(b, sizeof b, "%.14s %d %.3s", place[0] ? place : "旅行", day, gm_month_name((unsigned)mon % 12));
@@ -84,7 +84,7 @@ static int ok_or_cancel(int loading)
     qh = qt = 0;
     free(S->saves); S->saves = 0;
     S->nsaves = saves_list(&S->saves);
-    g_str(G_DGROUP, 0xa680, S->cur_file, sizeof S->cur_file);     /* "dksaveN.sav": the save last written or read */
+    saves_cur_name(S->cur_file, sizeof S->cur_file);              /* "dksaveN.sav": the save last written or read */
     S->loading = loading;
     S->sel = -1; S->armed = -1;
     if (loading) for (int i = 0; i < S->nsaves; i++) if (!strcasecmp(S->saves[i].file, S->cur_file)) { S->sel = i; break; }

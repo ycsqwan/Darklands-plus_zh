@@ -48,7 +48,7 @@ extern "C" {
 #include "ornament.h"
 
 static bool open_menu, open_map, open_goto;
-bool open_help, open_welcome, open_mt32, open_news;   /* (the side windows: ui/ui_windows.cpp) */
+bool open_help, open_welcome, open_mt32;   /* (the side windows: ui/ui_windows.cpp) */
 extern "C" void ui_toggle_help(void) { open_help = !open_help; }
 /* "Go to" in cities (ui/citynav.cpp): G on a city card */
 static bool goto_allowed(void) { return config_get_int("assist.city_goto", 1) && !config_get_int("original", 0) && citynav_available(); }
@@ -277,8 +277,6 @@ extern "C" void ui_init(SDL_Window *win, SDL_Renderer *ren)
     money_glyphs_paint(io.Fonts);
     tips_init();                         /* (the starts counted: ui/tips.cpp) */
     open_welcome = getenv("DL_WELCOME") != nullptr;   /* (the first start's welcome comes on the start screen: tips_title_reached) */
-    /* what is new, once, for a player of an earlier version (the first start's welcome says it all for a new one) */
-    open_news = (config_get_int("ui.welcome_seen", 0) && !getenv("DL_SCRIPT") && !getenv("DL_CTL") && !getenv("DL_RESTARTED") && !news_key().empty() && news_key() != config_get("ui.news_seen", "")) || getenv("DL_NEWS");
     {   /* the MT-32 recommendation: at each start while its ROM files are missing, until "don't remind me" */
         const char *dev = config_get("sound.device", "auto");
         open_mt32 = ((!getenv("DL_SCRIPT") && !getenv("DL_CTL") && !getenv("DL_RESTARTED")) || getenv("DL_MT32_PROMPT")) && config_get_int("sound.mt32_prompt", 1)
@@ -333,7 +331,7 @@ void dl_imgui_assert(const char *expr, const char *file, int line)
     fprintf(stderr, "imgui: check failed: %s (%s:%d)\n", expr, file, line);
 }
 extern "C" void ui_show_mt32_help(void) { open_mt32 = true; }   /* (the settings' Sound: how to get the MT-32) */
-extern "C" int ui_is_open(void) { return open_menu || open_map || open_goto || open_help || open_welcome || open_mt32 || open_news || tips_open() || levelmap_is_open() || halloffame_is_open() || figpick_is_open() || ui_alert_open(); }
+extern "C" int ui_is_open(void) { return open_menu || open_map || open_goto || open_help || open_welcome || open_mt32 || tips_open() || levelmap_is_open() || halloffame_is_open() || figpick_is_open() || ui_alert_open(); }
 extern "C" void ui_open_tab(int t) { open_map = false; open_goto = false; open_help = false; open_menu = true; if (t >= 0) ui_select_tab(t); }   /* (-1: the page it was on) */
 extern "C" int ui_map_open(void) { return open_map; }
 extern "C" void ui_toggle(void) { open_map = false; open_goto = false; open_help = false; open_menu = !open_menu; if (!open_menu && ui_dirty_config) { config_save(); ui_dirty_config = 0; } }
@@ -352,13 +350,10 @@ extern "C" void ui_toggle_map(void)
 }
 
 static int margin_click_taken, outside_down;
+extern "C" int levelwalk_door_click(void);            /* (mods/levelwalk.c: a click on a door, out of a fight) */
 extern "C" int ui_event(const SDL_Event *e)
 {
     if (e->type == SDL_RENDER_TARGETS_RESET || e->type == SDL_RENDER_DEVICE_RESET) dc_reset();   /* (the kept pictures lost) */
-    if (open_news && !open_welcome) {       /* what is new: as the welcome */
-        ImGui_ImplSDL2_ProcessEvent(e);
-        return e->type != SDL_QUIT && e->type != SDL_WINDOWEVENT;
-    }
     if (open_mt32 && !open_welcome) {       /* the MT-32 recommendation, as the welcome */
         ImGui_ImplSDL2_ProcessEvent(e);
         return e->type != SDL_QUIT && e->type != SDL_WINDOWEVENT;
@@ -412,6 +407,11 @@ extern "C" int ui_event(const SDL_Event *e)
         ImGui_ImplSDL2_ProcessEvent(e);
         return e->type != SDL_QUIT && e->type != SDL_WINDOWEVENT;
     }
+    if (savesview_opts_open()) {            /* the Save page's saving options (ui/savesview.cpp): every event, as the menu */
+        if (e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_ESCAPE) { savesview_opts_close(); return 1; }
+        ImGui_ImplSDL2_ProcessEvent(e);
+        return e->type != SDL_QUIT && e->type != SDL_WINDOWEVENT;
+    }
     if (open_map) {
         if (e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_ESCAPE && worldmap_find_escape(ImGui::GetIO().WantTextInput)) {   /* (Esc: a name in the Find box cleared first) */
             if (ImGui::GetIO().WantTextInput) ImGui_ImplSDL2_ProcessEvent(e);
@@ -424,7 +424,7 @@ extern "C" int ui_event(const SDL_Event *e)
     if (!open_menu) {
         if (e->type == SDL_MOUSEBUTTONDOWN && e->button.button == SDL_BUTTON_LEFT && overlay_click(e->button.x, e->button.y)) return 1;
         if (e->type == SDL_MOUSEBUTTONUP && e->button.button == SDL_BUTTON_LEFT && overlay_click_up(e->button.x, e->button.y)) return 1;
-        if (e->type == SDL_MOUSEBUTTONDOWN && e->button.button == SDL_BUTTON_LEFT && (margins_click(e->button.x, e->button.y) || partypanel_click(e->button.x, e->button.y) || cardview_chip_click(e->button.x, e->button.y))) { margin_click_taken = 1; return 1; }
+        if (e->type == SDL_MOUSEBUTTONDOWN && e->button.button == SDL_BUTTON_LEFT && (margins_click(e->button.x, e->button.y) || partypanel_click(e->button.x, e->button.y) || cardview_chip_click(e->button.x, e->button.y) || levelwalk_door_click())) { margin_click_taken = 1; return 1; }
         if (e->type == SDL_MOUSEBUTTONUP && e->button.button == SDL_BUTTON_LEFT && margin_click_taken) { margin_click_taken = 0; return 1; }
         {   /* a right-click on a member's box in a battle: their sheet (ui/partypanel.cpp) */
             static int rtaken;
@@ -472,7 +472,9 @@ static void tab_editor_all(void)
    there, and the game's hand not drawn, so the one pointer seen is where a click lands */
 static bool windows_up(void)
 {
-    return open_menu || open_map || open_goto || open_help || open_welcome || open_mt32 || open_news || tips_open() || levelmap_is_open() || halloffame_is_open() || figpick_is_open();
+    return open_menu || open_map || open_goto || open_help || open_welcome || open_mt32 || tips_open() || levelmap_is_open() || halloffame_is_open() || figpick_is_open()
+           || ui_alert_open()                  /* (a notice to click through: its OK under the system's pointer, not the game's hand drawn beneath it) */
+           || savesview_opts_open();           /* (the Save page's saving options) */
 }
 static void ui_cursor(void)
 {
@@ -574,8 +576,12 @@ static void draw_icon_grid(void)
 int vt_on = -1, vt_frame, vt_last_mark, vt_time = -1;
 unsigned long long ui_build_us;
 extern "C" int ui_vtx, ui_cmds; int ui_vtx, ui_cmds;   /* (DL_PRESENT_TIME: the size of what the interface hands the graphics card) */
+extern "C" int ui_frame_depth; int ui_frame_depth;    /* an interface frame being made (the game must not run inside one: runtime/bios.c dl_poll) */
+extern "C" void plat_native_stack(void);
 extern "C" void ui_draw(SDL_Renderer *ren)
 {
+    if (ui_frame_depth) { static int said; if (!said++) { fprintf(stderr, "ui: a frame begun while another is being made\n"); plat_native_stack(); } }
+    ui_frame_depth++;
     ImGui_ImplSDLRenderer2_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::GetStyle().HoverDelayNormal = config_get_int("display.tooltip_delay", 500) / 1000.0f;   /* (third_party/imgui: a tooltip waits so long) */
@@ -583,6 +589,7 @@ extern "C" void ui_draw(SDL_Renderer *ren)
     if (vt_on < 0) { vt_on = getenv("DL_VTX_TRACE") != 0; vt_time = getenv("DL_UI_TIME") != 0; }
     vt_frame++;
     if (game_mode() == GM_MAP) assist_leader_restore();     /* (back on the map: the leader the player chose) */
+    gamedata_follow_mods(game_dir);
     if (!open_menu && !open_map && !open_goto) citynav_tick();
     if (open_goto && !goto_allowed()) open_goto = false;
     levelmap_frame();
@@ -595,7 +602,7 @@ extern "C" void ui_draw(SDL_Renderer *ren)
     }
     else if (halloffame_is_open()) halloffame_draw();
     else if (levelmap_is_open()) levelmap_draw();
-    else { VT(banner_draw()); VT(hdtext_draw()); VT(partypanel_draw()); VT(cardview_draw()); VT(barterview_draw()); VT(sheetview_draw()); VT(lootview_draw()); VT(alchemyview_draw()); VT(cacheview_draw()); VT(prayview_draw()); VT(createview_draw()); VT(rosterview_draw()); VT(infoview_draw()); VT(titleview_draw()); VT(marchview_draw()); VT(lodgeview_draw()); VT(enemyview_draw()); VT(mapmsg_draw()); VT(savesview_draw()); VT(menuview_draw()); }
+    else { VT(banner_draw()); VT(hdtext_draw()); VT(partypanel_draw()); VT(cardview_draw()); VT(barterview_draw()); VT(sheetview_draw()); VT(lootview_draw()); VT(alchemyview_draw()); VT(cacheview_draw()); VT(prayview_draw()); VT(createview_draw()); VT(rosterview_draw()); VT(infoview_draw()); VT(titleview_draw()); VT(marchview_draw()); VT(lodgeview_draw()); VT(enemyview_draw()); VT(mapmsg_draw()); VT(choose_draw()); VT(savesview_draw()); VT(menuview_draw()); }
     if (!open_menu && !open_map && !levelmap_is_open() && !halloffame_is_open()) VT(ui_overlay());
     {
         if (!windows_up()) hdtext_draw_cursor();
@@ -606,9 +613,9 @@ extern "C" void ui_draw(SDL_Renderer *ren)
         sound_music_hushed = open_menu && settings_shown && !soundpreview_active() && !settings_pack_preview;
         { void playlist_frame(int); playlist_frame(open_menu && settings_shown); }   /* (the soundtrack's player stops with the settings: mods/playlist.c) */
     }
-    { void screenpics_frame(int); screenpics_frame(open_menu || open_map || open_goto || open_help || open_welcome || open_news);
-      void screenpics_map_frame(int, int); screenpics_map_frame(open_map, open_menu || open_goto || open_help || open_welcome || open_news);
-      void screenpics_land_frame(int); screenpics_land_frame(open_menu || open_map || open_goto || open_help || open_welcome || open_news || levelmap_is_open()); }   /* (ui/screenpics.cpp) */
+    { void screenpics_frame(int); screenpics_frame(open_menu || open_map || open_goto || open_help || open_welcome);
+      void screenpics_map_frame(int, int); screenpics_map_frame(open_map, open_menu || open_goto || open_help || open_welcome);
+      void screenpics_land_frame(int); screenpics_land_frame(open_menu || open_map || open_goto || open_help || open_welcome || levelmap_is_open()); }   /* (ui/screenpics.cpp) */
     ns_defer_frame_end(open_menu || open_map);                    /* (requests while the game is held: mods/nscreen.h) */
     if (open_menu) {
         ImGuiIO &io = ImGui::GetIO();
@@ -686,25 +693,28 @@ extern "C" void ui_draw(SDL_Renderer *ren)
     figpick_window();
     if (open_help) help_window();
     if (open_welcome) welcome_window();
-    else if (open_news) news_window();
     else if (open_mt32) mt32_window();
     else tips_frame();                      /* (the start screen's note, the first battle's tips: ui/tips.cpp) */
     { extern int hg_active, hg_hour, hg_day, hg_month;          /* time passing under a Darklands+ page (mods/lodgeview.c) */
-      if (hg_active) {
+      if (hg_active && !windows_up()) {                         /* (drawn over everything: it gives way to a window over the game, as the
+                                                                   game's message does below. 1.4.6-RC14, his report: a loss notice came up
+                                                                   during the hours and the clock stood over its OK and over F12) */
           ImDrawList *dl = ImGui::GetForegroundDrawList();
           float x0, y0, x1, y1; plat_game_to_win(0, 0, &x0, &y0); plat_game_to_win(320, 200, &x1, &y1);
           dl->AddRectFilled(ImVec2(x0, y0), ImVec2(x1, y1), IM_COL32(20, 12, 4, 120));
           float kx = (x1 - x0) / 320.0f, ky = (y1 - y0) / 200.0f;
           ui_draw_hourglass(dl, ImVec2(x0 + 130 * kx, y0 + 49 * ky), kx, ky, hg_hour, hg_day, hg_month);
       } }
-    { if (saves_loading_cover()) {                 /* a load under way: the game's load screen hidden */
+    { if (saves_loading_cover() && !windows_up()) {   /* a load under way: the game's load screen hidden (not a window over the game:
+                                                     the first battle's notice, come up as a save in a battle loaded, stood
+                                                     under "Loading...", the load waiting for its OK) */
           ImDrawList *dl = ImGui::GetForegroundDrawList(); ImGuiIO &io = ImGui::GetIO();
           dl->AddRectFilled(ImVec2(0, 0), io.DisplaySize, IM_COL32(20, 14, 10, 255));
           const char *t = "Loading...";
           ImVec2 ts = ImGui::CalcTextSize(t);
           dl->AddText(ImVec2((io.DisplaySize.x - ts.x) * 0.5f, (io.DisplaySize.y - ts.y) * 0.5f), IM_COL32(230, 210, 170, 255), t);
       } }
-    if (!open_menu && !open_map) VT(citynav_draw_cover());
+    if (!windows_up()) VT(citynav_draw_cover());
     ui_icon_styles_draw();
     { void ui_pstone_sheet_draw(void); ui_pstone_sheet_draw(); }   /* (test: DL_PSTONE_SHEET) */
     ui_draw_notice();
@@ -721,8 +731,11 @@ extern "C" void ui_draw(SDL_Renderer *ren)
     }
     { void repwatch_tick(void); repwatch_tick(); }
     VT(ui_cursor());
-    VT(ui_alert_draw());
-    { void game_dialog_draw(void); game_dialog_draw(); }
+    /* on top, the window that takes the events (ui_event): a notice waits behind F12, the welcome and the tips;
+       the game's message, drawn over everything, waits behind any window over the game */
+    if (open_menu || open_welcome || open_mt32 || tips_open()) ui_alert_hold();
+    else VT(ui_alert_draw());
+    if (!windows_up()) { void game_dialog_draw(void); game_dialog_draw(); }
     draw_icon_grid();
     if (vt_on > 0 && vt_frame % 120 == 0) fprintf(stderr, "vtx total %d\n", vt_total());
     dc_frame_end();
@@ -778,6 +791,7 @@ extern "C" void ui_draw(SDL_Renderer *ren)
             fprintf(stderr, "renderer: %s (a frame of %d vertices, %d indices)\n", e, dd->TotalVtxCount, dd->TotalIdxCount);
         }
     }
+    ui_frame_depth--;
 }
 
 /* the first start of a release: the game module is being made (runtime/prepare_run.c) */

@@ -94,7 +94,7 @@ int office_status(int loc, int g, int hall, OfficeStatus *o)
     case 0: case 4: case 5: {
         if (lock) return shut(o, lock, "三天内无任务：上次来访时，既未获任务，也未被拒绝，或已支付奖励。");
         o->state = OFS_ASK; o->chance = 14;
-        snprintf(o->note, sizeof o->note, "优惠在购物后出现：当队伍离开摊位时，约七分之一的商贩会带着钱包和任务单独与你交谈。"
+        snprintf(o->note, sizeof o->note, "优惠在购物后出现：当队伍离开摊位时，一百次中有十四次，商贩会带着钱包和任务单独与你交谈。"
                                           "（多数为取回物品，有时则是猎杀强盗骑士）。若未获任务，则三天内无其他优惠。");
         return 1; }
     }

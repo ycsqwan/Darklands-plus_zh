@@ -113,6 +113,7 @@
 #define draw_frame_box           sub_root_0000_2286   /* (win, x, y, cw, ch, bg): bevelled box with a cw x ch interior */
 #define text_box                 sub_root_0000_23e6   /* (win, y, save, text, dst, ...): framed text box, returns the saved rectangle */
 #define show_message             sub_root_0000_24bc   /* (text, ticks): message box for a while */
+#define wait_ticks               sub_root_0000_4402   /* (n): until tick_byte has counted n more (n & 255; waits for it to equal the start + n) */
 #define ask_yes_no               sub_root_0000_2522   /* (question) */
 #define datafile_select          sub_root_0000_25f2   /* (name): select data file name (kept in data_file) unless current */
 #define datafile_forget          sub_root_0000_262e   /* (): data_file = "" */
@@ -389,9 +390,9 @@
 #define door_set_vec             vec_1d6f             /* overlay call vector of door_set */
 #define secret_door_search       sub_s023_1ef8_0812   /* (who, roll) */
 #define secret_door_search_vec   vec_17ed             /* overlay call vector of secret_door_search */
-#define trap_spell               sub_s023_1ef8_0d88   /* (t, who) */
+#define trap_spell               sub_s023_1ef8_0d88   /* (who, h, t): who sprang handler h, spell trap t (s014 19cd:216a calls each handler (who, h, a, b)) */
 #define trap_spell_vec           vec_1801             /* overlay call vector of trap_spell */
-#define trap_missile             sub_s023_1ef8_0e30   /* (t, t2) */
+#define trap_missile             sub_s023_1ef8_0e30   /* (who, h, t, t2): missile trap t and its twin t2 (0xff none); its darts loosed by -1 (strikes) / -2 (misses) */
 #define trap_missile_vec         vec_180b             /* overlay call vector of trap_missile */
 #define lock_pick                sub_s023_1ef8_12c0   /* (): selected member picks a lock (lock picks = item 0x40) */
 #define lock_pick_vec            vec_1d1f             /* overlay call vector of lock_pick */
@@ -440,6 +441,7 @@
 #define enemy_class              D_c2bf               /* [13] 0 melee, 1 archer, 2 caster */
 #define cbt_selected             D_9064               /* [13] chosen flags */
 #define real_combat              D_a6c1               /* 1 = enemies engaged (battle mode) */
+#define tick_byte                D_07d2               /* char: counts the timer's ticks (with combat_clock and the clocks beside it) */
 #define combat_clock             D_07d4               /* ticks */
 #define combat_alarm             D_d6f4               /* alarm: real combat starts */
 #define combat_flags             D_9080               /* combat start flags */

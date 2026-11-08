@@ -24,9 +24,16 @@
 #include "../runtime/game.h"
 #include "../runtime/gamevars.h"
 #include "../runtime/config.h"
+#include "../runtime/hle.h"
+#include "datamods.h"
 #include "travel.h"
+#include "saves.h"
 #include "encounters.h"
 #include "sainttexts.h"
+#include "fixes.h"
+#include "gamemodel.h"
+#include "lodgeview.h"
+#include "checks.h"
 
 extern char game_dir[1024];
 
@@ -35,6 +42,8 @@ static int mw, mh;
 TravelState travel;
 int travel_enabled = 1, travel_fast = 1;          /* fast: 0 normal, 1 4x, 2 instant */
 int travel_step_result = -1;                      /* what the last step on the map led to (1000: a random encounter) */
+static int travel_min_left = -1, travel_stall;    /* the journey's progress: the least time left yet, the steps since it last fell */
+static int camp_resume, camp_seen, camp_tx, camp_ty, camp_loc; static char camp_name[48];   /* after a camp at 20:00 (travel.camp_at_8): the journey taken up again */
 
 /* minutes per one-pixel step by terrain (s030 1462:2ac8; with a saint's speed, mods/sainttexts.h) */
 static int minutes_base(int t);
@@ -52,13 +61,26 @@ static int minutes_base(int t)
     }
 }
 
+/* the map as the game reads it: a data mod's DARKLAND.MAP if one is on (dos_host_path_read), read again
+   when the mods change (of the same size: the plans' buffers are sized by it) */
+static int map_gen = -1;
+static void map_changed(void);
 static int load_map(void)
 {
-    if (terr) return 1;
-    char p[1200]; snprintf(p, sizeof p, "%s/DARKLAND.MAP", game_dir);
+    int gen = datamods_generation();
+    if (terr && gen == map_gen) return 1;
+    char p[1300]; dos_host_path_read("DARKLAND.MAP", p, sizeof p);
     FILE *f = fopen(p, "rb");
     if (!f) { snprintf(p, sizeof p, "%s/darkland.map", game_dir); f = fopen(p, "rb"); }
-    if (!f) return 0;
+    if (!f) return terr != 0;
+    if (terr) {                                       /* (the mods changed: the map again, if it is the same size) */
+        unsigned char h[4];
+        int same = fread(h, 1, 4, f) == 4 && (h[0] << 8 | h[1]) == mw && (h[2] << 8 | h[3]) == mh;
+        if (!same) { fclose(f); map_gen = gen; fprintf(stderr, "travel: the mods' map is not the size of the one in use: auto-travel keeps the old until the next start\n"); return 1; }
+        fseek(f, 0, SEEK_SET);
+        free(terr); terr = 0; map_changed();
+    }
+    map_gen = gen;
     fseek(f, 0, SEEK_END); long n = ftell(f); fseek(f, 0, SEEK_SET);
     unsigned char *d = malloc((size_t)n);
     if (!d || fread(d, 1, (size_t)n, f) != (size_t)n) { fclose(f); free(d); return 0; }
@@ -87,6 +109,7 @@ int travel_terrain(int x, int y) { return terr && x >= 0 && y >= 0 && x < mw && 
 static int *dist, *prev;
 static unsigned char *site;           /* tiles of locations (stepping on one enters it) */
 static int field_x = -1, field_y = -1, field_seq;
+void travel_test_terrain(int x, int y, int t) { if (load_map() && x >= 0 && y >= 0 && x < mw && y < mh) { terr[y * mw + x] = (unsigned char)t; field_x = -1; } }   /* (test uterrain: our copy only, the game's map unchanged) */
 
 static short *enter;                  /* the location stepping on a tile enters, -1 none */
 
@@ -136,6 +159,12 @@ static HE hpop(void)
     return t;
 }
 
+/* the tiles the party's marker can stand on: the game keeps the marker within x 11..247, y 13..177 of the view
+   and the view within the map (s030 1462:0c44), so the first six rows, the last one, the first column and the
+   last are out of reach (Zürich is on the last row: a way along its road there left the party stuck at the
+   edge, 1.4-RC2) */
+static int reachable(int x, int y) { return y >= 6 && y <= mh - 2 && x >= 1 && x <= mw - 2; }
+
 static int nb(int x, int y, int k, int *nx, int *ny, int *steps)
 {
     int odd = y & 1;
@@ -165,7 +194,7 @@ static void field(int x0, int y0)
         if (e.i != s && is_site(e.i)) continue;           /* one can arrive at a location, not pass it */
         for (int k = 0; k < 6; k++) {
             int nx, ny, st;
-            if (!nb(x, y, k, &nx, &ny, &st)) continue;
+            if (!nb(x, y, k, &nx, &ny, &st) || !reachable(nx, ny)) continue;
             int ni = ny * mw + nx, t = terr[ni];
             if (blocked(t)) continue;
             int d = e.d + st * (minutes(terr[e.i]) + minutes(t)) / 2;
@@ -219,15 +248,16 @@ int travel_to_tile(int x, int y, int loc, const char *name)
     int px, py; travel_party_tile(&px, &py);
     field(px, py);
     if (!plan(x, y)) return 0;
-    travel.active = 1; travel.loc = loc; travel.tx = x; travel.ty = y;
+    travel.active = 1; travel.loc = loc; travel.tx = x; travel.ty = y; camp_resume = 0;
     snprintf(travel.name, sizeof travel.name, "%s", name ? name : "");
-    travel.replan = 0;
+    travel.replan = 0; travel_min_left = -1; travel_stall = 0;
     fprintf(stderr, "travel: to %s (%d,%d) from (%d,%d): %d tiles, %d minutes\n", travel.name, x, y, px, py, travel.n, travel.minutes);
     { void plat_swallow_click(void); plat_swallow_click(); }   /* (the click that set it off: not for the game) */
     return 1;
 }
 
 void travel_stop(void) { travel.active = 0; }
+static void travel_after_load(void);
 
 /* a journey asked for from inside a town (the world map's "Leave and travel there"): set off as
    soon as the party is out on the travel map */
@@ -331,11 +361,95 @@ static u32 map_polled;                      /* when the overland loop last took 
  * message boxes */
 int travel_map_live(void) { return travel_enabled && plat_ticks_ms() - map_polled < 1200; }
 
+/* (fix mapfoot) when the step pulls the view down to the map's last rows (s030 1462:0c44, the clamp at the
+   foot) the original
+     - moves the marker up 5 pixels for each row the view went down instead of 4 (D_2868 += (occ - D_286c) * 5;
+       the top and the 23-row scrolls are right): the party jumps two to four rows north, near Basel beside a
+       village it then walked into;
+     - sets the view buffer's top row (D_286e) without reading the rows (1462:1dd4, as the other branches do):
+       until the next read the map's terrain is taken from rows two or so off, and the party met water that was
+       not there (beside Konstanz, stopping a journey).
+   Put the marker where the view's move leaves it; read the rows and draw the view and the marker again. */
+int ns_call(int sect, u16 seg, u16 off, int n, ...);
+static void foot_fix(int e0, int c0, int y0)
+{
+    if (!fix_is_on("mapfoot") || !load_map()) return;
+    int e1 = (s16)g_rw(GV_map_buf_row), c1 = (s16)g_rw(GV_map_view_row), y1 = (s16)g_rw(GV_map_marker_y);
+    if ((e1 == e0 && c1 == c0) || e1 != mh - 0x83 || c1 != mh - e1 - 0x30 || y0 < 150 || abs(y1 - y0 + 92) <= 1) return;   /* (the foot's clamp only) */
+    int y = y1 - 5 * (c0 - c1) - 4 * ((e1 + c1) - (e0 + c0));
+    if (getenv("DL_TRAVEL_LOG")) fprintf(stderr, "travel: the map's foot: marker y %d -> %d (view %d+%d -> %d+%d)\n", y1, y, e0, c0, e1, c1);
+    g_ww(GV_map_marker_y, (u16)y);
+    if (e1 != e0) ns_call(30, 0x1462, 0x1dd4, 3, g_rw(0xe3f4), e1, e0);                      /* (DS:e3f4 DARKLAND.MAP's FILE) */
+    ns_call(30, 0x1462, 0x20d2, 2, g_rw(GV_map_view_col), c1);                                  /* the view */
+    ns_call(30, 0x1462, 0x16c6, 4, g_rw(GV_map_marker_x), y, g_rw(0x2910), g_rw(0x8676));      /* the marker (frame, facing) */
+}
+
+/* travel.camp_at_8 (the campfire under the clock, ui/travel.cpp): a party on the move when the clock strikes 20:00 stops
+ * and makes camp (the game's C), since a day in camp or at an inn (camp_spend_day, s036 1462:147a) lasts until 5:00, or until
+ * 5:00 the day after when that is less than 9 hours away: from 20:00 a night of 9 hours, from 21:00 one of 32. 1: when a
+ * member needs rest (travel_camp_needed); 2: always (alchemy on the road). Once a day; a step that ends
+ * in an encounter leaves it for the next step on the map at that hour. On auto-travel, a step that may take an hour or
+ * more (hills, mountains: travel time per step, s030 1462:2ac8) is not begun at 19:00 lest it pass 20:00 by. */
+static long camp_done, camp_due = -1;
+/* a game loaded (saves_on_loaded): its journey, its camp at 20:00 and a trip waiting to start were the old
+   game's (a camp that night already made, a camp due, a journey to take up after it) */
+static int forced_x = -1, forced_y = -1;      /* the tile the last step made certain was taken from (encounter_weight_hook) */
+static void travel_after_load(void) { travel.active = 0; camp_done = 0; camp_due = -1; camp_resume = 0; pend_loc = -1; forced_x = forced_y = -1; }
+static long today(void) { return (long)(s16)g_rw(GV_cur_year) * 400 + (s16)g_rw(GV_cur_month) * 32 + (s16)g_rw(GV_cur_day); }
+/* a member needs rest: short of Strength, or of more Divine Favor than a night brings back. What comes back
+   without a camp, from the game's hourly update of the party (hours_pass, s029 0e76:255a, on the road and in
+   towns): Endurance each hour to 4 short of full, then 1 an hour to 2 short (a camp is not needed for it: the last
+   2 are a sliver, his word); Divine Favor at midnight by Religious Training / (20 to 24), at least 1, at most 5
+   (the least of it counted here); Strength only by chance (one in 150 for each point of the party's best Healing). */
+static char camp_why[80];                   /* (the log's: who needed it) */
+int travel_camp_needed(void)
+{
+    for (int m = 0; m < 5; m++) {
+        int st = gm_member_status(m);
+        if (st != 1 && st != 2) continue;
+        int c, x; gm_member_attr(m, ATTR_STR, &c, &x);
+        if (c < x) { snprintf(camp_why, sizeof camp_why, "member %d: Strength %d of %d", m, c, x); return 1; }
+        int night = gm_member_skill(m, SKILL_RELIGION) / 24; if (night < 1) night = 1; if (night > 5) night = 5;
+        gm_member_attr(m, ATTR_DF, &c, &x);
+        if (x - c > night) { snprintf(camp_why, sizeof camp_why, "member %d: Divine Favor %d of %d, a night brings back %d", m, c, x, night); return 1; }
+    }
+    snprintf(camp_why, sizeof camp_why, "nobody needs rest");
+    return 0;
+}
+static int camp_now(const char *why)
+{
+    int mode = config_get_int("travel.camp_at_8", 0);
+    if (!mode || config_get_int("original", 0) || camp_done == today()) return 0;
+    camp_done = today();
+    if (mode == 1 && !travel_camp_needed()) { fprintf(stderr, "travel: no camp at %d:00 (%s)\n", (s16)g_rw(GV_cur_hour), camp_why); return 0; }
+    void ui_notice(const char *); void plat_press_key(int scancode);
+    if (travel.active) {                                 /* auto-travel goes on after the camp, as after an encounter */
+        camp_resume = 1; camp_seen = lodge_entered; camp_tx = travel.tx; camp_ty = travel.ty; camp_loc = travel.loc;
+        snprintf(camp_name, sizeof camp_name, "%s", travel.name);
+    }
+    travel.active = 0;
+    plat_press_key(6);                                   /* (SDL_SCANCODE_C: the game's camp) */
+    fprintf(stderr, "travel: camp at %d:00 (%s, travel.camp_at_8 %d%s%s)\n", (s16)g_rw(GV_cur_hour), why, mode, mode == 1 ? ", " : "", mode == 1 ? camp_why : "");
+    ui_notice((s16)g_rw(GV_cur_hour) == 20 ? "20:00: the party makes camp (the campfire under the clock). A night in camp lasts until 5:00."
+                                           : "The party makes camp before 20:00 (the campfire under the clock): the way ahead would take past it.");
+    return 1;
+}
+
 static void step_hook(void)                 /* s030 1462:0c44 (key): one step of the overland loop */
 {
     int started = pending_check();                  /* (this step's key was read before: not the player's taking over) */
     { static int lg = -1; if (lg < 0) lg = getenv("DL_MAP_POLL_LOG") != 0; u32 t = plat_ticks_ms(); if (lg && t - map_polled > 200) fprintf(stderr, "map poll gap %u ms\n", t - map_polled); }
     map_polled = plat_ticks_ms();
+    if (camp_resume && !travel.active && lodge_entered != camp_seen) {   /* back from the camp at 20:00: on with the journey */
+        int px, py; travel_party_tile(&px, &py);
+        camp_resume = 0;
+        field(px, py);
+        if (plan(camp_tx, camp_ty)) {
+            travel.active = 1; travel.loc = camp_loc; travel.tx = camp_tx; travel.ty = camp_ty; snprintf(travel.name, sizeof travel.name, "%s", camp_name);
+            travel.replan = 0; travel_min_left = -1; travel_stall = 0; started = 1;
+            fprintf(stderr, "travel: on to %s after the camp (%d tiles)\n", travel.name, travel.n);
+        }
+    }
     if (travel.active) {
         u16 key = rw(SS, (u16)(SP + 4));
         if (key != 0x4c35 && !started) { travel.active = 0; fprintf(stderr, "travel: stopped by key %04x (the player took over)\n", key); }   /* the player took over */
@@ -345,27 +459,14 @@ static void step_hook(void)                 /* s030 1462:0c44 (key): one step of
             /* where on the route are we? (after an encounter the party may stand elsewhere) */
             int found = -1;
             for (int k = travel.i - 1; k < travel.n && k < travel.i + 3; k++) if (k >= 0 && travel.rx[k] == px && travel.ry[k] == py) found = k;
-            if (found < 0) { field(px, py); if (!plan(travel.tx, travel.ty)) travel.active = 0; found = 0; }
+            if (found < 0) { field(px, py); if (!plan(travel.tx, travel.ty)) travel.active = 0; found = 0; travel_min_left = -1; }   /* (elsewhere: its progress counted from here) */
             if (travel.active) {
                 travel.i = found + 1;
                 if (travel.i >= travel.n) { travel.active = 0; if (getenv("DL_TRAVEL_LOG")) fprintf(stderr, "travel: arrived at (%d,%d)\n", px, py); }   /* arrived (a location is entered by the game) */
             }
-            if (travel.active) {
-                int mx, my; marker_target(travel.rx[travel.i], travel.ry[travel.i], &mx, &my);
-                int x = (s16)g_rw(GV_map_marker_x), y = (s16)g_rw(GV_map_marker_y);
-                /* a safety: the party has not moved for many steps (each costs time): stop rather
-                   than let the days pass where it stands */
-                static int last_x = -1, last_y = -1, still;      /* (the tile: a tile takes at most some 16 steps to cross) */
-                (void)x; (void)y; (void)mx; (void)my;
-                if (px == last_x && py == last_y) still++; else still = 0;
-                last_x = px; last_y = py;
-                if (still > 150) {
-                    void ui_notice(const char *);
-                    still = 0; travel.active = 0;
-                    fprintf(stderr, "travel: stopped, the party did not move for 150 steps at (%d,%d)\n", px, py);
-                    ui_notice("旅行中断：队伍无法再沿这条路继续前进。");
-                }
-            }
+            if (travel.active && (s16)g_rw(GV_cur_hour) == 19                    /* a long step from 19:00 could pass 20:00 by (travel.camp_at_8) */
+                && (minutes(travel_terrain(px, py)) >= 60 || minutes(travel_terrain(travel.rx[travel.i], travel.ry[travel.i])) >= 60))
+                camp_now("a long step ahead");
             if (travel.active) {
                 int mx, my; marker_target(travel.rx[travel.i], travel.ry[travel.i], &mx, &my);
                 int x = (s16)g_rw(GV_map_marker_x), y = (s16)g_rw(GV_map_marker_y);
@@ -396,16 +497,45 @@ static void step_hook(void)                 /* s030 1462:0c44 (key): one step of
                     else if (y > my) k = 0x4800; else if (y < my) k = 0x5000;
                 }
                 ww(SS, (u16)(SP + 4), k);
+                { static int lg = -1; if (lg < 0) lg = getenv("DL_TRAVEL_STEPS") != 0;
+                  if (lg) fprintf(stderr, "travel step: tile (%d,%d) next (%d,%d) marker %d,%d target %d,%d view %d+%d col %d key %04x\n", px, py, nx, ny, x, y, mx, my,
+                                  (s16)g_rw(GV_map_buf_row), (s16)g_rw(GV_map_view_row), (s16)g_rw(GV_map_view_col), k); }
                 int left = 0, from = py * mw + px;
                 (void)from;
                 if (field_x >= 0) { int d = dist[travel.ty * mw + travel.tx], here = dist[py * mw + px]; left = d - (here == 0x7fffffff ? 0 : here); }
                 travel.left = left;
+                /* a safety: the journey has got no nearer its end for many steps (each costs time): stop rather than let
+                   the days pass where the party stands, or walks to and fro (water the game found in the way, again and
+                   again, where the map has none: after RC8 a party walked in place by the bridge north of Nymwegen, cause not found) */
+                if (travel_min_left < 0 || left < travel_min_left) { travel_min_left = left; travel_stall = 0; }
+                else if (++travel_stall > 150) {
+                    void ui_notice(const char *);
+                    travel.active = 0; travel_stall = 0;
+                    fprintf(stderr, "travel: stopped, no nearer in 150 steps: tile (%d,%d) terrain %d, next (%d,%d) terrain %d, marker %d,%d, view %d+%d col %d, last step %d\n",
+                            px, py, travel_terrain(px, py), nx, ny, travel_terrain(nx, ny), x, y, (s16)g_rw(GV_map_buf_row), (s16)g_rw(GV_map_view_row),
+                            (s16)g_rw(GV_map_view_col), travel_step_result);
+                    ui_notice("Travel stopped: the party could not get any further this way.");
+                }
             }
         }
     }
+    int e0 = (s16)g_rw(GV_map_buf_row), c0 = (s16)g_rw(GV_map_view_row), y0 = (s16)g_rw(GV_map_marker_y);
+    int x0 = (s16)g_rw(GV_map_marker_x), v0 = (s16)g_rw(GV_map_view_col), h0 = (s16)g_rw(GV_cur_hour);
     hook_call_original();
+    if (unw_active) return;                                  /* (a load from the map's menu bar: AX is not this step's) */
     int r = (s16)AX;
+    foot_fix(e0, c0, y0);
     travel_step_result = r;
+    {   /* travel.camp_at_8: on the move, the clock strikes 20:00 */
+        int moved = e0 != (s16)g_rw(GV_map_buf_row) || c0 != (s16)g_rw(GV_map_view_row) || y0 != (s16)g_rw(GV_map_marker_y)
+                    || x0 != (s16)g_rw(GV_map_marker_x) || v0 != (s16)g_rw(GV_map_view_col);
+        checks_map_step(r, moved);
+        if (moved && !travel.active && camp_resume) camp_resume = 0;   /* (walked by hand meanwhile: no journey taken up later) */
+        if (moved && (s16)g_rw(GV_cur_hour) == 20 && (h0 == 19 || camp_due == today())) {
+            if (r >= 0) camp_due = today();               /* an encounter, a place: on the next step */
+            else camp_now("20:00");
+        }
+    }
     if (travel.active && r >= 0 && getenv("DL_TRAVEL_LOG")) { int px, py; travel_party_tile(&px, &py); fprintf(stderr, "travel: step result %d at (%d,%d), route %d/%d\n", r, px, py, travel.i, travel.n); }
     if (travel.active && r >= 0) {
         if (r == 9999) travel.replan = 1;                     /* water in the way: plan again */
@@ -439,8 +569,20 @@ void travel_set(int on, int fast)
  * 100 % a step's weight is 0 (no encounter) that often, above it the weight grows. */
 static void encounter_weight_hook(void)
 {
+    int t = (s16)rw(SS, (u16)(SP + 4));                         /* (type, loc): the terrain stepped on */
     hook_call_original();
-    if (encounters_force_pending()) { AX = 1000; return; }      /* test: a new encounter at the next step */
+    /* an encounter due (a night in camp brought one; a test's uenc) makes this step's encounter certain - but
+       only where the game has encounter cards: on a river (terrain 3; 1 and 2 are not stepped on) its step with
+       an encounter brings none (s030 1462:02c0 draws no card there) and goes nowhere, and a party camped by the
+       river NW of Graz could not step off it (1.4.6-RC6, "the river acted as a wall"). There the step is the
+       game's own, and the encounter comes at the next one on land. Elsewhere too a step can bring no card (near a
+       place with some of its events, a summer's month in some terrains: the soak test, by a bridge): one such
+       step is made certain per tile, and the next from the same tile is the game's own, so the party walks on and
+       the encounter is tried again from the next tile (encounters.c gives it up after six tries). */
+    if (encounters_force_pending() && t > 3) {
+        int px = -1, py = -1; travel_party_tile(&px, &py);
+        if (!encounters_forced_tries() || px != forced_x || py != forced_y) { forced_x = px; forced_y = py; AX = 1000; encounters_forced_step(); return; }
+    }
     int pct = config_get_int("travel.encounters", 100);
     if (config_get_int("original", 0) || pct == 100) return;
     int w = (s16)AX;
@@ -490,6 +632,7 @@ static void clamp_hook(void)                          /* clamp_range (lo, hi, v)
 
 void travel_init(void)
 {
+    saves_on_loaded(travel_after_load);                    /* (a journey of the game before does not go on in the one loaded, 1.4-RC2) */
     travel_set(config_get_int("travel.auto", 1), config_get_int("travel.fast", 1));
     hook_install(30, 0x1462, 0x2d44, encounter_weight_hook);
     hook_install(39, 0x1462, 0x0000, watch_chance_hook);
@@ -547,6 +690,7 @@ static int boat_water(int t) { return t == 1 || t == 2 || t == 3; }
    shallows between an island and the coast (both within 4 steps: the Wadden behind the Frisian
    islands, where only small boats went) */
 static unsigned char *shore_dist, *wadden;
+static void map_changed(void) { field_x = -1; free(shore_dist); free(wadden); shore_dist = wadden = 0; }   /* (the plans and the shores worked out anew from the new map) */
 static void dist_from(unsigned char *d, int *q, const int *is_src)
 {
     size_t n = (size_t)mw * mh; int h = 0, tl = 0;

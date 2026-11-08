@@ -22,6 +22,9 @@
 #include "barterview.h"
 #include "lootview.h"
 #include "gamemodel.h"
+#include "saves.h"
+#include "keep.h"
+#include "nscreen.h"
 
 #define L_CUR   GV_loot_who
 #define L_N     GV_loot_n
@@ -101,28 +104,32 @@ static void key_hook(void)                 /* s040 1462:0c22 loot_key(key) */
     hook_call_original();
 }
 
+static void ingr_pile(void), ingr_members(int join);
 static void screen_hook(void)              /* s040 1462:01c8 the loot screen's loop */
 {
     loot_active++;
+    ingr_pile(); ingr_members(g_rb(GV_in_battle) != 1);
     hook_call_original();
     loot_active--;
 }
 
-/* ---------------------------------------------------------------- thrown weapons back
- * Javelins, throwing axes, throwing knives and darts (LST flag 0x10) that the party threw lie
- * in the loot pile after the battle, to be handed back one by one. What each member carried
- * of them is noted when a battle starts (run_battle, s029 0e76:2278); when the loot screen
- * after it opens, each gets back, through the game's own G, as many as they are missing (of
- * the same quality first). */
+/* ---------------------------------------------------------------- spent ammunition back
+ * Javelins, throwing axes, throwing knives and darts (LST flag 0x10) that the party threw, and
+ * the arrows and quarrels it shot that can be found again (7 in 10), lie in the loot pile after
+ * the battle, to be handed back one by one. With ammunition given back (assist.endless 2,
+ * mods/ammo.c: loot_return_thrown), what each member carried of them is noted when a battle
+ * starts (run_battle, s029 0e76:2278); when the loot screen after it opens, each gets back,
+ * through the game's own G, as many as they are missing (of the same quality first). */
 #define TH_MAX 12
 static struct { u16 id; u8 q; int n; } th[5][TH_MAX];
 static int th_n[5], th_valid, battle_depth;
-int loot_return_thrown = 1;
+int loot_return_thrown;                                                  /* (set by mods/ammo.c) */
 
 static int thrown_kind(u16 id)
 {
-    u32 d = g_itemdef(id & 0xfff);
-    return d && (rb((u16)(d >> 16), (u16)((u16)d + 0x20)) & 0x10);     /* shop categories (+0x20) bit 0x10: thrown weapons */
+    if (gm_is_ammo(id)) return 1;                                        /* arrows, quarrels, balls (balls are never found again) */
+    int c = gm_itemdef_u8(id, 0x20);
+    return c > 0 && (c & 0x10);                                          /* shop categories (+0x20) bit 0x10: thrown weapons */
 }
 static int carried(int m, u16 id, int q)
 {
@@ -194,7 +201,7 @@ static void give_back_thrown(void)
         }
         if (got && ml < (int)sizeof msg - 40) {
             char nm[16]; g_str(G_DGROUP, (u16)(G_MEMBER(m) + G_M_SHORTNAME), nm, sizeof nm);
-            ml += snprintf(msg + ml, sizeof msg - ml, "%s%s %d", ml ? ", " : "战斗后拾取的投掷武器（Darklands+）：", nm, got);
+            ml += snprintf(msg + ml, sizeof msg - ml, "%s%s %d", ml ? ", " : "战斗后归还的弹药和投掷武器：", nm, got);
         }
     }
     if (!given) return;
@@ -232,6 +239,165 @@ static void first_draw_hook(void)          /* s040 1462:06e2: the loot screen dr
     hook_call_original();
     if (loot_sim_m >= 0) sim_throw();
     if (!unw_active) give_back_thrown();
+}
+
+/* ---------------------------------------------------------------- ingredients of one quality
+ * An ingredient's quality changes nothing but its price: alchemy takes them by kind and number
+ * (s033 1462:1630), a potion's quality is the formula's. Yet one kind at two qualities is two
+ * entries everywhere (on the sheet, in the loot, the store room). With rules.ingredients_one_quality
+ * every ingredient is of quality 25: as one is added to a member (add_item_rec_impl), in the loot
+ * pile as the loot screen opens, in the store room as it is read, and those already carried when a
+ * game is loaded, the loot screen opens or the switch is turned on; a member's stacks of a kind are
+ * then made one through the game's own item_remove_stack (it puts right what is in hand), but not in
+ * a battle or a dungeon (GV_in_battle: the field's records keep the members' item numbers). */
+#define ING_Q 25
+int loot_ingredients_one = 1;
+static int is_ingredient(u16 code)
+{
+    int f = gm_itemdef_u16(code, 0x20);                                 /* (DARKLAND.LST's, not the game's copy: in a battle or a dungeon
+                                                                            that is other data, and every thing came out an ingredient) */
+    return f > 0 && (f & 0x400);                                         /* (the item's flags, as DARKLAND.LST's +32: 0x400 an ingredient) */
+}
+void loot_test_ingredients(int m)          /* test (uingr:m): what is_ingredient says of member m's records now */
+{
+    int n = g_rb((u16)(G_MEMBER(m) + G_M_NITEMS));
+    fprintf(stderr, "ingr test %d:", m);
+    for (int i = 0; i < n && i < 64; i++) { u16 code = rw(G_FAR2E38, G_ITEM(m, i)) & 0xfff;
+        fprintf(stderr, " %d%s(%04x)", code, is_ingredient(code) ? "*" : "", (u16)gm_itemdef_u16(code, 0x20)); }
+    fprintf(stderr, " | in_battle %d mode %d\n", g_rb(GV_in_battle), game_mode());
+}
+static void ingr_add_hook(void)            /* add_item_rec_impl (who, struct item { code, type, quality, count, .. }) */
+{
+    if (loot_ingredients_one && is_ingredient(rw(SS, (u16)(SP + 6))) && rb(SS, (u16)(SP + 9)) != ING_Q) wb(SS, (u16)(SP + 9), ING_Q);
+    hook_call_original();
+}
+static void ingr_keep(int id, int q)       /* (a mark on the old quality kept on the new) */
+{
+    if (q != ING_Q && keep_is(id, q) && !keep_is(id, ING_Q)) keep_mark(id, ING_Q, 1);
+}
+static void ingr_members(int join)          /* join: the stacks of a kind made one (not in a battle or a dungeon: the field's records point at the members' items) */
+{
+    if (!loot_ingredients_one) return;
+    int size = (s16)g_rw(G_PARTY_SIZE), merged = 0;
+    for (int m = 0; m < size && m < 5; m++) {
+        for (int guard = 0; guard < 64; guard++) {
+            int n = g_rb((u16)(G_MEMBER(m) + G_M_NITEMS)), again = 0;
+            for (int i = 0; i < n && i < 64 && !again; i++) {
+                u16 o = G_ITEM(m, i), code = rw(G_FAR2E38, o) & 0xfff;
+                if (!is_ingredient(code)) continue;
+                int q = rb(G_FAR2E38, (u16)(o + 3)), c = rb(G_FAR2E38, (u16)(o + 4));
+                if (q != ING_Q && getenv("DL_LOOT_LOG")) fprintf(stderr, "loot: member %d's item %d quality %d -> %d (in_battle %d, mode %d)\n", m, code, q, ING_Q, g_rb(GV_in_battle), game_mode());
+                ingr_keep(code, q);
+                wb(G_FAR2E38, (u16)(o + 3), ING_Q);
+                for (int k = 0; join && k < i; k++) {               /* an earlier stack of the kind: this one joins it */
+                    u16 ok = G_ITEM(m, k);
+                    if ((rw(G_FAR2E38, ok) & 0xfff) != code || rb(G_FAR2E38, (u16)(ok + 2)) != rb(G_FAR2E38, (u16)(o + 2))) continue;
+                    int ck = rb(G_FAR2E38, (u16)(ok + 4));
+                    if (ck + c > 255) continue;                     /* (the game's own limit to a stack) */
+                    u16 a[2] = { (u16)m, (u16)i };
+                    game_call_far(GF_item_remove_stack, 2, a);
+                    wb(G_FAR2E38, (u16)(ok + 4), (u8)(ck + c));
+                    merged++; again = 1;
+                    break;
+                }
+            }
+            if (!again) break;
+        }
+    }
+    if (merged) fprintf(stderr, "loot: ingredients of one quality: %d stacks joined others of their kind\n", merged);
+}
+static void ingr_pile(void)
+{
+    if (!loot_ingredients_one) return;
+    u16 sg = pile_seg();
+    for (int i = 0; i < (s16)g_rw(L_N) && i < 200; i++) {
+        u16 o = pile_off(i), code = rw(sg, o) & 0xfff;
+        if (!is_ingredient(code)) continue;
+        wb(sg, (u16)(o + 3), ING_Q);
+        for (int k = 0; k < i; k++) {
+            u16 ok = pile_off(k);
+            if ((rw(sg, ok) & 0xfff) != code || rb(sg, (u16)(ok + 2)) != rb(sg, (u16)(o + 2)) || rb(sg, (u16)(ok + 4)) + rb(sg, (u16)(o + 4)) > 255) continue;
+            wb(sg, (u16)(ok + 4), (u8)(rb(sg, (u16)(ok + 4)) + rb(sg, (u16)(o + 4))));
+            int n = (s16)g_rw(L_N);
+            for (int j = i; j + 1 < n; j++) for (int b = 0; b < 6; b++) wb(sg, (u16)(pile_off(j) + b), rb(sg, (u16)(pile_off(j + 1) + b)));
+            g_ww(L_N, (u16)(n - 1)); i--;
+            break;
+        }
+    }
+}
+#define F_STORE 0x37f4                     /* the store room's things, far 2e38: { int id; char quality; char count; } (mods/cacheview.c) */
+static void ingr_store_hook(void)          /* cache_first_draw (who, arg): the store read */
+{
+    hook_call_original();
+    if (!loot_ingredients_one || unw_active) return;
+    for (int i = 0; i < (s16)g_rw(GV_cache_n) && i < 256; i++) {
+        u16 o = (u16)(F_STORE + 4 * i), code = rw(G_FAR2E38, o) & 0xfff;
+        if (!is_ingredient(code)) continue;
+        ingr_keep(code, rb(G_FAR2E38, (u16)(o + 2)));
+        wb(G_FAR2E38, (u16)(o + 2), ING_Q);
+        for (int k = 0; k < i; k++) {
+            u16 ok = (u16)(F_STORE + 4 * k);
+            if ((rw(G_FAR2E38, ok) & 0xfff) != code || rb(G_FAR2E38, (u16)(ok + 3)) + rb(G_FAR2E38, (u16)(o + 3)) > 255) continue;
+            wb(G_FAR2E38, (u16)(ok + 3), (u8)(rb(G_FAR2E38, (u16)(ok + 3)) + rb(G_FAR2E38, (u16)(o + 3))));
+            int n = (s16)g_rw(GV_cache_n);
+            for (int j = i; j + 1 < n; j++) for (int b = 0; b < 4; b++) wb(G_FAR2E38, (u16)(F_STORE + 4 * j + b), rb(G_FAR2E38, (u16)(F_STORE + 4 * (j + 1) + b)));
+            g_ww(GV_cache_n, (u16)(n - 1)); i--;
+            break;
+        }
+    }
+}
+/* 1.4 to 1.4.5-RC5 read the item list from the game's copy in memory, which a battle or a dungeon overwrites: a save
+   loaded there had every thing taken for an ingredient and set to quality 25, weapons, armor, potions and relics alike
+   (and two alike joined). What a member wears or wields keeps its quality in their record of it in use (+0x44, +0x46,
+   +0x3b, +0x3c, +0x47, as gm_item_equipped reads it): a thing in use with no record of that quality, and a record of its
+   type at 25, has that record put back (one taken off a stack of them). Always, the switch on or off: the harm is in the
+   saves. What was not in use cannot be told. */
+static void ingr_repair_in_use(void)
+{
+    static const u8 T[5] = { 0x3d, 0x0e, 0x37, 0x38, 0x48 }, Q[5] = { 0x44, 0x46, 0x3b, 0x3c, 0x47 };
+    int size = (s16)g_rw(G_PARTY_SIZE);
+    for (int m = 0; m < size && m < 5; m++) {
+        if (!g_rb(G_MEMBER(m))) continue;
+        u16 b = G_MEMBER(m);
+        for (int k = 0; k < 5; k++) {
+            int t = (s8)g_rb((u16)(b + T[k])), qs = g_rb((u16)(b + Q[k]));
+            if (t < 0 || qs == ING_Q || qs < 1 || qs > 99) continue;
+            int n = g_rb((u16)(b + G_M_NITEMS)), exact = 0, at = -1;
+            for (int i = 0; i < n && i < 64; i++) {
+                u16 o = G_ITEM(m, i);
+                if (rb(G_FAR2E38, (u16)(o + 2)) != (u8)t) continue;
+                if (rb(G_FAR2E38, (u16)(o + 3)) == qs) exact = 1;
+                else if (rb(G_FAR2E38, (u16)(o + 3)) == ING_Q && at < 0 && !is_ingredient(rw(G_FAR2E38, o) & 0xfff)) at = i;
+            }
+            if (exact || at < 0) continue;
+            u16 o = G_ITEM(m, at);
+            int c = rb(G_FAR2E38, (u16)(o + 4));
+            if (c > 1) {                                       /* (one off a stack: a record of its own) */
+                if (n >= 64) continue;
+                u16 o2 = G_ITEM(m, n);
+                for (int j = 0; j < 6; j++) wb(G_FAR2E38, (u16)(o2 + j), rb(G_FAR2E38, (u16)(o + j)));
+                wb(G_FAR2E38, (u16)(o + 4), (u8)(c - 1));
+                wb(G_FAR2E38, (u16)(o2 + 3), (u8)qs); wb(G_FAR2E38, (u16)(o2 + 4), 1);
+                g_wb((u16)(b + G_M_NITEMS), (u8)(n + 1));
+            } else wb(G_FAR2E38, (u16)(o + 3), (u8)qs);
+            fprintf(stderr, "loot: member %d's item %d in use back to quality %d (it had been set to %d)\n", m, rw(G_FAR2E38, o) & 0xfff, qs, ING_Q);
+        }
+    }
+}
+static void ingr_now(int a, int b, int c, int d) { (void)a; (void)b; (void)c; (void)d; ingr_members(g_rb(GV_in_battle) != 1); }
+static void ingr_after_load(void)          /* a game loaded (saves_on_loaded; the load then unwinds the game: the stacks joined at
+                                               the next round of a game screen, ns_defer, out of a battle or a dungeon; in one, at the
+                                               next load or loot screen out of it) */
+{
+    ingr_repair_in_use();                   /* (what 1.4 to 1.4.5-RC5 did to the saves) */
+    ingr_members(0);                        /* (the qualities at once: memory only) */
+    if (loot_ingredients_one) ns_defer(ingr_now, 0, 0, 0, 0);
+    if (getenv("DL_LOOT_LOG")) fprintf(stderr, "loot: a save read, ingredients to join (%d)\n", loot_ingredients_one);
+}
+void loot_ingredients_set(int on)
+{
+    loot_ingredients_one = on;
+    if (on) ns_defer(ingr_now, 0, 0, 0, 0);
 }
 
 /* ---------------------------------------------------------------- shops
@@ -324,7 +490,10 @@ void loot_init(void)
     hook_install(40, 0x1462, 0x01c8, screen_hook);
     hook_install(40, 0x1462, 0x06e2, first_draw_hook);
     hook_install(GF_run_battle, battle_hook);
-    loot_return_thrown = config_get_int("assist.return_thrown", 1);
+    loot_ingredients_one = config_get_int("rules.ingredients_one_quality", 1);
+    hook_install(GF_add_item_rec_impl, ingr_add_hook);
+    hook_install(GF_cache_first_draw, ingr_store_hook);
+    saves_on_loaded(ingr_after_load);
     hook_install(GF_barter_key, barter_key_hook);
     hook_install(GF_barter_screen, barter_hook);
     barterview_init();

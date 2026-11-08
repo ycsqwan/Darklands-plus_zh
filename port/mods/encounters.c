@@ -39,11 +39,16 @@
 #include "datamods.h"
 #include "travel.h"
 #include "encounters.h"
+void fixes_clamp_party_items(void);           /* mods/fixes.c: item counts within bounds after a robbery */
+#include "saves.h"
+#include "gamemodel.h"
+#include "nscreen.h"
 
 void ui_notice(const char *);
 
 #define ENC_BASE   0x170                 /* card numbers of the new encounters */
-#define ENC_MAX    128                   /* 0x170..0x1ef: unused space after the card table */
+#define ENC_MAX    184                   /* 0x170..0x227: the card table's segment (2dae, 0x8a0 bytes up to 2e38) holds 0x16e
+                                            cards; the rest of it the game never uses (zeros) */
 #define CARD_TABLE ((u16)(LOADSEG + 0x2dae))
 #define NOPT       10
 
@@ -96,6 +101,8 @@ static int enc_log_on(void) { static int v = -1; if (v < 0) v = getenv("DL_ENC_L
 #define LOG(...) do { if (enc_log_on()) fprintf(stderr, "encounters: " __VA_ARGS__); } while (0)
 
 /* ================================================================ the encounters */
+enum { WH_WILD, WH_BOAT, WH_STREET, WH_CAMP };          /* where one comes up (the script's `where`) */
+static const char *WHERE_NAMES[4] = { "wild", "boat", "street", "camp" };
 typedef struct { char *s; int line; } Src;      /* a value from the file, with its line */
 
 typedef struct {
@@ -116,6 +123,7 @@ typedef struct {
 typedef struct {
     char id[40], title[80], file[1200], card[16], pic[16];
     int weight, when, music, slot;      /* when: 0 any, 1 day, 2 night */
+    int where;                          /* WH_WILD, WH_BOAT, WH_STREET, WH_CAMP */
     unsigned terrain;                   /* bit t: map terrain t (D_d843) */
     Src only;
     Sec *sec; int nsec;
@@ -125,7 +133,9 @@ typedef struct {
     int nblocks;                        /* the card text's blocks (0: not found, e.g. one of the game's own cards) */
     long card_bytes;                    /* its size as the game loads it (.MSG) */
     unsigned char nopts[64], optcode[64][NOPT];   /* each block's option lines and their codes (0x15 0x16 0x10 0x06) */
+    unsigned char optmoney[64][NOPT];             /* an option line that shows $Money1 (1) or $Money2 (2): its sum is known */
     int maxopts;                        /* the most option lines in one block */
+    int longest, longest_block, longest_raw;   /* the longest block with every $variable at its longest (text_expand's 900 bytes), and as loaded */
     int builtin;                        /* one of Darklands+'s own (cut content restored: cutcards.c), not a mod's */
 } Enc;
 
@@ -133,13 +143,21 @@ static Enc encs[ENC_MAX];
 static int nenc, nerr, loaded_gen = -1;
 static int by_slot[ENC_MAX];             /* card slot -> encounter, -1 */
 static int force_next = -1;
+static int camp_pending;                 /* a night in camp brought an encounter: at the first step on the map */
+static int forced_steps;                 /* steps made encounters for it that brought no card yet (encounters_forced_step) */
+static int pick_where(int where, int pct, int force);
 
 /* the encounter being run */
 static struct {
     int active, enc, card, sec, last_menu, jumped;
     int flag[NOPT];                      /* option overrides: -1 none, 0 hidden, 1 on, 2 greyed */
     long var[24];
-    int who, q, saint, item, result, cur_opt;
+    int who, q, saint, item, result, cur_opt, opt_block;   /* (cur_opt -1 outside an option's actions; opt_block its menu's block) */
+    int where, resume;                   /* where it came up; the card a street encounter goes back to */
+    int pending;                         /* a text block waiting for the actions that follow it (-1 none) */
+    u16 tvars[16];                       /* the card variables as they were when that text was asked for */
+    long hours;                          /* time the script passed since the last text shown */
+    int fought;                          /* a battle since the last text shown (its own screens told what came of it) */
 } rt;
 static int aborting;                     /* the game unwinds (load, quit): stop */
 
@@ -216,6 +234,24 @@ static int g_invoke_saint(int w, int s)
 static void g_drop_away(void) { G(GF_party_drop_away, 0); }
 static void g_rejoin_away(void) { G(GF_party_rejoin_away, 0); }
 static void g_rep_adj(int loc, int a, int b) { G(GF_loc_reputation_adj, 3, loc, a, b); }
+/* "reputation A, B": the game's own change (loc_reputation_adj, s029 0e76:19d0: from A to one short of B,
+   up for B > 0, down for B < 0, kept within -99..99) but made every time. The game makes it only with a
+   chance of 100 less the town's present opinion (its sign dropped), so a text saying the town would hear
+   of it ("he will tell every market in Kuttenberg") often came with nothing in What came of it. An opinion
+   already past 99 (cards that set it without that limit, $Polit00 +14..19, and events add to it; the game's
+   chance is then 0) is not brought back to 99 by a good word: 1.4.6's build 1203 did ("Stop, thief!" in a
+   Nurnberg at 168: -69). */
+static void rep_change(int loc, int a, int b)
+{
+    u32 r = loc >= 0 && loc < 0x5c ? g_location(loc) : 0;
+    if (!r) { g_rep_adj(loc, a, b); return; }
+    u16 rs = (u16)(r >> 16), ro = (u16)((u16)r + 0x12);
+    int aa = abs(a), ab = abs(b), d = aa + (ab > aa ? G(GF_rand_mod, 1, ab - aa) : 0);
+    int old = (s16)rw(rs, ro), v = old + (b > 0 ? d : -d);
+    if (b > 0 && v > 99) v = old > 99 ? old : 99;         /* (up: to 99 at most, never down) */
+    if (b <= 0 && v < -99) v = old < -99 ? old : -99;     /* (down: to -99 at most, never up) */
+    ww(rs, ro, (u16)v);
+}
 static void g_name_saint(int s) { G(GF_name_to_slot, 3, 1, s, 0); }
 static void g_load_city(int c) { G(GF_load_city, 1, c); }
 static int g_event_started(int k) { return G(GF_event_started, 1, k); }
@@ -270,6 +306,220 @@ static void money_put(u16 m, long pf)
 static int member_status(int m) { return m >= 0 && m < 5 ? g_rb(G_MEMBER(m)) : 0; }
 static int leader(void) { return (s8)g_rb(G_LEADER); }
 static void exit_to_map(void) { g_ww(G_CUR_LOC, 0xffff); g_ww(V_NEXT_CARD, 0x0c); }
+static int boat_done;                    /* a boat encounter just ended: the arrival without the river pirates as well */
+static int run_resume;                   /* the street card a street encounter came up on (set as it is chosen) */
+/* leaving the encounter: back to the map, or for one in a town's streets to the street it came up in, after a
+   voyage on to the arrival ($Enter00, card 0x5a) */
+static void enc_leave(void)
+{
+    if (rt.where == WH_STREET) {                 /* (the street as the hour has it now: a night in the tower ends by day; a save made during one: the main street) */
+        int side = rt.resume == 9 || rt.resume == 0x0a, day = g_daylight() != 0;
+        g_ww(V_NEXT_CARD, (u16)(side ? (day ? 9 : 0x0a) : (day ? 6 : 8)));
+    }
+    else if (rt.where == WH_BOAT) { boat_done = 1; g_ww(V_NEXT_CARD, 0x5a); }
+    else exit_to_map();
+}
+
+/* ================================================================ what came of it
+ * The party is noted before an option's actions and compared after them; what changed is listed under the
+ * text that tells of it (ui/cardview.cpp draws it), and "Nothing came of it" under the last text of an
+ * option that changed nothing, so the player sees which words had consequences and which were the tale.
+ * So a text is shown when the actions after it, up to the next text, goto, battle, picture, card or exit,
+ * have been done (they are what it tells of); the card's variables ($ChosenOneName, $ItemName, $Money1,
+ * $Number1 ...) are shown as they were when the text was asked for. */
+#define SNAP_ITEMS 300
+typedef struct {
+    int st[5], cur[5][7], max[5][7], skill[5][19];
+    int boost[5][7], sboost[5][19];                  /* (a saint's or a potion's help running: gm_temp_boost) */
+    char name[5][24];
+    long money; int fame, rep[0x5c];
+    int nit, it_id[SNAP_ITEMS], it_n[SNAP_ITEMS];
+} Snap;
+static Snap snap0;
+static EncOutcome outc[64]; static int noutc, outc_on, outc_final;
+static char outc_names[5][24];
+static void snap_item(Snap *s, int id, int n)
+{
+    for (int i = 0; i < s->nit; i++) if (s->it_id[i] == id) { s->it_n[i] += n; return; }
+    if (s->nit < SNAP_ITEMS) { s->it_id[s->nit] = id; s->it_n[s->nit] = n; s->nit++; }
+}
+static void snap_take(Snap *s)
+{
+    memset(s, 0, sizeof *s);
+    for (int m = 0; m < 5; m++) {
+        s->st[m] = gm_member_present(m) ? gm_member_status(m) : 0;
+        if (!s->st[m]) continue;
+        gm_member_name(m, s->name[m], sizeof s->name[m]);
+        for (int k = 0; k < 7; k++) { gm_member_attr(m, k, &s->cur[m][k], &s->max[m][k]); s->boost[m][k] = gm_temp_boost(0x48, m, k); s->cur[m][k] -= s->boost[m][k]; }
+        for (int k = 0; k < 19; k++) { s->sboost[m][k] = gm_temp_boost(0x49, m, k); s->skill[m][k] = gm_member_skill(m, k) - s->sboost[m][k]; }   /* (a saint's or a potion's help for a while: not what came of it) */
+        GmItem g;
+        for (int i = 0; i < gm_item_count(m); i++) if (gm_item(m, i, &g)) snap_item(s, g.id, g.count > 0 ? g.count : 1);   /* (item 0 is the Hand Axe: a raftsman's gift never showed) */
+    }
+    s->money = money_get(G_MONEY);
+    s->fame = (s16)g_rw(GV_party_fame);
+    for (int t = 0; t < 0x5c; t++) { u32 r = g_location(t); s->rep[t] = r ? (s16)rw((u16)(r >> 16), (u16)((u16)r + 0x12)) : 0; }
+}
+/* what the player did knowingly is no news: the Divine Favor a prayer spends, the potion drunk - taken into
+   the note the band compares with (What came of it lists only what the choice brought) */
+static void snap_known_df(int m)
+{
+    if (m < 0 || m > 4 || !snap0.st[m]) return;
+    gm_member_attr(m, 6, &snap0.cur[m][6], &snap0.max[m][6]);
+}
+static void snap_known_item(int id, int n)
+{
+    for (int i = 0; i < snap0.nit; i++) if (snap0.it_id[i] == id) { snap0.it_n[i] -= n; return; }
+}
+static void out_add(int kind, int m, int k, long v) { if (v && noutc < 64) { outc[noutc].kind = kind; outc[noutc].m = m; outc[noutc].k = k; outc[noutc].v = v; noutc++; } }
+static void outcome_since(const Snap *a)
+{
+    Snap b; snap_take(&b);
+    noutc = 0;
+    for (int m = 0; m < 5; m++) {
+        if (!a->st[m]) continue;
+        memcpy(outc_names[m], a->name[m], sizeof outc_names[m]);
+        if (!b.st[m] || (b.st[m] == 3 && a->st[m] != 3)) { out_add(EO_LOST, m, 0, 1); continue; }
+        /* (an attribute or skill whose help for a while began or ended meanwhile is left out: what it gave is not
+           all there in the value - a boost to Endurance above what wounds left, one capped at 99 - so the value less
+           the help moved by itself, and showed as the card's: Endurance +63 as boosts wore off, 1.4.5-RC5) */
+        for (int k = 0; k < 7; k++) {
+            if (b.boost[m][k] != a->boost[m][k]) continue;
+            if (b.cur[m][k] != a->cur[m][k]) out_add(EO_ATTR, m, k, b.cur[m][k] - a->cur[m][k]);
+            else if (b.max[m][k] != a->max[m][k]) out_add(EO_ATTRMAX, m, k, b.max[m][k] - a->max[m][k]);
+        }
+        for (int k = 0; k < 19; k++) if (b.sboost[m][k] == a->sboost[m][k]) out_add(EO_SKILL, m, k, b.skill[m][k] - a->skill[m][k]);
+    }
+    for (int i = 0; i < b.nit; i++) {                 /* things the party has more or fewer of (whoever carries them) */
+        int was = 0; for (int j = 0; j < a->nit; j++) if (a->it_id[j] == b.it_id[i]) was = a->it_n[j];
+        out_add(EO_ITEM, -1, b.it_id[i], b.it_n[i] - was);
+    }
+    for (int j = 0; j < a->nit; j++) {
+        int now = 0; for (int i = 0; i < b.nit; i++) if (b.it_id[i] == a->it_id[j]) now = 1;
+        if (!now) out_add(EO_ITEM, -1, a->it_id[j], -a->it_n[j]);
+    }
+    out_add(EO_MONEY, -1, 0, b.money - a->money);
+    out_add(EO_FAME, -1, 0, b.fame - a->fame);
+    for (int t = 0; t < 0x5c; t++) out_add(EO_REP, -1, t, b.rep[t] - a->rep[t]);
+    out_add(EO_HOURS, -1, 0, rt.hours);
+}
+/* the card's variables a text shows, kept with it while it waits */
+static const u16 TVARS[] = { V_CHOSEN1, V_CHOSEN1 + 2, V_ITEM, V_NUMBER1, V_NUMBER2, V_MONEY1, V_MONEY1 + 2, V_MONEY1 + 4,
+                             GV_var_money2, GV_var_money2 + 2, GV_var_money2 + 4 };
+#define NTV ((int)(sizeof TVARS / sizeof TVARS[0]))
+static void defer_flush(int final)
+{
+    if (rt.pending < 0 || aborting) { rt.pending = -1; return; }
+    int b = rt.pending; rt.pending = -1;
+    u16 now[NTV];
+    for (int i = 0; i < NTV; i++) { now[i] = g_rw(TVARS[i]); g_ww(TVARS[i], rt.tvars[i]); }
+    outcome_since(&snap0);
+    outc_final = final && !rt.fought; outc_on = 1;
+    LOG("text %d: %d consequence%s%s\n", b, noutc, noutc == 1 ? "" : "s", outc_final && !noutc ? " (nothing came of it)" : "");
+    g_card_text(b);
+    outc_on = 0;
+    for (int i = 0; i < NTV; i++) g_ww(TVARS[i], now[i]);
+    rt.hours = 0; rt.fought = 0;
+    snap_take(&snap0);
+}
+static void defer_text(int b)
+{
+    defer_flush(0);
+    if (aborting) return;
+    rt.pending = b;
+    for (int i = 0; i < NTV; i++) rt.tvars[i] = g_rw(TVARS[i]);
+}
+int encounters_outcome(EncOutcome *out, int max, int *final)
+{
+    if (!outc_on) return -1;
+    int n = noutc < max ? noutc : max;
+    memcpy(out, outc, (size_t)n * sizeof *out);
+    if (final) *final = outc_final;
+    return n;
+}
+const char *encounters_outcome_name(int m) { return m >= 0 && m < 5 ? outc_names[m] : ""; }
+
+/* ---------------------------------------------------------------- what came of it, on the game's own cards
+ * (assist.card_outcomes, one of the card helpers; not in the Full Original preset). The party is noted as an option of a game
+ * card's menu is chosen and after each text, and the next text or menu the card shows lists what changed since (the
+ * same band, drawn by ui/cardview.cpp: so only with the card screen of Darklands+). Only what the player
+ * could not know: not a sum the card named ($Money1, $Money2: a change of just that much), the thing it named
+ * ($ItemName: one of it; $Number1 or $Number2 of a thing), the Divine Favor a prayer from the card's box spends or the potion used from it,
+ * nor the time (its texts tell it). A battle, a shop or another screen in between, the map, a load: nothing is
+ * listed for what happened there (the screens show it). */
+static Snap gsnap; static int gsnap_ok, g_pray_m = -1, g_potion = -1;
+static int gout_on(void) { return config_get_int("assist.card_outcomes", 1) && !config_get_int("original", 0); }
+static void gcard_note(void) { snap_take(&gsnap); gsnap_ok = 1; }
+static void gcard_filter(void)
+{
+    long m1 = money_get(V_MONEY1), m2 = money_get(GV_var_money2);
+    int item = (s16)g_rw(V_ITEM), n1 = (s16)g_rw(V_NUMBER1), n2 = (s16)g_rw(V_NUMBER2);
+    int k = 0;
+    for (int i = 0; i < noutc; i++) {
+        const EncOutcome *e = &outc[i];
+        long v = e->v < 0 ? -e->v : e->v;
+        if (e->kind == EO_MONEY && v && (v == m1 || v == m2)) continue;
+        if (e->kind == EO_ITEM && ((e->k == item && v == 1) || (v > 1 && (v == n1 || v == n2)))) continue;   /* ($ItemName, or $Number1 of a thing) */
+        if (e->kind == EO_ITEM && e->k == g_potion && e->v < 0) continue;
+        if (e->kind == EO_ATTR && e->k == 6 && e->m == g_pray_m && e->v < 0) continue;
+        if (e->kind == EO_HOURS) continue;
+        outc[k++] = *e;
+    }
+    noutc = k;
+}
+extern int dos_no_writes;
+static int gcard_here(void) { return !rt.active && gout_on() && !dos_no_writes && game_mode() == GM_CARD; }
+static void gtext_hook(void)                    /* card_text (block, how), s043 150b:03b0 */
+{
+    if (!gcard_here() || !gsnap_ok) { hook_call_original(); if (!unw_active && gcard_here()) gcard_note(); return; }
+    outcome_since(&gsnap);
+    gcard_filter();
+    LOG("a game card's text %d: %d consequence%s\n", (s16)rw(SS, (u16)(SP + 4)), noutc, noutc == 1 ? "" : "s");
+    outc_final = 0; outc_on = noutc > 0;
+    hook_call_original();
+    outc_on = 0;
+    if (unw_active) return;
+    g_pray_m = g_potion = -1;
+    gcard_note();
+}
+static void gmenu_hook(void)                    /* card_menu (win, win2), s043 150b:1142: the option chosen */
+{
+    /* (what came since the last text, under the menu: many cards show their text, then do what it tells -
+       the Divine Favor a confession gives - and go back to their menu) */
+    if (gcard_here() && gsnap_ok) {
+        outcome_since(&gsnap);
+        gcard_filter();
+        LOG("a game card's menu: %d consequence%s\n", noutc, noutc == 1 ? "" : "s");
+        outc_final = 0; outc_on = noutc > 0;
+    }
+    hook_call_original();
+    outc_on = 0;
+    if (unw_active || !gcard_here()) return;
+    int sel = (s16)AX;
+    g_pray_m = g_potion = -1;
+    if (g_rw(GV_menu_popup) == 1) {             /* (from the card's box: a saint prayed to, a potion used) */
+        int kind = 0, n = (s8)g_rb(GV_card_layout);
+        for (int i = 0; i < n && i < 20; i++) if ((s8)g_rb((u16)(GV_card_layout_opt + i)) == sel) kind = (s16)g_rw((u16)(GV_card_layout_kind + 2 * i));
+        int mem = (s16)g_rw(GV_menu_member), slot = (s16)g_rw(GV_menu_slot);
+        if (kind == 2) g_pray_m = mem;
+        else if (kind == 1 && slot >= 0 && slot < 4) g_potion = (s16)g_rw((u16)(GV_card_items + 2 * slot));
+    }
+    LOG("a game card's option %d chosen: the party noted\n", sel);
+    gcard_note();
+}
+/* each frame: away from the cards (the map, a battle, a shop or a sheet), nothing is kept */
+void encounters_frame(void)
+{
+    if (!gsnap_ok) return;
+    if (game_mode() != GM_CARD || (ns_screen != NS_NONE && ns_screen != NS_CARD && ns_screen != NS_PRAY && ns_screen != NS_CHOOSE)) gsnap_ok = 0;   /* (a prayer from the card's box is the choice's own, and so is a thing chosen for it) */
+}
+/* the card screen of Darklands+ was switched (mods/cardview.c): these hooks first again (they set the band
+   before that screen's text hook, which does not hand on to the game's) */
+void encounters_rehook(void)
+{
+    hook_remove(GF_card_text, gtext_hook); hook_install(GF_card_text, gtext_hook);
+    hook_remove(43, 0x150b, 0x1142, gmenu_hook); hook_install(43, 0x150b, 0x1142, gmenu_hook);
+}
+
 static void script_error_at(const char *file)     /* a script error while it runs: the encounter ends, the player is never stuck in it */
 {
     fprintf(stderr, "encounters: %s: an error while running: back to the map\n", file);
@@ -341,9 +591,10 @@ static const struct { const char *n; int v; } CONSTS[] = {
     { "Brigand", 8 }, { "Madman", 9 }, { "Villager", 0x0b }, { "Thug", 0x0c }, { "Rebel", 0x0e }, { "Lackey", 0x10 },
     { "Henchman", 0x11 }, { "Soldier", 0x15 }, { "Raubritter", 0x23 }, { "Monk", 0x1d }, { "BadFriar", 0x1f }, { "Cultist", 0x29 },
     { "Dwarf", 0x2c }, { "Skeleton", 0x2d }, { "Gnome", 0x2e }, { "Kobold", 0x30 }, { "KoboldKing", 0x19 }, { "Undead", 0x32 },
-    { "WildHunter", 0x3c }, { "Zealot", 0x49 }, { "BanditSergeant", 0x4e },
+    { "WildHunter", 0x3c }, { "Zealot", 0x49 }, { "BanditSergeant", 0x4e }, { "Pirate", 0x0a },
     /* battlefields */
     { "Wilds", 0x2f }, { "Surrounded", 0x30 }, { "Clearing", 0x2e }, { "Cave", 0x68 },   /* (a cave holds one enemy only) */
+    { "MainStreet", 0x14 }, { "SideStreet", 0x12 },              /* a town's streets (where street: the game's $CityT00 fields) */
     /* battle results */
     { "Won", 0 }, { "Fled", 2 }, { "Beaten", 3 }, { "Surrendered", 4 },
     { "true", 1 }, { "false", 0 },
@@ -376,6 +627,22 @@ static long party_query2(P *p, u16 fn, int a, int b, int member)
     return member ? m : v;
 }
 
+/* bestskill(K, W) and the like: the member present who has the most (least) of it but W, so that
+   the healer is not the one bitten (W itself when it is alone); a tie goes to the first */
+static long best_but(P *p, const char *f, int k, int but)
+{
+    if (p->dry) return 0;
+    int skill = strstr(f, "skill") != 0, best = f[0] == 'b', w = resolve_who(but), pick = -1;
+    if (k < 0 || k > (skill ? 18 : 6)) { perr(p, "%s: %s out of range", f, skill ? "a skill" : "an attribute"); return 0; }
+    long pv = 0;
+    for (int m = 0; m < 5; m++) {
+        if (m == w || member_status(m) != 1) continue;
+        long v = skill ? g_skill(m, k) : g_attr(m, k);
+        if (pick < 0 || (best ? v > pv : v < pv)) { pick = m; pv = v; }
+    }
+    return pick >= 0 ? pick : w >= 0 && w < 5 ? w : leader();
+}
+
 static int value_of(P *p, const char *n, long *v)
 {
     int i;
@@ -393,6 +660,7 @@ static int value_of(P *p, const char *n, long *v)
     if (!strcasecmp(n, "result")) { *v = rt.result; return 1; }
     if (!strcasecmp(n, "number1")) { *v = p->dry ? 0 : (s16)g_rw(V_NUMBER1); return 1; }
     if (!strcasecmp(n, "money1")) { *v = p->dry ? 0 : money_get(V_MONEY1); return 1; }
+    if (!strcasecmp(n, "money2")) { *v = p->dry ? 0 : money_get(GV_var_money2); return 1; }
     if (p->dry) {                        /* zero-argument functions: checked, not run */
         static const char *Z[] = { "lore", "standing", "fame", "mounted", "daylight", "night", "hour", "month", "day", "year", "money", "size",
             "women", "avgagility", "minagility", "slowest", "slowspeed", "spotter", "spotvalue", "terrain", "difficulty", "members", 0 };
@@ -437,7 +705,11 @@ static long call_fn(P *p, const char *f, const long *a, int n)
         { "maxattr", 0x16fe, 0 }, { "minattr", 0x164a, 0 }, { "avgattr", 0x1800, 0 },
         { "bestskill", 0x14a4, 1 }, { "worstskill", 0x1396, 1 }, { "bestattr", 0x16fe, 1 }, { "worstattr", 0x164a, 1 } };
     for (int i = 0; i < (int)(sizeof PQ / sizeof PQ[0]); i++)
-        if (!strcasecmp(f, PQ[i].n)) { if (!nargs_ok(p, f, n, 1, 1)) return 0; return party_query(p, PQ[i].fn, (int)a[0], PQ[i].member); }
+        if (!strcasecmp(f, PQ[i].n)) {
+            if (!nargs_ok(p, f, n, 1, PQ[i].member ? 2 : 1)) return 0;
+            if (n == 2) return best_but(p, f, (int)a[0], (int)a[1]);
+            return party_query(p, PQ[i].fn, (int)a[0], PQ[i].member);
+        }
     static const struct { const char *n; u16 fn; int member; } PQ2[] = {
         { "maxskill2", 0x153a, 0 }, { "bestskill2", 0x153a, 1 }, { "maxskillsum", 0x15a2, 0 }, { "bestskillsum", 0x15a2, 1 },
         { "maxattrsum", 0x179c, 0 }, { "bestattrsum", 0x179c, 1 }, { "maxattrskill", 0x184a, 0 }, { "bestattrskill", 0x184a, 1 } };
@@ -599,6 +871,7 @@ static int jump(P *p, const char *n)
     int i = find_sec(p->e, n);
     if (i < 0) { perr(p, "没有章节 [%s]", n); return 0; }
     if (p->dry) return 0;
+    defer_flush(0);
     rt.sec = i; rt.jumped = 1;
     return 1;
 }
@@ -656,15 +929,19 @@ static int exec_stmt(P *p)
         return dry ? 0 : r;
     }
     if (!strcasecmp(w, "goto")) { char t[48]; snprintf(t, sizeof t, "%s", p->id); nx(p); return jump(p, t); }
-    if (!strcasecmp(w, "exit")) { if (!dry) { exit_to_map(); return 1; } return 0; }
+    if (!strcasecmp(w, "exit")) { if (!dry) { defer_flush(1); if (aborting) return 1; enc_leave(); return 1; } return 0; }
     if (!strcasecmp(w, "card")) {               /* on to one of the game's cards (a town's street ...) */
         n = args(p, a, 1, 1, w);
         if (!p->err && (a[0] < 1 || a[0] > 0x16d)) perr(p, "卡片：游戏中的某张卡片，1 到 0x16d");
-        if (!dry && !p->err) { g_ww(V_NEXT_CARD, (u16)a[0]); return 1; }
+        if (!dry && !p->err) { defer_flush(1); if (aborting) return 1; g_ww(V_NEXT_CARD, (u16)a[0]); return 1; }
         return 0;
     }
     if (!strcasecmp(w, "tocity")) {             /* the journey ends at the nearest city's gate */
-        if (!dry) { int c = g_nearest_city(); g_ww(G_CUR_LOC, (u16)c); g_load_city(c); g_ww(V_NEXT_CARD, 0x0c); return 1; }
+        if (!dry) {
+            defer_flush(1); if (aborting) return 1;
+            if (rt.where == WH_STREET || rt.where == WH_BOAT) { enc_leave(); return 1; }   /* (already at a town) */
+            int c = g_nearest_city(); g_ww(G_CUR_LOC, (u16)c); g_load_city(c); g_ww(V_NEXT_CARD, 0x0c); return 1;
+        }
         return 0;
     }
     if (!strcasecmp(w, "set")) {
@@ -679,7 +956,7 @@ static int exec_stmt(P *p)
     if (!strcasecmp(w, "picture")) {
         char pic[48]; snprintf(pic, sizeof pic, "%s", p->id); nx(p);
         if (strlen(pic) > 8) perr(p, "图片名称最多 8 个字母");
-        if (!dry && !p->err) { dset_pic(V_PIC_BUF2, pic); g_card_load_near(); }
+        if (!dry && !p->err) { defer_flush(0); if (aborting) return 1; dset_pic(V_PIC_BUF2, pic); g_card_load_near(); }
         return 0;
     }
     if (!strcasecmp(w, "music")) { if (!dry) g_music(); return 0; }
@@ -696,9 +973,12 @@ static int exec_stmt(P *p)
         if (!p->err && (n - 1) % 3) perr(p, "战斗：一片战场，然后是敌人、品质、每组的数量");
         if (dry || p->err) return 0;
         long bf = a[0];                         /* the wilderness battlefields (the game's vec_1b71) and the cave; the rest need a town, castle or mine */
-        if (!((bf >= 0x2e && bf <= 0x55) || (bf >= 0x61 && bf <= 0x63) || (bf >= 0x6f && bf <= 0x79) || bf == 0x68)) {
-            perr(p, "战斗：一片荒野战场（Wilds、Surrounded、Clearing、Cave，或 0x2e-0x55、0x61-0x63、0x6f-0x79）"); return 1;
+        int town = (bf >= 0x11 && bf <= 0x17) || bf == 0x56;
+        if (!((bf >= 0x2e && bf <= 0x55) || (bf >= 0x61 && bf <= 0x63) || (bf >= 0x6f && bf <= 0x79) || bf == 0x68 || town)) {
+            perr(p, "战斗：一片荒野战场（Wilds、Surrounded、Clearing、Cave，或 0x2e-0x55、0x61-0x63、0x6f-0x79），或城镇街道的主街/侧街"); return 1;
         }
+        if (town && rt.where != WH_STREET) { perr(p, "战斗：主街和侧街只能在城镇中（where street）"); return 1; }
+        defer_flush(0);                          /* (the text before it is read first) */
         int b[11] = { (int)a[0], -1, -1, 0, 0, -1, 0, 0, -1, 0, 0 };
         int ng = 0, total = 0;                  /* a battle holds 8 foes (13 combatants, 5 of them the party) */
         for (int g = 0; g < 3 && 1 + 3 * g < n; g++) {
@@ -716,6 +996,8 @@ static int exec_stmt(P *p)
         rt.result = g_battle(b);
         if (rt.result == 1) rt.result = 2;
         LOG("battle %d: result %d\n", (int)a[0], rt.result);
+        snap_take(&snap0);                      /* (the battle's own wounds and spoils are seen in it) */
+        rt.fought = 1;
         return 0;
     }
     if (!strcasecmp(w, "skill") || !strcasecmp(w, "attr") || !strcasecmp(w, "attrmax") || !strcasecmp(w, "setattr")) {
@@ -753,13 +1035,20 @@ static int exec_stmt(P *p)
         return 1;
     }
     if (dry || p->err) return 0;
-    if (!strcasecmp(w, "text")) g_card_text((int)a[0]);
-    else if (!strcasecmp(w, "hours")) g_hours((int)a[0]);
-    else if (!strcasecmp(w, "days")) g_days((int)a[0]);
-    else if (!strcasecmp(w, "until")) g_hours(g_hours_until((int)a[0]));
+    if (!strcasecmp(w, "text")) defer_text((int)a[0]);
+    else if (!strcasecmp(w, "hours")) { g_hours((int)a[0]); if (a[0] > 0) rt.hours += a[0]; }
+    else if (!strcasecmp(w, "days")) { g_days((int)a[0]); if (a[0] > 0) rt.hours += 24 * a[0]; }
+    else if (!strcasecmp(w, "until")) { int h = g_hours_until((int)a[0]); g_hours(h); if (h > 0) rt.hours += h; }
     else if (!strcasecmp(w, "practice")) g_practice((int)a[0], (int)a[1], n > 2 ? (int)a[2] : 1, n > 3 ? (int)a[3] : 10, n > 4 ? (int)a[4] : 0);
-    else if (!strcasecmp(w, "injure")) g_injure((int)a[0], (int)a[1], n > 2 ? (int)a[2] : (int)a[1], n > 3 ? (int)a[3] : 10);
-    else if (!strcasecmp(w, "pay")) money_put(G_MONEY, money_get(G_MONEY) - a[0]);
+    else if (!strcasecmp(w, "injure")) g_injure(resolve_who((int)a[0]), (int)a[1], n > 2 ? (int)a[2] : (int)a[1], n > 3 ? (int)a[3] : 10);   /* (-1 the leader: the game's injure takes -2, the party, but not -1) */
+    else if (!strcasecmp(w, "pay")) {
+        money_put(G_MONEY, money_get(G_MONEY) - a[0]);
+        int b = rt.opt_block, k = rt.cur_opt;                    /* (the sum the chosen option's line showed: no news) */
+        if (rt.active && b >= 0 && b < 64 && k >= 0 && k < NOPT) {
+            int m = encs[rt.enc].optmoney[b][k];
+            if (((m & 1) && a[0] == money_get(V_MONEY1)) || ((m & 2) && a[0] == money_get(GV_var_money2))) snap0.money -= a[0];
+        }
+    }
     else if (!strcasecmp(w, "gain")) money_put(G_MONEY, money_get(G_MONEY) + a[0]);
     else if (!strcasecmp(w, "money1")) money_put(V_MONEY1, a[0]);
     else if (!strcasecmp(w, "money2")) money_put(GV_var_money2, a[0]);
@@ -767,11 +1056,11 @@ static int exec_stmt(P *p)
     else if (!strcasecmp(w, "number1")) g_ww(V_NUMBER1, (u16)a[0]);
     else if (!strcasecmp(w, "number2")) g_ww(V_NUMBER2, (u16)a[0]);
     else if (!strcasecmp(w, "fame")) g_reward((int)a[0]);
-    else if (!strcasecmp(w, "reputation")) g_rep_adj(g_nearest_city(), (int)a[0], (int)a[1]);
+    else if (!strcasecmp(w, "reputation")) rep_change(g_nearest_city(), (int)a[0], (int)a[1]);
     else if (!strcasecmp(w, "additem")) { int m = resolve_who((int)a[0]); if (n > 2) g_add_item_q(m, (int)a[1], (int)a[2]); else g_add_item(m, (int)a[1]); g_ww(V_ITEM, (u16)a[1]); }
     else if (!strcasecmp(w, "takeitem")) g_take_item(resolve_who((int)a[0]), (int)a[1]);
-    else if (!strcasecmp(w, "loseitems")) g_lose_items((int)a[0] == -1 ? leader() : (int)a[0]);
-    else if (!strcasecmp(w, "keepitems")) g_keep_items((int)a[0] == -1 ? leader() : (int)a[0], (int)a[1]);
+    else if (!strcasecmp(w, "loseitems")) { g_lose_items((int)a[0] == -1 ? leader() : (int)a[0]); fixes_clamp_party_items(); }   /* (the game's loss routines can leave -1 items) */
+    else if (!strcasecmp(w, "keepitems")) { g_keep_items((int)a[0] == -1 ? leader() : (int)a[0], (int)a[1]); fixes_clamp_party_items(); }
     else if (!strcasecmp(w, "removeitems")) g_remove_flags((int)a[0] == -1 ? leader() : (int)a[0], a[1]);
     else if (!strcasecmp(w, "kill")) {          /* a member is lost (taken, dead): as the game's own cards do it */
         int m = resolve_who((int)a[0]);
@@ -804,7 +1093,8 @@ static int run_src(Enc *e, const Src *src, int dry)
     if (!src->s) return 0;
     P p; p_init(&p, e, src, dry);
     int r = exec_list(&p);
-    if (!p.err && !r && p.tt != TEND) perr(&p, "意外的“%s", p.id);     /* (after a goto or exit the rest is not run) */
+    if (!dry && !aborting) defer_flush(0);       /* (the last text, before the menu comes back) */
+    if (!p.err && !r && p.tt != TEND) perr(&p, "意外的“%s”", p.id);     /* (after a goto or exit the rest is not run) */
     return p.err ? (dry ? -1 : 2) : r;          /* 2: an error while running */
 }
 
@@ -934,6 +1224,10 @@ static int load_text(Enc *e, const char *text, const char *label, const char *id
             else if (!strcasecmp(w, "weight")) { e->weight = atoi(v); if (e->weight < 0 || e->weight > 100) { ferr(e, ln, "重量：0 到 100"); e->weight = 1; } }
             else if (!strcasecmp(w, "only")) src_set(&e->only, v, ln);
             else if (!strcasecmp(w, "music")) e->music = !strcasecmp(v, "yes") || !strcasecmp(v, "ambush");
+            else if (!strcasecmp(w, "where")) {
+                int k = -1; for (int i = 0; i < 4; i++) if (!strcasecmp(v, WHERE_NAMES[i])) k = i;
+                if (k < 0) ferr(e, ln, "where: wild, boat, street or camp"); else e->where = k;
+            }
             else if (!strcasecmp(w, "vars")) {
                 char buf[300]; snprintf(buf, sizeof buf, "%s", v);
                 for (char *q = strtok(buf, " ,\t"); q; q = strtok(0, " ,\t")) if (e->nvars < 24) snprintf(e->vars[e->nvars++], 24, "%s", q);
@@ -1009,6 +1303,23 @@ static int load_file(Enc *e, const char *path, const char *id)
     return r;
 }
 
+/* the longest a $variable of a card text can come out (text_expand fills them in, s043 150b:0886):
+ * the money texts and $Text1..4 (40-byte buffers), the town's description, $NamedOne.. (30 bytes), a
+ * member's name, a pronoun, a number; a place's or building's name (32 bytes) for the rest */
+static int var_longest(const char *v, int n)
+{
+    char b[24]; int k = 0;
+    for (; k < n && k < 23; k++) b[k] = (char)tolower((unsigned char)v[k]);
+    b[k] = 0;
+    if (!strncmp(b, "money", 5) || !strncmp(b, "text", 4)) return 40;
+    if (!strcmp(b, "placedesc")) return 100;
+    if (!strncmp(b, "named", 5)) return 30;
+    if (!strcmp(b, "leadername") || (!strncmp(b, "chosen", 6) && k > 4 && !strcmp(b + k - 4, "name"))) return 12;
+    if (!strcmp(b, "he") || !strcmp(b, "she") || !strcmp(b, "his") || !strcmp(b, "her") || !strcmp(b, "him") || !strcmp(b, "himself") || !strcmp(b, "herself")) return 7;
+    if (!strncmp(b, "number", 6)) return 6;
+    return 32;
+}
+
 /* the shape of the encounter's card text (MSGFILES/<card>.TXT of a mod): its blocks and, in each,
  * the option lines in order with their codes, so the script can be checked against them */
 static void card_shape(Enc *e)
@@ -1027,17 +1338,27 @@ static void card_shape(Enc *e)
     }
     if (!f) return;
     char line[2000];
-    int b = -1, nl = 0;
+    int b = -1, nl = 0, braw = 0, bmax = 0;
     long bytes = 1;
-    e->maxopts = 0;
+    e->maxopts = 0; e->longest = e->longest_raw = 0; e->longest_block = -1;
     while (fgets(line, sizeof line, f)) {
         if (line[0] == '#') continue;
-        if (!strncmp(line, "=== card", 8)) { b++; nl = 0; bytes += 5; if (b < 64) e->nopts[b] = 0; continue; }
+        if (!strncmp(line, "=== card", 8)) { b++; nl = 0; bytes += 5; braw = bmax = 0; if (b < 64) e->nopts[b] = 0; continue; }
         if (b < 0) continue;
         {   /* its bytes in the game's form (card_text_to_msg in datamods.c): \\ and \xx are one */
             size_t L = strlen(line); while (L && (line[L - 1] == '\n' || line[L - 1] == '\r')) L--;
-            for (size_t i = 0; i < L; i++) { if (line[i] == '\\' && i + 1 < L && line[i + 1] == '\\') i++; else if (line[i] == '\\' && i + 2 < L && isxdigit((unsigned char)line[i + 1]) && isxdigit((unsigned char)line[i + 2])) i += 2; bytes++; }
-            bytes++;                                /* the line's end (the last one's: the block's 0) */
+            for (size_t i = 0; i < L; i++) {
+                if (line[i] == '\\' && i + 1 < L && line[i + 1] == '\\') i++;
+                else if (line[i] == '\\' && i + 2 < L && isxdigit((unsigned char)line[i + 1]) && isxdigit((unsigned char)line[i + 2])) i += 2;
+                else if (line[i] == '$') {                  /* (a $variable: at its longest) */
+                    size_t j = i + 1; while (j < L && isalnum((unsigned char)line[j])) j++;
+                    if (j > i + 1) { bmax += var_longest(line + i + 1, (int)(j - i - 1)); braw += (int)(j - i); bytes += (long)(j - i); i = j - 1; continue; }
+                }
+                bytes++; braw++; bmax++;
+            }
+            bytes++; braw++; bmax++;                   /* the line's end (the last one's: the block's 0) */
+            if (bmax > e->longest) { e->longest = bmax; e->longest_block = b; }
+            if (braw > e->longest_raw) e->longest_raw = braw;
         }
         if (b >= 64) continue;
         /* the first character code of the line, past any \14 */
@@ -1051,7 +1372,7 @@ static void card_shape(Enc *e)
             break;
         }
         if (c == 0x15 || c == 0x16 || c == 0x10 || c == 0x06) {
-            if (e->nopts[b] < NOPT) e->optcode[b][e->nopts[b]] = (unsigned char)c;
+            if (e->nopts[b] < NOPT) { e->optcode[b][e->nopts[b]] = (unsigned char)c; e->optmoney[b][e->nopts[b]] = (unsigned char)((strstr(line, "$Money1") ? 1 : 0) | (strstr(line, "$Money2") ? 2 : 0)); }
             if (++nl > e->maxopts) e->maxopts = nl;
             if (e->nopts[b] < 255) e->nopts[b]++;
         }
@@ -1069,6 +1390,13 @@ static void check(Enc *e)
     if (e->nblocks > 25) { ferr(e, 1, "%s 有 %d 个文本块：游戏最多可容纳 25", e->card, e->nblocks); bad = 1; }
     if (e->card_bytes >= 6000) { ferr(e, 1, "%s 太长了：游戏加载时为 %ld 字节，不超过 6000 即可", e->card, e->card_bytes); bad = 1; }
     if (e->maxopts > NOPT) { ferr(e, 1, "%s 有一个包含 %d 行选项的区块：最多 %d", e->card, e->maxopts, NOPT); bad = 1; }
+    /* text_expand (s043 150b:06fe) copies a block onto its stack (900 bytes) and writes it out with its
+       $variables filled in to msg_buf (900 bytes), neither with a limit: past them it wrote over the game's
+       menus (1.4.6-RC6, "MeetA01") and could reach its return address */
+    if (e->longest > 900 || e->longest_raw > 899) {
+        ferr(e, 1, "%s 的区块 %d 太长：填入 $变量后最多 %d 个字符（写入时为 %d），超过 899 将无法容纳", e->card, e->longest_block, e->longest - 1, e->longest_raw - 1);
+        bad = 1;
+    }
     if (e->only.s) { int er; eval_src(e, &e->only, 1, &er); bad |= er; }
     for (int i = 0; i < e->nsec; i++) {
         Sec *s = &e->sec[i];
@@ -1160,11 +1488,19 @@ static void reload(void)
         }
     }
     qsort(encs, (size_t)nenc, sizeof(Enc), cmp_enc);
-    /* card numbers by name, so a save made during one still finds it with other mods in use */
+    /* card numbers by name, so a save made during one still finds it with other mods in use: the slot its name
+       gives among the first 128 (as up to 1.4, which had no more), and for one whose slot is taken, the first
+       free one of the rest */
     for (int i = 0; i < ENC_MAX; i++) by_slot[i] = -1;
+    for (int i = 0; i < nenc; i++) encs[i].slot = -1;
     for (int i = 0; i < nenc; i++) {
-        int sl = (int)(slot_hash(encs[i].id) % ENC_MAX);
-        while (by_slot[sl] >= 0) sl = (sl + 1) % ENC_MAX;
+        int sl = (int)(slot_hash(encs[i].id) % 128);
+        if (by_slot[sl] < 0) { by_slot[sl] = i; encs[i].slot = sl; }
+    }
+    for (int i = 0; i < nenc; i++) {
+        if (encs[i].slot >= 0) continue;
+        int sl = 128;
+        for (int k = 0; k < ENC_MAX && by_slot[sl] >= 0; k++) sl = (sl + 1) % ENC_MAX;
         by_slot[sl] = i; encs[i].slot = sl;
     }
     int good = 0; for (int i = 0; i < nenc; i++) good += encs[i].ok;
@@ -1296,7 +1632,6 @@ static void menu_round(Enc *e, Sec *s)
     if (k < 0 || k >= NOPT || !s->opt[k].defined) { LOG("menu: option %d has no actions\n", k); return; }
     Opt *o = &s->opt[k];
     int ok = 1;
-    rt.cur_opt = k;
     if (o->kind == 2) {                          /* a saint */
         if (!popup || m < 0 || m > 4 || sl < 0 || sl > 3 || s->saints[sl] < 0) return;
         rt.who = m; rt.saint = s->saints[sl];
@@ -1305,6 +1640,7 @@ static void menu_round(Enc *e, Sec *s)
         int r = g_invoke_saint(m, rt.saint);
         LOG("saint %d by %d: %d\n", rt.saint, m, r);
         if (aborting || r < 0) return;           /* the prayer was called off */
+        snap_known_df(m);
         ok = r > 0;
     } else if (o->kind == 1) {                   /* a potion */
         if (!popup || m < 0 || m > 4 || sl < 0 || sl > 3 || s->items[sl] < 0) return;
@@ -1314,6 +1650,7 @@ static void menu_round(Enc *e, Sec *s)
         int j = pot_index(o, rt.item);
         int c = j < 0 ? 100 : (int)eval_src(e, &o->pot[j], 0, 0);
         g_take_item(m, rt.item);
+        snap_known_item(rt.item, 1);
         ok = g_rand(100) <= c;
         LOG("potion %d (q %d) by %d: chance %d -> %d\n", rt.item, rt.q, m, c, ok);
     } else {
@@ -1325,7 +1662,10 @@ static void menu_round(Enc *e, Sec *s)
         }
     }
     if (aborting) return;
-    if (run_src(e, ok ? &o->ok : &o->fail, 0) == 2 && !aborting && !rt.jumped && (s16)g_rw(V_NEXT_CARD) == rt.card) script_error(e);
+    rt.cur_opt = k; rt.opt_block = s->block;
+    int rr = run_src(e, ok ? &o->ok : &o->fail, 0);
+    rt.cur_opt = -1;
+    if (rr == 2 && !aborting && !rt.jumped && (s16)g_rw(V_NEXT_CARD) == rt.card) script_error(e);
 }
 
 static int run_encounter(int card)
@@ -1335,10 +1675,14 @@ static int run_encounter(int card)
     int i = sl >= 0 && sl < ENC_MAX ? by_slot[sl] : -1;
     if (i < 0 || !encs[i].ok) { fprintf(stderr, "encounters: card %#x is no encounter in use: back to the map\n", card); exit_to_map(); return 0x0c; }
     Enc *e = &encs[i];
+    int resume = run_resume;
     memset(&rt, 0, sizeof rt);
     for (int k = 0; k < NOPT; k++) rt.flag[k] = -1;
+    rt.cur_opt = -1;
     rt.active = 1; rt.enc = i; rt.card = card; rt.sec = 0; rt.last_menu = -1;
     rt.who = leader(); rt.result = -1;
+    rt.where = e->where; rt.resume = resume; rt.pending = -1;
+    snap_take(&snap0);
     LOG("start %s (card %#x)\n", e->id, card);
     e->last_day = game_day();
     g_ww(V_NEXT_CARD, (u16)card);
@@ -1410,6 +1754,14 @@ static void install_cards(void)
 /* ================================================================ choosing one */
 static const int REGION_CARDS[] = { 0x112, 0x117, 0x116, 0x11b, 0xa0, 0x102, 0x103, 0x111, 0x122, 0xa5, 0x107, 0x118, 0x106,
     0x7f, 0x104, 0x105, 0x108, 0x24, 0xf0, 0xa6, 0xa7, 0x3d, 0xc3, 0x163, 0x113 };
+/* the game's encounters a new one never stands in for: what they give comes from nowhere else, or
+   from few other places (his ask, 2026-11-01: the witch's hut, and any other unique one) - the witch's
+   sod hut ($MeetW01: the witch to beat or catch, who starts the Wild Hunt and tells of a High Sabbat),
+   the hermit ($MeetH00: a saint taught, Divine Favor), the travelling alchemist ($MeetA00, $MeetA01:
+   potions he trades), the merchant caravan ($MeetM00: trade and company on the road), the knight on
+   his way to a tournament ($MeetJ00: news, a race, a joust) and the cave in the pass ($MeetC00: its
+   chest). The others (wolves, boars, robbers, storms, pilgrims, tolls ...) a new encounter may replace. */
+static const int KEEP_CARDS[] = { 0x122, 0x118, 0xa6, 0xa7, 0x104, 0xc3, 0xf0 };
 /* entries of the game's table for a terrain (s030 1462:02c0): a new encounter of weight w
  * counts as w more entries */
 static int table_size(int t)
@@ -1442,10 +1794,10 @@ static unsigned long long rng(void)
     return rng_s;
 }
 
-static int eligible(Enc *e, int t, long today)
+static int eligible(Enc *e, int where, int t, long today)
 {
-    if (!e->ok || e->weight <= 0) return 0;
-    if (t < 0 || t > 31 || !(e->terrain >> t & 1)) return 0;
+    if (!e->ok || e->weight <= 0 || e->where != where) return 0;
+    if (where == WH_WILD && (t < 0 || t > 31 || !(e->terrain >> t & 1))) return 0;
     { long d = today - e->last_day; if (d >= 0 && d < 4) return 0; }   /* not the same one again within a few days (a save loaded from before: no matter) */
     if (e->when) { int d = g_daylight() != 0; if ((e->when == 1) != d) return 0; }
     if (e->only.s) { memset(&rt, 0, sizeof rt); rt.who = leader(); if (!eval_src(e, &e->only, 0, 0)) return 0; }
@@ -1461,21 +1813,39 @@ static int choose(int r, int t)
 {
     int region = 0;
     for (int i = 0; i < (int)(sizeof REGION_CARDS / sizeof REGION_CARDS[0]); i++) if (REGION_CARDS[i] == r) region = 1;
+    for (int i = 0; i < (int)(sizeof KEEP_CARDS / sizeof KEEP_CARDS[0]); i++) if (KEEP_CARDS[i] == r) region = 0;
+    /* one that is due (a night in camp brought it, or a test's uenc): mods/travel.c makes this step's encounter
+       certain for it, so whatever the game drew for that step gives way - also a unique card, or the card of a
+       robber knight's keep close by (step 2000, s030 1462:0c44: a place whose second card is not 0x62, which only
+       the keeps have) - and it is due no longer. (It once waited for a step whose card was one a new encounter may
+       replace: every step until then was a sure encounter, and a journey to Graz went no further, 1.4.6-RC6.) */
+    int due_wild = force_next >= 0 && force_next < nenc && encs[force_next].ok && encs[force_next].where == WH_WILD;
+    if ((camp_pending || due_wild) && (travel_step_result == 1000 || travel_step_result == 2000)) {
+        int was_camp = camp_pending, c = -1;
+        camp_pending = 0; forced_steps = 0;
+        if (!encounters_offered()) { force_next = -1; return r; }
+        install_cards();
+        aborting = 0;
+        if (was_camp) c = pick_where(WH_CAMP, 100, 1);
+        else { c = ENC_BASE + encs[force_next].slot; force_next = -1; }
+        if (aborting || c < 0) return r;
+        LOG("%s: %#x instead of card %#x (step %d)\n", was_camp ? "camp" : "forced", c, r, travel_step_result);
+        return c;
+    }
     if (travel_step_result != 1000 || !region) return r;
     if (!encounters_offered()) return r;
     install_cards();
     aborting = 0;
     long today = game_day();
     int pick = -1;
-    if (force_next >= 0 && force_next < nenc && encs[force_next].ok) { pick = force_next; force_next = -1; }
-    else {
+    {
         int share = config_get_int("encounters.share", 100);
         if (share <= 0) return r;
         int T = table_size(t);
         if (!T) return r;
         if (share > 1000) share = 1000;
         long long w[ENC_MAX], W = 0;
-        for (int i = 0; i < nenc; i++) { w[i] = eligible(&encs[i], t, today) ? (long long)encs[i].weight * share : 0; W += w[i]; }
+        for (int i = 0; i < nenc; i++) { w[i] = eligible(&encs[i], WH_WILD, t, today) ? (long long)encs[i].weight * share : 0; W += w[i]; }
         if (aborting || !W) return r;
         long long roll = (long long)(rng() % (unsigned long long)(T * 100LL + W));
         LOG("terrain %d: table %d, new weight %lld/100, roll %lld\n", t, T, W, roll);
@@ -1485,6 +1855,66 @@ static int choose(int r, int t)
     if (pick < 0) return r;
     LOG("%s instead of card %#x\n", encs[pick].id, r);
     return ENC_BASE + encs[pick].slot;
+}
+
+/* ================================================================ in towns, on boats, in camp
+ * where street: on the way through a town, as the party comes into a street from elsewhere - the main
+ *   street (cards 6 by day, 8 by night) or the side streets (9, 10), the hubs Go to walks through; the
+ *   chance of each: 3 and 6 % on the main street, 6 and 10 % in the side streets (the encounters' share,
+ *   F12 > Mods, scales it); an encounter's exit goes back to that street.
+ * where boat: arriving by boat (the docks' passage, $Docks00 card 0x1f, or the river, 0x110: the arrival
+ *   $Enter00, card 0x5a, where the game sends the river pirates one time in five): 30 % of voyages bring
+ *   one instead; the arrival then comes without the pirates.
+ * where camp: a night camping in the wild (s036 1462:0082, mode 1) brings one at 12 % a night unless the
+ *   lord's men came (event 0x5f): it comes up at the first step on the map after the camp.
+ * (place_hook) */
+static int pick_where(int where, int pct, int force)
+{
+    if (!encounters_offered()) return -1;
+    install_cards();
+    if (force_next >= 0 && force_next < nenc && encs[force_next].ok && encs[force_next].where == where) { int f = force_next; force_next = -1; return ENC_BASE + encs[f].slot; }
+    int share = config_get_int("encounters.share", 100);
+    if (share <= 0 || (!force && (long long)(rng() % 10000) >= (long long)pct * share)) return -1;
+    long today = game_day();
+    long long w[ENC_MAX], W = 0;
+    for (int i = 0; i < nenc; i++) { w[i] = eligible(&encs[i], where, -1, today) ? encs[i].weight : 0; W += w[i]; }
+    if (aborting || !W) return -1;
+    long long roll = (long long)(rng() % (unsigned long long)W);
+    for (int i = 0; i < nenc; i++) { if (roll < w[i]) return ENC_BASE + encs[i].slot; roll -= w[i]; }
+    return -1;
+}
+/* the street cards and the arrival by water (their functions, hooked at the start): a new encounter in their place, or
+   the game's own */
+static int just_loaded;
+static int test_arrive;                   /* test (uarrive:): the next arrival card counts as one by boat */
+void encounters_test_arrive(void) { test_arrive = 1; fprintf(stderr, "encounters: the next arrival counts as one by boat\n"); }
+static void place_hook(void)
+{
+    aborting = 0;
+    if (just_loaded) { just_loaded = 0; hook_call_original(); return; }   /* (a save loaded into a street: the street it was saved in) */
+    int card = (s16)g_rw(V_CUR_CARD), prev = (s16)g_rw(GV_prev_screen), c = -1;
+    if (card == 0x5a) {                          /* arriving by water */
+        if (boat_done) { boat_done = 0; g_ww(GV_prev_screen, 0x11a); }   /* (after ours: as after the pirates) */
+        else if (prev == 0x1f || prev == 0x110 || test_arrive) { test_arrive = 0; c = pick_where(WH_BOAT, 30, 0); }
+    } else if ((card == 6 || card == 8 || card == 9 || card == 0x0a) && prev != card && !(prev >= ENC_BASE && prev < ENC_BASE + ENC_MAX)
+               && (s16)g_rw(G_CUR_LOC) >= 0 && (s16)g_rw(G_CUR_LOC) < 0x5c)
+        c = pick_where(WH_STREET, card == 6 ? 3 : card == 8 || card == 9 ? 6 : 10, 0);
+    if (aborting || c < 0) { hook_call_original(); return; }
+    LOG("%s: %#x instead of card %#x\n", card == 0x5a ? "boat" : "street", c, card);
+    run_resume = card;
+    g_ww(V_NEXT_CARD, (u16)c); AX = (u16)c;
+    hook_return_far(0);
+}
+static void camp_hook(void)                     /* s036 1462:0082 (mode): a stay; mode 1 camping in the wild */
+{
+    int mode = (s16)rw(SS, (u16)(SP + 4));
+    hook_call_original();
+    if (unw_active || mode != 1 || !encounters_offered()) return;
+    int nights = (s16)g_rw(0x3abe), share = config_get_int("encounters.share", 100);   /* (DS:3abe the days stayed) */
+    if (nights <= 0 || share <= 0 || g_event_started(0x5f)) return;      /* (the lord's men came: that night's trouble) */
+    int forced = force_next >= 0 && force_next < nenc && encs[force_next].where == WH_CAMP;   /* (test: uenc) */
+    for (int i = 0; i < nights && !camp_pending; i++) if (forced || (long long)(rng() % 10000) < 12LL * share) camp_pending = 1;
+    if (camp_pending) { forced_steps = 0; LOG("camp: %d night(s): an encounter at the first step\n", nights); }
 }
 
 static void overland_hook(void)                 /* s030 1462:02c0 overland_loop(): the next card */
@@ -1511,19 +1941,110 @@ int encounters_card_of(const char *id)          /* the card number of an encount
     return -1;
 }
 int encounters_errors(void) { reload(); return nerr; }
+
+/* what the loaded encounters ask for (added on the Saints page and in the items' texts to what the game's own
+   cards ask, mods/saintinfo.c, ui/nsdraw.cpp): the encounters, read without errors, that list a saint in a
+   `saints` line, a potion in an `items` line, or name an item in has(), count(), quality() or takeitem.
+   Counted once per load of the mods. */
+static int asks_gen = -1; static unsigned char asks_saint[136], asks_item[200];
+static void asks_scan(const char *t, unsigned char *seen)
+{
+    for (const char *q = t; q && *q; q++) {
+        int call = !strncasecmp(q, "has(", 4) || !strncasecmp(q, "count(", 6) || !strncasecmp(q, "quality(", 8);
+        int take = !strncasecmp(q, "takeitem", 8);
+        if (!call && !take) continue;
+        const char *c = strchr(q, ',');
+        if (!c) continue;
+        c++; while (*c == ' ') c++;
+        char *end; long v = strtol(c, &end, 0);
+        if (end != c && v >= 0 && v < 200) seen[v] = 1;
+    }
+}
+static void asks_count(void)
+{
+    reload();
+    if (asks_gen == loaded_gen) return;
+    asks_gen = loaded_gen;
+    memset(asks_saint, 0, sizeof asks_saint); memset(asks_item, 0, sizeof asks_item);
+    for (int i = 0; i < nenc; i++) {
+        Enc *e = &encs[i];
+        if (!e->ok) continue;
+        unsigned char ss[136] = { 0 }, it[200] = { 0 };
+        asks_scan(e->only.s, it);
+        for (int k = 0; k < e->nsec; k++) {
+            Sec *x = &e->sec[k];
+            for (int j = 0; j < 4; j++) { if (x->saints[j] >= 0 && x->saints[j] < 136) ss[x->saints[j]] = 1; if (x->items[j] >= 0 && x->items[j] < 200) it[x->items[j]] = 1; }
+            asks_scan(x->chosen.s, it); asks_scan(x->enter.s, it);
+            for (int o = 0; o < NOPT; o++) {
+                Opt *op = &x->opt[o];
+                if (!op->defined) continue;
+                asks_scan(op->only.s, it); asks_scan(op->need.s, it); asks_scan(op->who.s, it); asks_scan(op->chance.s, it);
+                asks_scan(op->ok.s, it); asks_scan(op->fail.s, it);
+                for (int j = 0; j < op->npot && j < 4; j++) if (op->pot_code[j] >= 0 && op->pot_code[j] < 200) it[op->pot_code[j]] = 1;
+            }
+        }
+        for (int k = 0; k < 136; k++) if (ss[k] && asks_saint[k] < 255) asks_saint[k]++;
+        for (int k = 0; k < 200; k++) if (it[k] && asks_item[k] < 255) asks_item[k]++;
+    }
+    if (enc_log_on()) {
+        fprintf(stderr, "encounters: they call on saints");
+        for (int k = 0; k < 136; k++) if (asks_saint[k]) fprintf(stderr, " %d:%d", k, asks_saint[k]);
+        fprintf(stderr, "\nencounters: they ask for items");
+        for (int k = 0; k < 200; k++) if (asks_item[k]) fprintf(stderr, " %#x:%d", k, asks_item[k]);
+        fprintf(stderr, "\n");
+    }
+}
+int encounters_asks_saint(int s) { if (s < 0 || s >= 136) return 0; asks_count(); return asks_saint[s]; }
+int encounters_asks_item(int id) { if (id < 0 || id >= 200) return 0; asks_count(); return asks_item[id]; }
 const char *encounters_title(int i) { return i >= 0 && i < nenc ? encs[i].title : ""; }
 int encounters_card_active(void) { return rt.active ? rt.enc + 1 : 0; }
+int encounters_in_street(void) { return rt.active && rt.where == WH_STREET; }
+/* a save loaded: an encounter on the screen is gone with the game it was in (its native frame is left behind
+   by the unwinding: it stayed "on the screen", and Go to, the margins and the mods' reload took the town for
+   the road); a night in camp's encounter and a voyage's are the old game's too */
+static int just_loaded;                  /* the card a save resumes on: not a street newly come into */
+void encounters_after_load(void) { memset(&rt, 0, sizeof rt); rt.pending = -1; rt.result = -1; aborting = 0; camp_pending = 0; forced_steps = 0; boat_done = 0; outc_on = 0; just_loaded = 1; gsnap_ok = 0; }
 void encounters_force(int i)
 {
     reload();
     if (i < 0 || i >= nenc) { fprintf(stderr, "encounters: no encounter %d (%d loaded)\n", i, nenc); return; }
     force_next = i;
-    fprintf(stderr, "encounters: the next wilderness encounter is %s\n", encs[i].id);
+    fprintf(stderr, "encounters: the next %s encounter is %s\n", WHERE_NAMES[encs[i].where], encs[i].id);
 }
-int encounters_force_pending(void) { return force_next >= 0; }
+int encounters_force_pending(void) { return (force_next >= 0 && force_next < nenc && encs[force_next].where == WH_WILD) || camp_pending; }
+/* a step made an encounter for one that is due (mods/travel.c, one try per tile): choose() takes it when the
+   game's card comes. A step whose encounter brings no card (the game's tables leave some out: a summer's month,
+   a terrain, a place's events) goes nowhere; after six such tries the encounter due is given up */
+int encounters_forced_tries(void) { return forced_steps; }   /* (0: the encounter due not tried yet) */
+void encounters_forced_step(void)
+{
+    if (++forced_steps < 6) return;
+    forced_steps = 0;
+    LOG("the encounter due came to no card in six steps: given up\n");
+    camp_pending = 0;
+    if (force_next >= 0 && force_next < nenc && encs[force_next].where == WH_WILD) force_next = -1;
+}
+
+/* the main loop (root 03a1:000a), once the game's start-up has cleared its data: the cards' entries
+   written there, before any save is read. A save made during a new encounter names its card, and the
+   main loop calls that card's entry as soon as the save is read: written only at start-up (cleared
+   then) or when an encounter was chosen, a fresh session that loaded such a save called 0000:0000. */
+static void mainloop_hook(void)
+{
+    install_cards();
+    hook_call_original();
+}
 
 void encounters_init(void)
 {
+    saves_on_loaded(encounters_after_load);
     hook_install(GF_overland_loop, overland_hook);
-    install_cards();                             /* also for a save made during a new encounter */
+    hook_install(36, 0x1462, 0x0082, camp_hook);   /* (after lodgeview's: it wraps the stay) */
+    hook_install(-1, 0x03a1, 0x000a, mainloop_hook);
+    hook_install(45, 0x18fc, 0x0000, place_hook);   /* card 6, the main street by day */
+    hook_install(46, 0x1838, 0x0000, place_hook);   /* card 8, by night */
+    hook_install(46, 0x18aa, 0x0004, place_hook);   /* card 9, a side street by day */
+    hook_install(46, 0x194b, 0x0002, place_hook);   /* card 0x0a, by night */
+    hook_install(66, 0x19ec, 0x000e, place_hook);   /* card 0x5a, arriving by water ($Enter00) */
+    encounters_rehook();                            /* (what came of it on the game's cards: after mods/cardview.c's and mods/assist.c's) */
 }

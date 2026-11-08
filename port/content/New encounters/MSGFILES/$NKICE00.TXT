@@ -1,0 +1,25 @@
+# $NKICE00: the swallows under the ice (New encounters)
+=== card 0: 10 10 0 240 0 ===
+A hard frost came down in the night. At dawn the mere beside your camp lies white from shore to shore, and $ChosenOneName takes an axe to the edge to cut a hole for water.
+\14The kettle comes up heavy. In it is a clump of small dark birds, wings folded, clinging to one another beak to tail, stiff as stones. Swallows.
+\14The old fishers say that swallows do not fly away in autumn, but sleep in the mud of the meres till spring. You have always laughed at them. $ChosenOneName remembers the rest of the tale: warm a sleeping swallow before its time and it wakes, and sings, and dies. And it is ill luck to kill a swallow.
+\14You...
+\14\15...\1dwarm them at the fire, to see whether the tale is true.
+\15...\1dlower them gently back to the bottom, just as they lay.
+\15...\1dcut them open for the swallow-stones the apothecaries prize.
+\15...\1ddrop them back in the hole and fetch your water elsewhere.
+=== card 1: 10 10 0 240 0 ===
+You lay them on a cloak by the fire. After a while one stirs, then another, and then they are up, all of them, darting round the camp and twittering, a sound of high summer in the white morning. One perches on $ChosenOneName's shoulder and sings.
+\14Then the frost reaches them. One by one they drop into the snow and do not stir again. The tale is true, all of it. You bury them in silence and set out an hour late.
+=== card 2: 10 10 0 240 0 ===
+$ChosenOneName keeps the kettle away from the fire and from the warmth of $his own hands, and lowers it on a strap into the black water, slowly, until it touches the mud. A gentle tip, and the swallows settle on the bottom as they lay.
+\14Somewhere a church will have its swallows back under the eaves in April. It is a good thought to set out on.
+=== card 3: 10 10 0 240 0 ===
+$ChosenOneName handles them a moment too long. The warmth of $his hands wakes one, then another; they flutter up out of the kettle into the frost and fall dead on the ice before anyone can catch them. The rest sink out of sight. Nothing more comes of it.
+=== card 4: 10 10 0 240 0 ===
+The apothecaries call it the swallow-stone: a little stone in a swallow's crop, sovereign against the falling sickness and a bleared eye. $ChosenOneName opens the birds one by one on a flat stone, and in four of them finds stones, small and smooth as lentils, red and black.
+\14They fetch $Money1 from the next apothecary you pass. The little bodies you leave on the ice for the crows, and nobody says much for the rest of the day.
+=== card 5: 10 10 0 240 0 ===
+$ChosenOneName opens the birds one by one on a flat stone, and finds nothing in their crops but grit and the husks of summer flies. A dozen dead swallows lie on the ice, for nothing. Nobody says much for the rest of the day.
+=== card 6: 10 10 0 240 0 ===
+You drop the swallows back through the hole, and they sink out of sight like stones. You fill the kettle from a new hole a little way along, and if anyone looks into it first, nobody mentions it. Nothing more comes of it.

@@ -17,6 +17,8 @@
 #include "../runtime/config.h"
 #include "../runtime/dispatch.h"
 #include "gamemodel.h"
+#include "saves.h"
+#include "fixes.h"
 
 #include "../ui/alerts.h"
 void ui_text_utf8(const char *game, char *out, int n);
@@ -29,20 +31,17 @@ static struct { char name[24]; s8 max[7]; s8 skill[19]; int have; } snap[5];
 static int in_battle;
 static int snap_seed;
 
-/* the temporary part of attribute a (0x48) or skill k (0x49) of member m: the boosts and lowerings running */
-static int temp_of(int kind, int m, int idx)
+/* the party's events are in memory: not while a battle has closed the cards (run_battle: cards_shutdown to
+   cards_startup, mods/fixes.c), when the table holds only what the battle made - a saint's boost to a skill
+   cannot be told from the skill then. Taken for the party's, the battle's table (any event in it) gave the
+   skills with their boosts as the members' own, and the boosts, back with the cards, as a loss ("Artifice 58
+   (was 99)" as the battle ended, a +41 boost still at work) */
+static int events_known(void)
 {
-    int t = 0;
-    for (int i = 0; i < G_NEVENTS; i++) {
-        u32 e = g_event(i); if (!e) continue;
-        u16 s = (u16)(e >> 16), o = (u16)e;
-        if ((s16)rw(s, (u16)(o + 0x22)) == kind && (s16)rw(s, (u16)(o + 0x1a)) == m && (s16)rw(s, o) == idx) t += (s16)rw(s, (u16)(o + 0x1e));
-    }
-    return t;
+    if (fixes_cards_down()) return 0;
+    for (int i = 0; i < G_NEVENTS; i++) if (g_event(i)) return 1;
+    return 0;
 }
-/* the events are in memory (the battle and what follows it until the next card swap them out: the
-   table reads empty, a saint's boost to a skill cannot be told from the skill then) */
-static int events_known(void) { for (int i = 0; i < G_NEVENTS; i++) if (g_event(i)) return 1; return 0; }
 static void take(int m)
 {
     char nm[24]; gm_member_name(m, nm, sizeof nm);
@@ -50,7 +49,7 @@ static void take(int m)
     memcpy(snap[m].name, nm, sizeof nm);
     for (int a = 0; a < 7; a++) snap[m].max[a] = (s8)g_rb((u16)(G_MEMBER(m) + G_M_ATTR_MAX + a));
     if (!same || events_known())                      /* (else the skills as last known stand) */
-        for (int k = 0; k < 19; k++) snap[m].skill[k] = (s8)(g_rb((u16)(G_MEMBER(m) + G_M_SKILLS + k)) - temp_of(0x49, m, k));
+        for (int k = 0; k < 19; k++) snap[m].skill[k] = (s8)(g_rb((u16)(G_MEMBER(m) + G_M_SKILLS + k)) - gm_temp_boost(0x49, m, k));
     snap[m].have = gm_member_present(m);
 }
 /* (aging.c lowered member m's attributes and told it: taken as they are now) */
@@ -63,16 +62,15 @@ static void battle_hook(void)
 {
     in_battle++;
     hook_call_original();
-    in_battle--;
+    if (in_battle > 0) in_battle--;                   /* (a load in a battle: after_load set it to 0, then the unwinding came back through here) */
     for (int m = 0; m < 5; m++) take(m);
 }
 void losses_battle_frame(void);
+static int grace;
+static void after_load(void) { grace = 300; in_battle = 0; }   /* a game loaded (saves_on_loaded): the battle it was loaded from is over */
 void losses_frame(void)
 {
     losses_battle_frame();
-    extern unsigned dos_save_read_ms;
-    static unsigned last_read; static int grace;
-    if (dos_save_read_ms != last_read) { last_read = dos_save_read_ms; grace = 300; in_battle = 0; }   /* (a game loaded: a battle left by it never returned) */
     if (grace > 0) grace--;
     int seed = (s16)g_rw(G_PARTY_SEED);
     int gm = game_mode();
@@ -96,7 +94,7 @@ void losses_frame(void)
             }
         }
         for (int k = 0; k < 19 && ek; k++) {          /* (the skills only while their boosts can be told) */
-            int v = (s8)(g_rb((u16)(G_MEMBER(m) + G_M_SKILLS + k)) - temp_of(0x49, m, k));
+            int v = (s8)(g_rb((u16)(G_MEMBER(m) + G_M_SKILLS + k)) - gm_temp_boost(0x49, m, k));
             if (v < snap[m].skill[k]) {
                 pl += (size_t)snprintf(part + pl, sizeof part - pl, "%s%s %d（原为%d）", pl ? ", " : "", gm_skill_name(k), v, snap[m].skill[k]); if (pl >= sizeof part) pl = sizeof part - 1;
                 row->ch[row->n].key = 7 + k; row->ch[row->n].was = snap[m].skill[k]; row->ch[row->n].now = v; row->n++;
@@ -143,4 +141,4 @@ void losses_battle_frame(void)
     worn_len = 0; worn[0] = 0;
 }
 
-void losses_init(void) { hook_install(19, 0x1ef8, 0x0968, wear_hook); hook_install(GF_combat_main, battle_hook); }   /* (run_battle has hooks enough: combat_main is the battle itself) */
+void losses_init(void) { hook_install(19, 0x1ef8, 0x0968, wear_hook); hook_install(GF_combat_main, battle_hook); saves_on_loaded(after_load); }   /* (run_battle has hooks enough: combat_main is the battle itself) */

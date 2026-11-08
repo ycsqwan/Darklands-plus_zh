@@ -455,24 +455,46 @@ int plat_rec_frames;
    stays on screen until the new view is up (ns_enter releases it), at most ms */
 static u32 hold_until;
 void plat_hold(int ms) { hold_until = ms > 0 ? SDL_GetTicks() + (u32)ms : 0; }
-/* the battle view moved and its floor redrawn, its people not yet (mods/battlescroll.c): the last whole
-   picture of the game stays in the window until the next combat frame is drawn (plat_drawn), at most 150 ms */
+/* a battle's picture while it is not whole (mods/battlescroll.c): the view moved and its floor redrawn, its
+   people not yet (plat_hold_until_drawn, until plat_drawn); or a combat frame being drawn (plat_drawing:
+   combat_draw takes the pointer off, erases the last frame's people and draws them again on the screen itself;
+   a third of a running battle's pictures were taken meanwhile, 13 to 21 of 40 every 2 s in a test battle: the
+   pointer gone, people missing or cut in two - "Ursula flickers while walking"). Meanwhile the window shows the
+   last whole picture: the one taken when combat_draw last finished or the last one taken outside these, if
+   later (64000 bytes and the palette, kept at each), so every finished frame can be shown. (Build 1203 kept the
+   window's last picture instead: a frame finished and drawn over again between two pictures was never shown,
+   and the battles stuttered.) At most 150 ms each (a draw cut short by a load leaves it set). */
 static u32 hold_draw_t; static int hold_draw;
 void plat_hold_until_drawn(void) { hold_draw = 1; hold_draw_t = SDL_GetTicks(); }
 void plat_drawn(void) { hold_draw = 0; }
+static u32 drawing_t; static int drawing;
+static u8 whole_vga[320 * 200], whole_pal[768]; static int whole_ok;
+static const u8 *live_vga, *live_pal;     /* (what plat_present is given: the game's screen and palette) */
+static void keep_whole(const u8 *vga, const u8 *pal) { memcpy(whole_vga, vga, sizeof whole_vga); memcpy(whole_pal, pal, sizeof whole_pal); whole_ok = 1; }
+void plat_drawing(int on)
+{
+    drawing = on; drawing_t = SDL_GetTicks();
+    if (!on && live_vga) keep_whole(live_vga, live_pal);
+}
 void plat_present(const u8 *vga, const u8 *pal)
 {
-    { void fixes_frame(void); fixes_frame(); void saves_frame(void); saves_frame(); void rules_frame(void); rules_frame(); void autopause_frame(void); autopause_frame(); void battlelog_frame(void); battlelog_frame(); void memberlooks_frame(void); memberlooks_frame(); void losses_frame(void); losses_frame(); void battleend_frame(void); battleend_frame(); void orders_frame(void); orders_frame(); }   /* game-side checks, headless too */
+    { void fixes_frame(void); fixes_frame(); void saves_frame(void); saves_frame(); void rules_frame(void); rules_frame(); void autopause_frame(void); autopause_frame(); void battlelog_frame(void); battlelog_frame(); void memberlooks_frame(void); memberlooks_frame(); void losses_frame(void); losses_frame(); void battleend_frame(void); battleend_frame(); void orders_frame(void); orders_frame(); void encounters_frame(void); encounters_frame(); void relics_frame(void); relics_frame(); void checks_frame(void); checks_frame(); }   /* game-side checks, headless too */
     { static int slow = -1; if (slow < 0) slow = getenv("DL_SLOW_PRESENT") ? atoi(getenv("DL_SLOW_PRESENT")) : 0; if (slow) plat_sleep_ms(slow); }   /* test: a slow display */
     if (headless) return;
     if (hold_until && (s32)(hold_until - SDL_GetTicks()) > 0) { SDL_PumpEvents(); return; }
     hold_until = 0;
-    /* the battle view just moved, its people not yet drawn again (plat_hold_until_drawn): the window goes on
-       being drawn as ever - the interface, a slide under way - but with the last whole picture of the game
-       (1.3-RC32 held the whole window back instead: the people no longer flickered, but a drag lost its
-       smoothness) */
-    int held = hold_draw && SDL_GetTicks() - hold_draw_t < 150 && game_mode() == GM_BATTLE;
-    if (!held) hold_draw = 0;
+    /* the battle's picture not whole (above): the window goes on being drawn as ever - the interface, a slide
+       under way - but with the last whole picture of the game (1.3-RC32 held the whole window back instead:
+       the people no longer flickered, but a drag lost its smoothness) */
+    int battle = game_mode() == GM_BATTLE;
+    u32 now = SDL_GetTicks();
+    live_vga = vga; live_pal = pal;
+    if (hold_draw && (now - hold_draw_t >= 150 || !battle)) hold_draw = 0;
+    int whole = !battle || !(hold_draw || (drawing && now - drawing_t < 150));
+    if (!battle) whole_ok = 0;
+    else if (whole) keep_whole(vga, pal);
+    else if (whole_ok) { vga = whole_vga; pal = whole_pal; whole = 1; }
+    int held = !whole;                    /* (none yet in this battle: the window's last picture) */
     static int ptime = -1; if (ptime < 0) ptime = getenv("DL_PRESENT_TIME") != 0;
     uint64_t pt0 = ptime ? plat_ticks_us() : 0;
     if (!held) {
@@ -489,6 +511,8 @@ void plat_present(const u8 *vga, const u8 *pal)
     layout();
     SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
     SDL_RenderClear(ren);
+    int crt_begin(SDL_Renderer *, SDL_Rect *); void crt_end(SDL_Renderer *, SDL_Rect *, SDL_Rect, const u32 *, int);
+    SDL_Rect crt_saved = dest; int crt_tgt = crt_begin(ren, &dest);   /* (the screen effect: runtime/crt.c) */
     art_draw();
     for (int t = 0; t < nt; t++) {
         SDL_SetTextureScaleMode(tiles[t], ui_settings.smooth ? SDL_ScaleModeLinear : SDL_ScaleModeNearest);
@@ -501,6 +525,7 @@ void plat_present(const u8 *vga, const u8 *pal)
         SDL_RenderCopyF(ren, tiles[t], &tile_src[t], &d);
     }
     if (held ? sliding && slide_t() < 1 : slide_watch()) slide_draw();   /* (held: a slide under way goes on; a new one waits for the whole picture) */
+    crt_end(ren, &dest, crt_saved, frame, crt_tgt);
     uint64_t pt2 = ptime ? plat_ticks_us() : 0;
     ui_draw(ren);
     uint64_t pt3 = ptime ? plat_ticks_us() : 0;
@@ -748,8 +773,9 @@ static void run_script(void)
         else if (!strcmp(s->cmd, "travel")) { void travel_click(int, int); travel_click(x, y); }   /* as Ctrl+click at game x,y */
         else if (!strcmp(s->cmd, "travelto")) { int travel_to_loc(int, const char *); travel_to_loc(atoi(s->arg), "test"); }
         else if (!strcmp(s->cmd, "travelnear")) { int travel_nearest(int); travel_nearest(atoi(s->arg)); }   /* nearest location of a type */
-        else if (!strcmp(s->cmd, "uclick") || !strcmp(s->cmd, "urclick")) {   /* a click (urclick: right) as from the system, window pixels */
+        else if (!strcmp(s->cmd, "uclick") || !strcmp(s->cmd, "urclick") || !strcmp(s->cmd, "ugclick")) {   /* a click (urclick: right) as from the system, window pixels (ugclick: game pixels) */
             int btn = s->cmd[1] == 'r' ? SDL_BUTTON_RIGHT : SDL_BUTTON_LEFT;
+            if (s->cmd[1] == 'g') { float wx, wy; plat_game_to_win((float)x + 0.5f, (float)y + 0.5f, &wx, &wy); x = (int)wx; y = (int)wy; }
             SDL_Event ev; memset(&ev, 0, sizeof ev);
             Uint32 wid = win ? SDL_GetWindowID(win) : 0;
             if (win) SDL_WarpMouseInWindow(win, x, y);

@@ -178,7 +178,9 @@
  *            Cavern of Fire and Hail crossed under armour (s130 190c:033e) and the spider
  *            warehouse (s134 1838:0550, 0692) add the Endurance and Strength their texts take; the
  *            warehouse's owner ($DPost00, s134 1838:0000) is $NamedOneName, which nothing sets
- *            (whoever was named last, or nothing: "I am . Are ye hardy adventurers?"); a robber
+ *            (whoever was named last, or nothing: "I am . Are ye hardy adventurers?"), and so is the
+ *            dwarf king met again with his red hat ($MineB03, s101 18bd:0000; only $MineB00 and B02
+ *            name him: name_to_slot (7, vec_219d (), 0)); a robber
  *            knight's bounty ($Raubi01, s080 1870:000c) tells by a coin toss whether the Hanse's
  *            guide leaves (text 6) or there was none (7), and says the village's Schulz "departs
  *            from your party" (text 1) whether or not he came along; neither is let go (he stayed
@@ -190,6 +192,16 @@
  *            Found by Arkana Mechanika (Darklands Restoration).
  *  minerelic The relic deep in a mine of dwarfs, kobolds or vulcans gets its own quality and kind
  *            (the item list's), not quality 35 and item type 0x9f for any relic (below, minerelic).
+ *  ownplace  A place stepped on is the place whose own tile it is, when the game took another one
+ *            near it (below, ownplace).
+ *  dwarfrelic The dwarf at a mine's iron door ($MineH00 text 7) tells of a relic its guards hold and
+ *            hands the leader a relic there and then; it comes in the loot of the next fight won there
+ *            (below, dwarfrelic).
+ *  minechests A mine's floor shows a chest (piece 5 closed, 6 open, of a cell's first byte's high nibble)
+ *            only where a chest is (below, minechests).
+ *  carditems Things a card gives by kind (add_items, add_item, add_item_q) take their type and weight from
+ *            the item list as it is, not the game's copy a battle or dungeon lays other data over
+ *            (below, carditems).
  *  cityalert, dayjobs, cloudline, attrsum, lootcount, corridors, battledead, createback: below, each
  *            at its hook (Arkana Mechanika's B-55afd6, B-074e99, B-3cc78a and B-bfb04e, B-82a302,
  *            B-e080d4, B-c90740, B-f7799c, B-126118).
@@ -206,6 +218,18 @@
  *            far: 999 (certain) the first time. Now, before each menu, the best climber of all and
  *            his value; everyone's chance is the weakest's. Found by Arkana Mechanika (Darklands
  *            Restoration).
+ *  westedge  overland_open (s030 1462:00a8) puts the party's marker 8 tiles into the view; where the
+ *            place left lies nearer the map's west edge (x < 8), the view stops at column 0 and the
+ *            marker's x should be 0x82 + (x - 8) * 16, but it is 0x82 - (x - 8): a pixel per tile
+ *            instead of 16, so the party came out at column 8, 2 to 5 tiles east of the place
+ *            ("I exited Helmond and it put me to the right of it"). Nine places: Nancy, Elberg,
+ *            Valkenberg, Tongeren, Gemert, Helmond, Limberg, Spa, Briey. The marker is set right
+ *            before the place icons are made (1462:1c76, called only there). And the view
+ *            (1462:20d2) draws column 0 as column 1 ("if (col == 0) col = 1") while the marker's
+ *            tile is counted from the view's column (party_x = view + col - 1): with the view at 0,
+ *            from this placement or from a scroll west (1462:0c44 clamps at 0), the party was drawn
+ *            a tile east of where the game had it. The view's first column is made 1 and the marker
+ *            moved back by 16; the row the same (overland_open lets it be 0, the scroll stops at 1).
  *
  * Known, and left as the game has them (no fix: they are the game's design, or never reached):
  *  - An alchemist offers formula (seed + 100 + 3k) % 22 (k 0..3): only formulae 0..21 are ever
@@ -228,136 +252,113 @@
 #include "fixes.h"
 #include "nscreen.h"
 #include "gamemodel.h"
+#include "saves.h"
 #include "teachers.h"
 #include "sainttexts.h"
 
 Fix FIXES[] = {
-    { "blessing", "祝福不再消耗良好属性点",
-      "在原作中，对同一属性的第二次祝福，或接近99的祝福，在效果消失时会扣除相应的点数。耐力或力量的提升在耗尽后会被全额扣除，即便经过一夜休息或伤口已将其消耗殆尽（重伤的队员也可能因此丧命）。而施加于整个队伍的降低效果（如“火与冰之洞穴”）则会在第一个被提升到该数值以上的队员处停止。如今，祝福只会收回其实际增加的部分以及仍高于上限的数值，而降低效果则会作用于每位队员，并在结束时予以恢复。", 1 },
-    { "fireward", "无防火护盾",
-      "在原版中，圣人波利卡普的防火护甲以及类似的防护效果也计入护甲值（+16至+64），且不会随时间消退。现在它仅能抵御火焰伤害。", 1 },
-    { "nullitem", "无“（空）”或空项",
-      "在原版中，物品名称为“（空）”的非真实物品以及空的堆叠可能会出现在队伍的物品栏中，这些物品既不能使用也不能出售。现在已不再添加此类物品。", 1 },
-    { "castle", "城堡战斗在骑士死亡时结束",
-      "在城堡战斗中，只有骑士死亡才会结束战斗，但原版并未保存这一设定：在战斗过程中存档再读取后，即使骑士已死，离开仍会被视为逃跑。现在，读取存档后，他的死亡也会被计入。", 1 },
-    { "bounty", "商人悬赏的强盗骑士报酬发放正常",
-      "原版曾查找错误的任务发布者，导致名称混乱、内存损坏，并使奖励被反复领取。现在它能正确找到任务发布者了。", 1 },
-    { "alchemy", "炼制会消耗所有原料",
-      "原版在某种原料被分散到多个堆叠时只会取其中一部分；现在则会全部取走。", 1 },
-    { "fullpack", "再也不会有物品因队伍已满而丢失了",
-      "一名成员最多可携带64种物品；在原版中，当某位成员已拥有64种物品时，游戏会直接将其物品清空（包括任务物品）。现在，这些物品会被转移到有空间的成员身上。若在无人有空间时购买物品，则会白白浪费金钱；而从储物室取出物品给无空间的成员时，也会导致物品丢失：这两种情况现均被拒绝。", 1 },
-    { "innsave", "在旅店之后仍可存档与载入",
-      "在某些情况下（例如点击空着的队伍栏位），离开旅店的住宿界面会导致存档与载入功能被禁用，直到打开角色面板为止。现在，离开后该功能已重新启用。", 1 },
-    { "colors", "成员的颜色得以保留（“霓虹发色”Bug）",
-      "在原版中，成员在遭遇战斗后，其颜色与精灵图案有时会变成刺眼的样式。现在，他们的颜色会被保留并恢复原状。", 1 },
-    { "copyprot", "跳过手动检查",
-      "当队伍首次出发时，游戏不再要求玩家从印刷手册中查找炼金术符号。", 1 },
-    { "potions", "武器药水会逐渐失效，且不会损坏武器",
-      "致命之刃、强力边缘和强大力量等技能从未失效，其加成还会不断叠加，超出游戏所能承受的上限：使用几次药水（或一次强大力量）后，武器尤其是弓箭的攻击力几乎为零。现在，这些技能约一天后会自然失效，且同时使用多种技能也不会超过上限。", 1 },
-    { "offmap", "土地边界之外不再出现任务目的地",
-      "巴塞尔东南方的一处洞穴位于土地底部边缘之外，队伍无法到达，因此派往那里的任务永远无法完成。现已将该洞穴移至土地范围内，队伍可以抵达。", 1 },
-    { "bestweapon", "武器训练会提升队长最擅长的武器技能",
-      "原本卡片总是训练导弹装置，而现在，当卡片允许队长练习其最擅长的武器时，会训练队长最擅长的武器技能。", 1 },
-    { "itemcount", "抢劫者只会拿走现有物品（不会再崩溃）",
-      "当抢劫者抢走队伍物品时，游戏曾多扣了一件物品；结果导致某位成员身无分文，最终竟出现负数物品，若其随后战死，游戏还会崩溃。现在，只会拿走实际存在的物品；带有此问题的存档会自动修复。", 1 },
-    { "储物室", "储物室中不会丢失任何物品",
-      "储物室可存放100种物品，但当某种物品数量超过127时（显示为负数，随即丢失），系统会拒绝继续放入，并提示原因。", 1 },
-    { "testcard", "开发者测试卡不会导致崩溃",
-      "卡片0是开发者的测试卡（“试试看……你会喜欢的！”）。原本返回原卡的卡片，在没有来源卡时会进入卡片0，而游戏因测试卡缺少图片（pics\\\\xhouse3.pic）而停止运行。现在，它已切换到陆地视图，或前往队伍所在城镇。", 1 },
-    { "armorwear", "只有穿戴的盔甲才会磨损",
-      "同款盔甲被视为同一堆，因此当正在穿戴的那件被酸或火腐蚀时，该成员所拥有的同款、同质的备用盔甲也会一同失去品质，并随之销毁。现在，只有 worn 的那件会受损。", 1 },
-    { "teachers", "在旅店训练时能找到城镇的教师",
-      "当另一座城镇也同时拥有教师时，旅店的“训练”或“学习”选项会显示无人，费用甚至高达-4096芬尼（钱包还因此膨胀），结果一天下来什么也没学到。现在，旅店会列出这座城镇的教师，并收取相应费用。", 1 },
-    { "cardopts", "卡片选项不再因误操作而变灰",
-      "翻越城墙时，贿赂可以不带现金提出（因为检查是否有钱的是通过下水道爬出的选项）；在反叛人群的堡垒前，队伍带着绳索攀爬时，相关选项会变灰；守卫只统计最后一名队员的绳索后，再攀墙时，每个后续选项都会按下方选项应有的方式执行（游戏中从未处理过的三个“放弃马匹”选项使它们步调不一致）。布商街白天除了“离开”外别无他物：其他行会街道都有的店面橱窗都被关闭，因此布商只能在夜间营业，且需付出声誉代价；如今这些店铺已恢复白日营业。", 1 },
-    { "patronsaint", "大教堂、圣科斯玛或圣达米安所教授的圣人知识已被习得",
-      "向大教堂询问其守护圣人本意是让队长了解该圣人，而圣科斯玛与圣达米安彼此传授对方的知识；但游戏并未将其传授给任何成员：无人真正学到圣人的知识，第五名成员反而被标记为知道配方。现在，圣人知识已被习得。", 1 },
-    { "debtnote", "债券由商人注明",
-      "商人派队伍去索取债券时，会标明持有者（美第奇家族或富格尔家族），但游戏却把它们藏在市场上方的另一间办公室里，因此闯入指定办公室也一无所获。现在，这些债券已被放置在指定办公室内。", 1 },
-    { "alchrisk", "炼金术配方的风险等级设置正确",
-      "每个配方都标有低、中、高风险等级，而风险决定了失败批次在旅店、村庄或隐秘据点造成的后果：要么引发爆炸（队伍受伤、需赔偿损失、旅店四个月无房可用），要么仅留下臭味（一个月）。游戏此前弄反了：低风险配方失败时竟三次爆炸，而高风险配方失败时却只有一半概率爆炸。现在，低风险配方失败时每四次有一次爆炸，中风险配方每三次有一次爆炸，高风险配方每两次有一次爆炸。", 1 },
-    { "bishop", "来自大教堂的任务属于主教，而非商人",
-      "大教堂的教规曾像为城镇商人发布任务一样：商人付费（且在任务进行期间不再自行发布新任务），教规每次来访都会推出新任务，而主教的遗物则可在任务完成后反复领取。现在，任务计为主教所有，其遗物作为奖励，仅发放一次。", 1 },
-    { "altar", "不再向被净化的异教祭坛派遣任务",
-      "队伍摧毁的异教祭坛已从陆地视图中消失，但任务仍可能将其指派到那里，而此类任务往往无法完成（其发起者也无法再提供新的任务）。这类祭坛不再被选择；已派出的任务则会转而前往最近仍在矗立的祭坛。", 1 },
-    { "tomb", "从墓穴中取走的物品归胜利者所有",
-      "任务从墓穴中寻找的物品会唤醒死者：赢得战斗虽未获得任何东西（尽管文字称队伍携物撤离），但输掉战斗则会得到该物品。现在，队伍获胜时即可获得该物品。", 1 },
-    { "lordreward", "领主为其任务买单",
-      "在没有议会的城镇，要塞领主会派出强盗骑士狩猎，但游戏仅在议会大厅支付此类任务的报酬，因此在这样的城镇根本无法领取。现在，领主会在接见时付款，如同议会一般。", 1 },
-    { "armorday", "盔甲与来自药剂和圣人的防火保护可持续一天；硬甲的效果如说明书所述",
-      "硬甲（使护甲提升1至3点）、圣邓斯坦的祝福（+1）、圣帕特里克的祝福（+2）、圣克里斯平的祝福（使所有人的护甲品质提升10点）以及防火护盾和圣波利卡普的防火效果均不会消失，且每次叠加都会累加。如今这些效果正如说明书所言，持续约一天，而在存档中累积的效果也会恢复原状。圣查理蒂、圣埃拉苏斯和圣潘塔莱昂（以及圣波利卡普）则将他们的防火保护以护甲形式呈现：优质时可提供+32或+48的护甲值（若启用“无防火无敌”修复，则为无效果）；现在成员可获得90点的防火保护，与圣波利卡普相同。硬甲同样按说明书所示：护甲品质提升20、25或30点，厚度增加一到两层（游戏原本设定为1至3层且不提升品质）；当其中一层仍在生效时使用第二层，将保留两者中更强的效果。", 1 },
-    { "greatpower", "大威力可提升武器的品质",
-      "根据说明书，大威力可使武器品质提升14、22或30点（最高可达99），而品质决定了攻击的伤害力。原版则将这些点数直接加到了成员的伤害与穿透力加成上：+14穿透力，或+1伤害与+6穿透力，或+1伤害与+14穿透力。如今它仅能提升手中武器的品质（包括弓箭与枪械），效果持续约一天。", 1 },
-    { "standings", "存档会保留队伍在富格尔、美第奇与汉萨同盟中的声望",
-      "各公司的卡片会提升或降低队伍在他们那里的声望（若队伍或城镇声望低于零，则无法接取任务），但存档并不能保留这一状态：加载后，声望将恢复到前一次游戏结束时的数值，或重启后归零。如今存档已能保存这一状态（原版仍可加载此类存档）。", 1 },
-    { "battlesaints", "战斗中召唤的圣人援助会失效",
-      "原版中，战斗中召唤的圣人通常会提升属性与技能（一般情况下），而部分圣人索取的代价（降低某项属性）却从未返还：战斗结束后便不再追踪哪些效果该消失。如今两者都已按正常机制失效，如同战斗外召唤的援助一样。", 1 },
-    { "healboost", "治愈不再消耗增益",
-      "治愈（恩典之 essence 或圣人治愈）能使受伤的属性部分恢复至最大值，但游戏也曾让超出最大值的属性部分回落至其上限：当某位成员的力量或耐力超过上限（如铁臂、新风、圣人加持）时，用于治愈的药剂往往会夺走大部分增益。如今治愈仅能提升属性，绝不会降低。", 1 },
-    { "teachcap", "教师只能教授与其自身能力相符的内容",
-      "游戏文本规定教师不得教授超出自身能力的技能（这句台词游戏从未显示），而医师则会拒绝那些知识超过他的人；然而，任何水平的教师都能将技能学到99级。如今课程止于教师的能力范围：达到上限的成员将改为休息。", 1 },
-    { "oilweapons", "每种武器油均按说明书指定的武器使用",
-      "致命之刃适用于除冲击武器与连枷以外的所有武器，强刃适用于刀剑与长柄武器，而大威力则适用于冲击武器、连枷及手枪，正如说明书与药剂标签所言。游戏曾将每种油赋予成员所使用的任何武器，包括弓箭与拳头。", 1 },
-    { "pauls", "两位圣保罗均按各自文本行事",
-      "圣保罗使徒给予的援助与圣保罗简单者相同（全部力量与耐力恢复，智力损失一半且需维持一天，要求美德70），而圣保罗简单者则复制了圣托马斯·阿奎那的帮助。使徒自身的帮助（通用语、拉丁语、读写、魅力、耐力，少量力量恢复；美德19，按说明书所述）虽存在于游戏代码中却从未启用。如今两人各按其文本行事。", 1 },
-    { "saintrep", "圣人的声望加成会作用于正确的城镇",
-      "在布拉格被召唤时，圣约翰·内波穆克提升了某个无关地点（或根本不存在的地点）的声望，而非布拉格；而圣塞西莉亚在远离任何城镇的地方被召唤（从陆地视角看），竟提升了完全不存在的地点的声望。如今内波穆克的加成归于布拉格，塞西莉亚的则归于最近的城镇，与其他圣人一致。", 1 },
-    { "sainttexts", "圣人按其文本行事",
-      "对于43位圣人，游戏提供的帮助要么不足，要么偏离了圣人本身的描述：圣克里斯多福、圣德罗戈与圣威尔弗里德从未加快过队伍的行程（如今一周内旅行更快：路上天数减少），圣尤斯塔修也未穿越树林；圣尼古拉斯与圣西奥多尔提供了连枷而非骑行；圣查理蒂、圣埃拉苏斯与圣潘塔莱昂未给队伍提供防火保护；圣卢特加迪斯的狂喜反而增加了耐力而非消耗；圣乔治、圣米迦勒、圣隆吉尼乌斯、圣莫里斯与圣埃利吉乌斯从未改善过武器或盔甲；圣克里斯平改良了金属盔甲，圣邓斯坦则未做任何改进；声望流向错误的土地或毫无声望……如今每位圣人都按其文本行事（新的角色表与祈祷界面详细描述了每位圣人）。盔甲与防火圣人需要“药剂与圣人提供的盔甲与防火保护可持续一天”的修复。", 1 },
-    { "nightbowyer", "弓匠夜间也出售弓箭",
-      "夜间醒来时，弓匠开设了一家专门销售铁匠武器与盔甲的店铺，却不卖弓箭：夜卡将铁匠的商品交给了这家店。如今这里出售的正是弓匠白天所售之物。", 1 },
-    { "confession", "告解至少需一小时",
-      "队伍在城镇的声望越高，教堂内的告解时间就越短：声望达110时无需等待，120以上则会倒转钟表。如今告解至少需一小时。", 1 },
-    { "appointment", "明日的听众预约会被遵守",
-      "议会书记员或领主管家若“帮你安排明日的听众时间”，实际上并未真正落实预约，第二天队伍只得像其他人一样再次申请。如今听众已确定在次日到场。", 1 },
-    { "pileup", "同一战士同时遭受多次打击，所有伤害均计入统计",
-      "战士所受的伤势会累计直至处理完毕，总数最多不超过127。四次重击同时命中（成员被群殴）超过了这一上限并导致负数：战士反而恢复了耐力与力量，而非继续跌落。如今总和上限定为127。", 1 },
-    { "castlefreeze", "将队伍安置于城堡时不会冻结",
-      "为将队伍安置于城堡的某些楼层，游戏会随机抽取房间，直到出现非门厅的房间；若门厅是唯一被抽中的房间，游戏便会无限循环并冻结。如今在这种情况下，系统会优先选择第一个房间。", 1 },
-    { "university", "大学搜索配方失败后，关闭的是搜索本身，而非圣人",
-      "向大学咨询炼金术配方却失败，反而使关于圣人的提问被视为已提出：一周内禁止再问圣人相关问题，而配方问题则可立即重新询问。如今系统会标记配方问题。", 1 },
-    { "partyitems", "分发给全队的物品只发放一次",
-      "当一张卡片为每位成员分发某样东西（来自地牢或小偷），已有此物的成员却收到了两次：既加入了他的原有储备，又作为新储备再次领取。如今每人仅领取一次。", 1 },
-    { "itemflags", "骑乘时，坐骑的品质有助于逃亡",
-      "驾马逃离野性狩猎或狼群时，最差骑手的坐骑品质会提高成功率，但游戏此前找错了坐骑来源，因此未能添加任何效果。如今系统已找到合适的坐骑。", 1 },
-    { "membervalue", "教堂什一税会惠及正确成员",
-      "当队伍在城镇教堂缴纳十分之一时，本应首先惠及宗教方面表现最佳的成员的神恩，却未惠及任何成员（游戏取用了该技能对成员数量的数值）；而夜间潜入公会领袖家中时，显示的姓名却因混乱而与敏捷最低的成员不符。如今两者均已使用正确的成员。", 1 },
-    { "cardslips", "单张卡片上的小失误",
-      "宣称与胡斯派乐队交朋友的成功率仅为百分之一，无论显示的概率如何。投向小偷的药剂从未用完。旅店的厩务长仅在没有马匹时才询问是否出售队伍的坐骑。村长 Schulz 说“请收下这枚弗罗林”，却并未送出。圣殿骑士团的书桌教的配方读者早已知晓。女巫的药膏无法用来逃避浪潮间的安息日（两种选项均被关闭）。即使无人被吃掉，tatzelwurm 的死亡文字仍会出现。穿着盔甲穿越火与冰之洞穴、清理蜘蛛仓库，确实治愈了队伍，尽管其文本称队伍仍受创；而仓库主人甚至没有自己的名字（“我是……你们是坚韧的冒险者吗？”）。当队伍为一名强盗骑士付款时，汉萨同盟的导游或随行的村长 Schulz 被认为会通过抛硬币离开（甚至在他从未到来时），却最终留了下来。与城镇守卫的第二次冲突并未影响声望（卡片保留了抵达时发现的声望），码头方面则对缺钱的队伍表示“你需要导弹武器”，夜间前往城镇林地途中遇到麻烦，导致林地的夜卡即便白昼已至仍被激活，而潜入公会宿舍则使全队为每位成员进行了一次演练。如今每个人都在按其文本行事。", 1 },
-    { "nightwall", "夜间攀爬城墙时，使用正确的几率",
-      "夜间沿着城墙攀登，最擅长攀爬者用绳索的几率，是上次所有人失败攀登后剩余的那个数字（第一次为0：他总是掉下来），而大家不用绳索攀登的几率，则是以该数字与每位成员对比，而不是取最弱者（第一次必定如此）。首位成员从不被选为攀爬者。现在，攀爬者是所有人中最优秀的，他的几率由自己决定，而所有人的攀登几率则以最弱者的为准。", 1 },
-    { "campguard", "擅长使用冲击武器的守卫让营地更安全",
-      "营地值守的每位成员都能降低遭遇袭击的风险，若其武器熟练度达到30或以上，则每提高一点；但游戏忘记统计冲击类武器（棍棒、狼牙棒和锤子）。现在这些武器也计入了。", 1 },
-    { "enemygroups", "战斗中不会出现敌人群体消失的情况",
-      "设置战斗时，游戏会剔除那些最终空无一人的敌人群体，但有个错误导致第一个空群之后的所有群体也被误删：有些战斗中的敌人数量少于预设。现在只有空群才会被剔除。", 1 },
-    { "cityalert", "处于警戒状态的城镇会记得之前的麻烦",
-      "与城门守卫发生冲突后（以及起义后的数周内），城镇进入警戒状态，在此期间，-10或更糟的数值本应使城镇变得敌对（包括城门守卫、码头和市政厅），而非仅需达到-75或更糟。原测试方式正好相反，因此警戒从未生效。现在终于生效了。", 1 },
-    { "dayjobs", "方济各会修士的日常工作被提供",
-      "成员在旅店能找到的两种日常工作——传道修士和乞讨修士——本应在特定类型的城镇开放（但没有这样的城镇）；测试失误导致它们在各地都被关闭。现在符合条件的成员可以被提供这些工作。", 1 },
-    { "cloudline", "穿过烟雾云的射击被正确测试",
-      "射击是否能穿过云层（黑云、烟雾）曾被错误判断：有些云并未阻挡射击却被判定为阻挡，有些本不该通过的云却未被识别。现在场上每片云都会根据射击本身的轨迹进行检测。", 1 },
-    { "attrsum", "测试两项属性的卡牌会同时计入两项",
-      "三张卡牌寻找在两项属性之和上表现最佳的成员（一处地下城、一处城镇、一处乡村）：游戏曾两次只计算第一项属性，依据的是最后比较的那位成员。现在每位成员的两项属性相加，以总和最高者为准。", 1 },
-    { "lootcount", "不再丢失超过255件同类战利品",
-      "战后收集的战利品堆叠时，相同物品最多只能计数255件；超出部分将被丢弃（例如箭矢或弩箭过多的战斗）。现在无法容纳的部分会被移至另一行。", 1 },
-    { "corridors", "城堡走廊装饰位于正确位置",
-      "布置城堡时，游戏会在每条通道的墙边选定一个装饰点，从通道远端而非起点开始计数：几乎所有可能的随机结果都把装饰点放在通道尽头之外，甚至到了隔壁房间。现在装饰点就位于通道内。", 1 },
-    { "battledead", "战死的雇佣兵不会在事后派来替代者",
-      "雇佣兵战死后，其合同终止及“已离队”通知并未取消：日后仍可能派遣接替者加入队伍。现在这些通知在战斗结束后即被取消。", 1 },
-    { "createback", "创建角色时按Esc键不会重新打开已选择的童年",
-      "在创建角色时，按Esc键返回童年列表，即便该童年已被占用（角色已满15岁）：此时再从中选择一行，就会以同一编号开启成年职业。现在按Esc键可直接进入职业，就像按Esc键进入职业属性一样。", 1 },
-    { "ruinkeep", "烧毁的城堡要塞让队伍在搜查后继续前行",
-      "搜查强盗骑士烧毁的废墟时，结束语写着“当你重新踏上旅程……”，但卡片却回到了第一页，仿佛队伍刚刚抵达。现在队伍正如文字所述，已重返旅途。", 1 },
-    { "rkonce", "施予者只需向强盗骑士请求一次",
-      "城镇领主或议会（以及任何施予者）总会指定离城镇最近的强盗骑士；一周后再问，又给了队伍同一位骑士第二次任务，且有独立截止日期，尽管队伍已有第一次任务。现在已向队伍请求过该骑士的施予者，只需重复请求，无需再增加新任务。", 1 },
-    { "bestteacher", "同一技能的两位教师中，更优秀的那一位负责授课",
-      "当队伍在城镇雇用了两位教授同一技能的老师（比如大学和炼金术士），旅店总是优先选用先被雇用的一位，无论其收费和授课效果如何，即使另一位明显更优秀。现在学习该技能的成员将跟随最优秀的那位（能力最高；两人价格相当时选较便宜者）。", 1 },
-    { "minerelic", "矿井中发现的遗物与遗物本身同样珍贵",
-      "在矮人、地精和火山族的矿井里，队伍能在深处找到的遗物品质始终为35，无论具体为何种遗物（遗物品质范围为50至99），而且它甚至并非自身种类：圣阿努尔夫的大剑或圣奥拉夫的战斧都无法作为真正的武器使用。现在遗物的价值等同于物品清单所列。", 1 },
-    { "hitsound", "普通击打会产生声音",
-      "在原版中，未使目标后退的击打完全无声：只有未命中、格挡、后退、射击和死亡才会被听见，因此许多击打都悄然掠过。现在普通击打也会发出声响（游戏自带的后退声，或自定义音效包中的击打声）。", 1 },
+    { "blessing", "祝福不再消耗良好属性点", "在原作中，对同一属性的第二次祝福，或接近99的祝福，在效果消失时会扣除相应的点数。耐力或力量的提升在耗尽后会被全额扣除，即便经过一夜休息或伤口已将其消耗殆尽（重伤的队员也可能因此丧命）。而施加于整个队伍的降低效果（如“火与冰之洞穴”）则会在第一个被提升到该数值以上的队员处停止。如今，祝福只会收回其实际增加的部分以及仍高于上限的数值，而降低效果则会作用于每位队员，并在结束时予以恢复。", 1 },
+    { "fireward", "无防火护盾", "在原版中，圣人波利卡普的防火护甲以及类似的防护效果也计入护甲值（+16至+64），且不会随时间消退。现在它仅能抵御火焰伤害。", 1 },
+    { "nullitem", "无“（空）”或空项", "在原版中，物品名称为“（空）”的非真实物品以及空的堆叠可能会出现在队伍的物品栏中，这些物品既不能使用也不能出售。现在已不再添加此类物品。", 1 },
+    { "castle", "城堡战斗在骑士死亡时结束", "在城堡战斗中，只有骑士死亡才会结束战斗，但原版并未保存这一设定：在战斗过程中存档再读取后，即使骑士已死，离开仍会被视为逃跑。现在，读取存档后，他的死亡也会被计入。", 1 },
+    { "bounty", "商人悬赏的强盗骑士只支付一次，且不再有混乱的名字", "原版查找了错误的任务发布者，导致名字混乱、内存损坏，并使奖励被反复领取。现在它能找到正确的那一个。", 1 },
+    { "alchemy", "炼制会消耗所有原料", "原版在某种原料被分散到多个堆叠时只会取其中一部分；现在则会全部取走。", 1 },
+    { "fullpack", "再也不会有物品因队伍已满而丢失", "一名成员最多可携带 64 种物品；在原版中，游戏把物品交给已有 64 种的成员时，物品就会直接消失（任务物品也不例外）。现在它会交给已经携带该物品的成员，否则交给携带种类最少的成员（如果哪里都没有空间，仍然会丢失）。在没人有空间时购买会白花钱，从储物室取出物品给没有空间的成员会丢失：这两种情况现均被拒绝。", 1 },
+    { "innsave", "在旅店之后仍可存档与载入", "在某些情况下（例如点击空着的队伍栏位），离开旅店的住宿界面会导致存档与载入功能被禁用，直到打开角色面板为止。现在，离开后该功能已重新启用。", 1 },
+    { "colors", "成员的颜色得以保留（“霓虹发色”Bug）", "在原版中，成员在遭遇战斗后，其颜色与精灵图案有时会变成刺眼的样式。现在，他们的颜色会被保留并恢复原状。", 1 },
+    { "copyprot", "跳过手动检查", "当队伍首次出发时，游戏不再要求玩家从印刷手册中查找炼金术符号。", 1 },
+    { "potions", "武器药水会逐渐失效，且不会损坏武器", "致命之刃、强力边缘和强大力量从未失效，其加成还会不断叠加，超出游戏所能承受的上限：使用几次药水（或一次强大力量）后，武器尤其是弓箭的攻击力几乎为零。现在它们约一天后（19 到 21 小时）失效，且同时使用多种技能时，每项加成最多叠加到 15。", 1 },
+    { "mapfoot", "旅行地图底部不再跳动", "当旅行地图的视野到达陆地的最后几行（巴塞尔、苏黎世、康斯坦茨）时，队伍标记在视野滚动时会多移动五分之一，导致队伍向北跳两到四行：可能落在村庄旁边并走入其中。而且在视野再次滚动之前，队伍脚下的土地是从偏移几行的位置读取的：实际不存在的水域可能会阻止旅行。现在队伍留在原处，站在实际存在的土地上。", 1 },
+    { "offmap", "土地边界之外不再出现任务目的地", "巴塞尔东南方的一处洞穴位于土地底部边缘之外，队伍无法到达，因此派往那里的任务永远无法完成。现已将该洞穴移至土地范围内，队伍可以抵达。", 1 },
+    { "bestweapon", "武器训练会提升队长最擅长的武器技能", "原本卡片总是训练导弹装置，而现在，当卡片允许队长练习其最擅长的武器时，会训练队长最擅长的武器技能。", 1 },
+    { "itemcount", "抢劫者只会拿走现有物品（不会再崩溃）", "当抢劫者抢走队伍物品时，游戏曾多扣了一件物品；结果导致某位成员身无分文，最终竟出现负数物品，若其随后战死，游戏还会崩溃。现在，只会拿走实际存在的物品；带有此问题的存档会自动修复。", 1 },
+    { "store room", "储物室中不会丢失任何物品", "储物室可存放100种物品，但当某种物品数量超过127时（显示为负数，随即丢失），系统会拒绝继续放入，并提示原因。", 1 },
+    { "testcard", "开发者测试卡不会导致崩溃", "卡片0是开发者的测试卡（“试试看……你会喜欢的！”）。原本返回原卡的卡片，在没有来源卡时会进入卡片0，而游戏因测试卡缺少图片（pics\\\\xhouse3.pic）而停止运行。现在，它已切换到陆地视图，或前往队伍所在城镇。", 1 },
+    { "armorwear", "只有穿戴的盔甲才会磨损", "同款盔甲被视为同一堆，因此当正在穿戴的那件被酸或火腐蚀时，该成员所拥有的同款、同质的备用盔甲也会一同失去品质，并随之销毁。现在，只有 worn 的那件会受损。", 1 },
+    { "teachers", "在旅店训练时能找到城镇的教师", "当另一座城镇也同时拥有教师时，旅店的“训练”或“学习”选项会显示无人，费用甚至高达-4096芬尼（钱包还因此膨胀），结果一天下来什么也没学到。现在，旅店会列出这座城镇的教师，并收取相应费用。", 1 },
+    { "cardopts", "卡片选项不再因误操作而变灰", "翻越城墙时，贿赂可以不带现金提出（因为检查是否有钱的是通过下水道爬出的选项）；在反叛人群的堡垒前，队伍带着绳索攀爬时，相关选项会变灰；守卫只统计最后一名队员的绳索后，再攀墙时，每个后续选项都会按下方选项应有的方式执行（游戏中从未处理过的三个“放弃马匹”选项使它们步调不一致）。布商街白天除了“离开”外别无他物：其他行会街道都有的店面橱窗都被关闭，因此布商只能在夜间营业，且需付出声誉代价；如今这些店铺已恢复白日营业。", 1 },
+    { "patronsaint", "大教堂、圣科斯玛或圣达米安所教授的圣人知识已被习得", "向大教堂询问其守护圣人本意是让队长了解该圣人，而圣科斯玛与圣达米安彼此传授对方的知识；但游戏并未将其传授给任何成员：无人真正学到圣人的知识，第五名成员反而被标记为知道配方。现在，圣人知识已被习得。", 1 },
+    { "debtnote", "债券由商人注明", "商人派队伍去索取债券时，会标明持有者（美第奇家族或富格尔家族），但游戏却把它们藏在市场上方的另一间办公室里，因此闯入指定办公室也一无所获。现在，这些债券已被放置在指定办公室内。", 1 },
+    { "alchrisk", "风险更高的炼金配方更容易爆炸，而非更不易", "每种配方都标为低、中或高风险。在旅店、村庄或藏身处失败的批次中，有一半会以事故告终，而风险等级决定是哪一种：爆炸（队伍受伤、需赔偿损失、四个月无法入住旅店）或只是一阵恶臭（一个月）。游戏把两者弄反了：低风险下四次事故有三次爆炸，高风险下两次中有一次。现在低风险下四分之一爆炸，中风险下三分之一，高风险下一半。", 1 },
+    { "bishop", "来自大教堂的任务属于主教，而非商人", "大教堂的教规曾像为城镇商人发布任务一样：商人付费（且在任务进行期间不再自行发布新任务），教规每次来访都会推出新任务，而主教的遗物则可在任务完成后反复领取。现在，任务计为主教所有，其遗物作为奖励，仅发放一次。", 1 },
+    { "altar", "不再向被净化的异教祭坛派遣任务", "队伍摧毁的异教祭坛已从陆地视图中消失，但任务仍可能将其指派到那里，而此类任务往往无法完成（其发起者也无法再提供新的任务）。这类祭坛不再被选择；已派出的任务则会转而前往最近仍在矗立的祭坛。", 1 },
+    { "tomb", "从墓穴中取走的物品归胜利者所有", "任务从墓穴中寻找的物品会唤醒死者：赢得战斗虽未获得任何东西（尽管文字称队伍携物撤离），但输掉战斗则会得到该物品。现在，队伍获胜时即可获得该物品。", 1 },
+    { "lordreward", "领主为其任务买单", "在没有议会的城镇，要塞领主会派出强盗骑士狩猎，但游戏仅在议会大厅支付此类任务的报酬，因此在这样的城镇根本无法领取。现在，领主会在接见时付款，如同议会一般。", 1 },
+    { "armorday", "来自药水和圣人的盔甲与防火保护持续一天；硬甲按说明书生效", "硬甲（+1 到 +3 盔甲）、圣邓斯坦的（+1）和圣帕特里克的（+2）祝福、圣克里斯平的（每人盔甲品质 +10）以及火墙和圣波利卡普的防火保护从未失效，而且每次新的都会叠加到上一次之上。现在它们持续约一天，如说明书所述，而存档中以此方式堆叠的部分会被丢弃：只有仍在生效的才算。圣慈善、圣伊拉斯谟和圣潘塔莱翁（以及圣波利卡普）把防火保护当作盔甲给予：永久 +32 或 +48 盔甲（若开启「无防火护盾」修正则为零）；现在该成员会获得 90 的防火保护，持续一天，与圣波利卡普的相同。硬甲也按说明书生效：品质提高 20、25 或 30 点，厚度增加一级或两级（游戏此前给 1 到 3 级且不提高品质）；在已有硬甲生效时再次使用，会保留两者中更强的一个。", 1 },
+    { "greatpower", "大威力可提升武器的品质", "根据说明书，大威力可使武器品质提升14、22或30点（最高可达99），而品质决定了攻击的伤害力。原版则将这些点数直接加到了成员的伤害与穿透力加成上：+14穿透力，或+1伤害与+6穿透力，或+1伤害与+14穿透力。如今它仅能提升手中武器的品质（包括弓箭与枪械），效果持续约一天。", 1 },
+    { "standings", "存档会保留队伍在富格尔、美第奇与汉萨同盟中的声望", "各公司的卡片会提升或降低队伍在他们那里的声望（若队伍或城镇声望低于零，则无法接取任务），但存档并不能保留这一状态：加载后，声望将恢复到前一次游戏结束时的数值，或重启后归零。如今存档已能保存这一状态（原版仍可加载此类存档）。", 1 },
+    { "battlesaints", "战斗中召唤的圣人援助会失效", "原版中，战斗中召唤的圣人通常会提升属性与技能（一般情况下），而部分圣人索取的代价（降低某项属性）却从未返还：战斗结束后便不再追踪哪些效果该消失。如今两者都已按正常机制失效，如同战斗外召唤的援助一样。", 1 },
+    { "healboost", "治愈不再消耗增益", "治愈（恩典之 essence 或圣人治愈）能使受伤的属性部分恢复至最大值，但游戏也曾让超出最大值的属性部分回落至其上限：当某位成员的力量或耐力超过上限（如铁臂、新风、圣人加持）时，用于治愈的药剂往往会夺走大部分增益。如今治愈仅能提升属性，绝不会降低。", 1 },
+    { "teachcap", "教师只能教授与其自身能力相符的内容", "游戏文本规定教师不得教授超出自身能力的技能（这句台词游戏从未显示），而医师则会拒绝那些知识超过他的人；然而，任何水平的教师都能将技能学到99级。如今课程止于教师的能力范围：达到上限的成员将改为休息。", 1 },
+    { "oilweapons", "每种武器油仅对说明书点名的武器生效", "致命之刃对除打击武器和连枷外的每种武器生效，强力边缘对刀刃和长柄武器生效，强大力量对打击武器、连枷和手枪生效，如说明书和药水自身的标签所说。游戏把每种油都给了成员当时用来打击的任何武器，包括弓箭和拳头。", 1 },
+    { "pauls", "两位圣保罗均按各自文本行事", "圣保罗使徒给予的援助与圣保罗简单者相同（全部力量与耐力恢复，智力损失一半且需维持一天，要求美德70），而圣保罗简单者则复制了圣托马斯·阿奎那的帮助。使徒自身的帮助（通用语、拉丁语、读写、魅力、耐力，少量力量恢复；美德19，按说明书所述）虽存在于游戏代码中却从未启用。如今两人各按其文本行事。", 1 },
+    { "saintrep", "圣内波穆克和圣塞西莉亚的声望加成会作用于真实的城镇", "在布拉格召唤时，圣约翰·内波穆克提升的是某个无关之地（或根本不存在的地点）的声望，而非布拉格的；在远离任何城镇的地方（在陆地视图中）召唤圣塞西莉亚时，她提升的是根本不存在的地点的声望。现在内波穆克的加成作用于布拉格，塞西莉亚的加成作用于最近的城镇，与其他圣人一样。", 1 },
+    { "sainttexts", "圣人按其文本行事", "对于43位圣人，游戏提供的帮助要么不足，要么偏离了圣人本身的描述：圣克里斯多福、圣德罗戈与圣威尔弗里德从未加快过队伍的行程（如今一周内旅行更快：路上天数减少），圣尤斯塔修也未穿越树林；圣尼古拉斯与圣西奥多尔提供了连枷而非骑行；圣查理蒂、圣埃拉苏斯与圣潘塔莱昂未给队伍提供防火保护；圣卢特加迪斯的狂喜反而增加了耐力而非消耗；圣乔治、圣米迦勒、圣隆吉尼乌斯、圣莫里斯与圣埃利吉乌斯从未改善过武器或盔甲；圣克里斯平改良了金属盔甲，圣邓斯坦则未做任何改进；声望流向错误的土地或毫无声望……如今每位圣人都按其文本行事（新的角色表与祈祷界面详细描述了每位圣人）。盔甲与防火圣人需要“药剂与圣人提供的盔甲与防火保护可持续一天”的修复。", 1 },
+    { "nightbowyer", "弓匠夜间也出售弓箭", "夜间醒来时，弓匠开设了一家专门销售铁匠武器与盔甲的店铺，却不卖弓箭：夜卡将铁匠的商品交给了这家店。如今这里出售的正是弓匠白天所售之物。", 1 },
+    { "confession", "告解至少需一小时", "队伍在城镇的声望越高，教堂内的告解时间就越短：声望达110时无需等待，120以上则会倒转钟表。如今告解至少需一小时。", 1 },
+    { "appointment", "明日的听众预约会被遵守", "议会书记员或领主管家若“帮你安排明日的听众时间”，实际上并未真正落实预约，第二天队伍只得像其他人一样再次申请。如今听众已确定在次日到场。", 1 },
+    { "pileup", "同一战士同时遭受多次打击，所有伤害均计入统计", "战士所受的伤势会累计直至处理完毕，总数最多不超过127。四次重击同时命中（成员被群殴）超过了这一上限并导致负数：战士反而恢复了耐力与力量，而非继续跌落。如今总和上限定为127。", 1 },
+    { "castlefreeze", "将队伍安置于城堡时不会冻结", "为将队伍安置于城堡的某些楼层，游戏会随机抽取房间，直到出现非门厅的房间；若门厅是唯一被抽中的房间，游戏便会无限循环并冻结。如今在这种情况下，系统会优先选择第一个房间。", 1 },
+    { "university", "大学搜索配方失败后，关闭的是搜索本身，而非圣人", "向大学咨询炼金术配方却失败，反而使关于圣人的提问被视为已提出：一周内禁止再问圣人相关问题，而配方问题则可立即重新询问。如今系统会标记配方问题。", 1 },
+    { "partyitems", "分发给全队的物品只发放一次", "当一张卡片为每位成员分发某样东西（来自地牢或小偷），已有此物的成员却收到了两次：既加入了他的原有储备，又作为新储备再次领取。如今每人仅领取一次。", 1 },
+    { "itemflags", "骑马逃亡会计算最差的骑手坐骑", "骑马逃离野猎或狼群时，会把最差骑手的坐骑品质加到几率上，但游戏在错误的位置寻找坐骑，因此什么也没加上。现在它能找到坐骑了。", 1 },
+    { "membervalue", "教堂什一税会祝福最擅长宗教的成员", "当队伍在城镇教堂缴纳什一税时，本应首先归于最擅长宗教的成员的神恩却落到了没有任何成员身上（游戏把技能的数值当成了成员的编号）；而夜间潜入公会会长之家时，显示的名字混乱不清，而非最不敏捷的成员。现在两者都会使用正确的成员。", 1 },
+    { "cardslips", "单张卡片上的小失误", "与胡斯派营地结交的成功率恒为百分之一，无论显示的几率是多少。投向脚夫的药水从未被用掉。旅店的马厩管理员只在队伍没有坐骑时才询问是否出售队伍的坐骑。村庄的舒尔茨说「请收下这枚弗罗林」却什么也没给。圣殿骑士团的写字台教给读者他已经知道的配方。女巫的药膏无法用来在浪潮之间逃出安息日（它的两个选项都被关闭了）。塔佐蠕虫的死亡文本即使没人被吃掉也会出现。穿着盔甲穿越火与冰雹的洞窟、以及清理蜘蛛仓库，都会治疗队伍，尽管它们的文本说那是伤害；而仓库的主人没有自己的名字（「我是 。你们是勇敢的冒险者吗？」），再次遇到戴着红帽的矮人王时他也没有名字（「又是 来了，矮人王」）。当队伍因一名强盗骑士、汉萨的向导或村里的舒尔茨而获得报酬时，会说同行的那人（甚至他根本没来过）以掷硬币的方式离开，然后他又留了下来。与城镇守卫的第二次战斗不消耗声望（卡片保留了它到达时找到的声望），码头对付不起船费的队伍说「你需要一件远程武器」，夜间在前往城镇树林的路上遇到麻烦时，即使天已亮也会进入树林的夜卡，而潜入公会驻地会让整个队伍按每位成员各练习一次。现在每张卡片都按它的文本行事。", 1 },
+    { "nightwall", "夜间攀爬城墙使用攀爬者自己的几率", "在夜间沿城墙攀爬时，用绳索的最佳攀爬者的几率是上一位攀爬者失败后留下的数字（第一次为 0：他总会摔下），而所有人不用绳索攀爬的几率则是将每位成员与那个数字比较，而非取最弱者（第一次必然如此）。第一名成员从未被选为攀爬者。现在攀爬者是所有人中最好的，他的几率是他自己的，而所有人攀爬的几率取最弱的成员。", 1 },
+    { "campguard", "擅长使用冲击武器的守卫让营地更安全", "营地值守的每位成员都能降低遭遇袭击的风险，若其武器熟练度达到30或以上，则每提高一点；但游戏忘记统计冲击类武器（棍棒、狼牙棒和锤子）。现在这些武器也计入了。", 1 },
+    { "enemygroups", "战斗中不会出现敌人群体消失的情况", "设置战斗时，游戏会剔除那些最终空无一人的敌人群体，但有个错误导致第一个空群之后的所有群体也被误删：有些战斗中的敌人数量少于预设。现在只有空群才会被剔除。", 1 },
+    { "cityalert", "处于警戒状态的城镇会记得之前的麻烦", "与城门守卫发生冲突后（以及起义后的数周内），城镇进入警戒状态，在此期间，-10或更糟的数值本应使城镇变得敌对（包括城门守卫、码头和市政厅），而非仅需达到-75或更糟。原测试方式正好相反，因此警戒从未生效。现在终于生效了。", 1 },
+    { "dayjobs", "方济各会修士的日常工作被提供", "成员在旅店能找到的两种日常工作——传道修士和乞讨修士——本应在特定类型的城镇开放（但没有这样的城镇）；测试失误导致它们在各地都被关闭。现在符合条件的成员可以被提供这些工作。", 1 },
+    { "cloudline", "云雾只阻挡穿过它们的射击", "判断射击是否穿过云雾（黑云、烟）的方式有误：射击会被不在路线上的云阻挡，或穿过挡路的云。现在战场上的每朵云都会对照射击自身的路线进行检测。", 1 },
+    { "attrsum", "测试两项属性的卡牌会同时计入两项", "三张卡牌寻找在两项属性之和上表现最佳的成员（一处地下城、一处城镇、一处乡村）：游戏曾两次只计算第一项属性，依据的是最后比较的那位成员。现在每位成员的两项属性相加，以总和最高者为准。", 1 },
+    { "lootcount", "不再丢失超过255件同类战利品", "战后收集的战利品堆叠时，相同物品最多只能计数255件；超出部分将被丢弃（例如箭矢或弩箭过多的战斗）。现在无法容纳的部分会被移至另一行。", 1 },
+    { "corridors", "城堡走廊的装饰留在其通道上", "布置城堡时，游戏会沿着每条通道的墙壁选一个位置来装饰，但它是从通道的远端而非起点开始计数的：除一种可能的掷骰外，所有结果都把位置放到了通道尽头之外，落在另一个房间里。现在该位置落在通道上。", 1 },
+    { "battledead", "战死的雇佣兵不会在事后派来替代者", "雇佣兵战死后，其合同终止及“已离队”通知并未取消：日后仍可能派遣接替者加入队伍。现在这些通知在战斗结束后即被取消。", 1 },
+    { "createback", "创建角色时按Esc键不会重新打开已选择的童年", "在创建角色时，按Esc键返回童年列表，即便该童年已被占用（角色已满15岁）：此时再从中选择一行，就会以同一编号开启成年职业。现在按Esc键可直接进入职业，就像按Esc键进入职业属性一样。", 1 },
+    { "ruinkeep", "烧毁的城堡要塞让队伍在搜查后继续前行", "搜查强盗骑士烧毁的废墟时，结束语写着“当你重新踏上旅程……”，但卡片却回到了第一页，仿佛队伍刚刚抵达。现在队伍正如文字所述，已重返旅途。", 1 },
+    { "rkonce", "施予者只需向强盗骑士请求一次", "城镇领主或议会（以及任何施予者）总会指定离城镇最近的强盗骑士；一周后再问，又给了队伍同一位骑士第二次任务，且有独立截止日期，尽管队伍已有第一次任务。现在已向队伍请求过该骑士的施予者，只需重复请求，无需再增加新任务。", 1 },
+    { "bestteacher", "同一技能的两位教师中，更优秀的那一位负责授课", "当队伍在城镇雇用了两位教授同一技能的老师（比如大学和炼金术士），旅店总是优先选用先被雇用的一位，无论其收费和授课效果如何，即使另一位明显更优秀。现在学习该技能的成员将跟随最优秀的那位（能力最高；两人价格相当时选较便宜者）。", 1 },
+    { "minerelic", "矿井中发现的遗物与遗物本身同样珍贵", "在矮人、地精和火山族的矿井里，队伍能在深处找到的遗物品质始终为35，无论具体为何种遗物（遗物品质范围为50至99），而且它甚至并非自身种类：圣阿努尔夫的大剑或圣奥拉夫的战斧都无法作为真正的武器使用。现在遗物的价值等同于物品清单所列。", 1 },
+    { "ownplace", "紧邻其他地点的村庄也可以进入", "踏上村庄时，游戏会寻找周围四格内的地点，并取列表中的第一个，而非最近的：如果矿井、城堡或其他地点恰好在那么近的地方，村庄就永远无法进入。走上施派尔以西的劳夫时，会进入东边四格处的拉梅尔斯堡矿井。现在队伍会进入它踏上的那一格所在的地点。", 1 },
+    { "hitsound", "普通击打会产生声音", "在原版中，未使目标后退的击打完全无声：只有未命中、格挡、后退、射击和死亡才会被听见，因此许多击打都悄然掠过。现在普通击打也会发出声响（游戏自带的后退声，或自定义音效包中的击打声）。", 1 },
+    { "rkcastle", "强盗骑士在城堡中讨命", "城镇议会、领主或商人，或某个村庄，会要求队伍杀死离他们最近的城堡中的强盗骑士。一旦任何地方都不再有强盗骑士的城堡（每座要塞都被烧毁：队伍杀死骑士的速度快过新人搬入废墟，每三个月一个），游戏就会点名城里的一个骑士，而他永远找不到，还可能再次被点名。现在，新的骑士会先搬入离该城镇最近的烧毁要塞，正如游戏自身的规则所安排的那样，任务也会在那里点名他；已发给某个城镇或村庄的任务也会指向那座要塞。", 1 },
+    { "dragonhide", "躲避巨龙需要潜行与木系知识", "当巨龙飞过（或从地里爬出）时，躲藏并跟随它到其巢穴的几率来自队长的魅力和拉丁语，这一组合在游戏中没有其他检查使用，代码中也没有说明原因：很可能是笔误。既然游戏没有说明，此处猜测其本意：队伍的平均潜行（所有人都必须保持隐蔽）加上最佳的木系知识（用于跟随那头野兽），取其和的一半。", 1 },
+    { "knightdead", "被杀的强盗骑士会一直死去", "每种杀死强盗骑士的方式都会烧毁他的要塞并让队伍继续赶路，但在队伍离开该地之前，他塔楼的卡片可能再次出现，骑士在其中活着：他可以一次又一次地被杀死，每次都获得一笔悬赏（GitHub 问题 7）。现在，一旦他的要塞被烧毁，队伍在那里找到的就是那座烧毁的要塞。", 1 },
+    { "alertonce", "戒备中的城堡是一条记录，而非上百条", "在强盗骑士的塔楼处，挑战他、潜近和其他尝试每次都会留下城堡处于戒备状态的记录，持续 270 天，每次都在上一条旁边新增一条。足够多的尝试填满了游戏 300 条记录的表格，之后便无法再记录任何新内容：每次回合都出现「EVENT Failure」（GitHub 问题 8）。现在新记录会替换上一条，存档中多出的副本会在加载时被丢弃。", 1 },
+    { "kingdoor", "矮人王在他自己的门后等待", "在戴着红帽的矮人王的矿井中，通往国王的铁门在谜语被解开后会带着他的帽子把他带「回来」；但 12 条谜语中有 2 条反而通向了他让队伍离开的那张卡片，而矿井的另一扇门总是会通向那里。在那里擦身而过时门打开了，但国王永远消失，因此他的宝藏再也无法献还给他（GitHub 问题 9）。现在那扇门的每条谜语都会带来戴着红帽的国王。", 1 },
+    { "dwarfrelic", "矮人的圣物是从其守卫手中赢来的", "在矿井中过一扇铁门时，一个咧嘴笑的矮人说门后的敌人守着一件他们偷走的圣物，矮人无法触碰，并请队伍夺回它；然而游戏当时就把圣物放进了队长的手里。现在圣物会出现在队伍在该矿井中赢得的下一场战斗的战利品里（它会显示在那场战斗的战利品中），矮人只有在圣物到手后才说它已被取回。", 1 },
+    { "minechests", "矿井中的箱子是队伍可以打开的", "矿井楼层上画出的一些箱子只是图画：那里并没有箱子，点击或站在旁边也不会有任何反应。它们不再被画出；留在矿井楼层上的每个箱子都可以被打开（或撬开，或溶解其锁）。", 1 },
+    { "carditems", "卡片在战斗后给予的物品就是它所说的那些", "矿井被攻占后，矿工会给队伍十袋矿物（十种材料，每种 10 到 14 个），但没有一袋进入队伍的清单：战斗后或地城中的卡片会从游戏的物品列表副本中生成物品，而战斗自身的数据随后会覆盖该副本，于是物品变成了错误的种类。现在卡片给予的每件物品都从物品列表本身获取其种类和重量。", 1 },
+    { "prayfor", "每次祈祷都会询问是为谁而做", "从角色面板发起的祈祷会询问是为谁而做，但卡片要求的祈祷（在遭遇战或城镇中召唤圣人）不会：游戏把它当作全队的祈祷，而圣人给予个人的东西（增益、治疗）会落到队长身上，尽管祈祷并消耗神恩的是另一个人。用 P 祈祷而不作选择时也是如此。现在每次祈祷都会询问是为谁而做，即第一个祈祷的人，而未作选择的祈祷会帮助祈祷者本人。", 1 },
+    { "westedge", "从地图西缘离开地点会把队伍置于其旁边", "从旅行地图西缘附近的九个地点（南锡、埃尔贝、法尔肯贝根、通厄伦、赫默特、海尔蒙德、林贝、斯帕和布里耶）离开时，队伍会被放在其东边 2 到 5 格处；而且无论旅行地图的视野到达该边缘的何处，队伍都会被画在比游戏所记录位置往东一格的地方。现在队伍会像在其他地方一样出现在该地点旁边，并被画在它实际所在的位置。", 1 },
 };
 int FIX_COUNT = (int)(sizeof FIXES / sizeof FIXES[0]);
+
+/* ---------------------------------------------------------------- prayfor
+ * saint_screen(who, saint, party) asks who a prayer is for (pray_choose) by the saint's flags (its
+ * handler, what 6): bit 0 for a prayer from the sheet, bit 1 for one a card makes for the party
+ * (saint_pray_party), which no saint but one has. Unasked, the target (pray_target) stays -1, and the
+ * game's routines give -1's help to the leader. Here a card's prayer is asked as the sheet's is (party
+ * passed as 0 to the game's own screen; mods/prayview.c asks the same of ours), and -1 left at
+ * saint_finish, which every prayer passes before its help, becomes the one who prays. */
+static void prayfor_screen_hook(void)          /* saint_screen (who, saint, party), s034 1462:022c */
+{
+    u16 at = (u16)(SP + 8);                     /* (taken before the call: its return moves SP) */
+    int party = (s16)rw(SS, at);
+    if (party) ww(SS, at, 0);
+    hook_call_original();
+    if (unw_active) return;
+    if (party) ww(SS, at, (u16)party);
+}
+static void prayfor_hook(void)                 /* saint_finish (who, saint), s034 1462:06e2 */
+{
+    int who = (s16)rw(SS, (u16)(SP + 4));
+    if ((s16)g_rw(GV_pray_target) == -1 && who >= 0 && who < 5) {
+        g_ww(GV_pray_target, (u16)who);
+        if (getenv("DL_FIX_LOG")) fprintf(stderr, "fix prayfor: the help for member %d, who prays\n", who);
+    }
+    hook_call_original();
+}
 
 /* ---------------------------------------------------------------- blessing */
 #define ev_ptr g_event
@@ -579,21 +580,21 @@ static void col_read(u8 cur[5][28])
         for (int i = 0; i < 4; i++) cur[m][24 + i] = g_rb((u16)(GV_member_shield + m * 4 + i));
     }
 }
+static int col_grace;
+static void colours_after_load(void) { col_grace = 300; }   /* a game loaded (saves_on_loaded) */
 static void colours_frame(void)
 {
     if (!fix_on("colors")) { col_have = 0; return; }
     u8 cur[5][28]; col_read(cur);
-    extern unsigned dos_save_read_ms; u32 plat_ticks_ms(void);
-    /* a game was loaded (quick load, autosave, the save browser, Alt-L, Quickstart): its colours
-       come in over the next moments; counted in frames as well as time (a first start of the MT-32
+    u32 plat_ticks_ms(void);
+    /* a game was loaded (saves_on_loaded: quick load, autosave, the save browser, Alt-L, Quickstart): its
+       colours come in over the next moments; counted in frames as well as time (a first start of the MT-32
        or a slow disk held the frames for longer than the time: the stale colours went back) */
-    static unsigned last_read; static int grace;
-    if (dos_save_read_ms != last_read) { last_read = dos_save_read_ms; grace = 300; }
     static int prev_mode = -1;                                   /* (the game proper just began: Quickstart, a new game) */
-    if (prev_mode == GM_OTHER && game_mode() != GM_OTHER && grace < 300) grace = 300;
+    if (prev_mode == GM_OTHER && game_mode() != GM_OTHER && col_grace < 300) col_grace = 300;
     prev_mode = game_mode();
-    if (grace > 0) grace--;
-    int loading = grace > 0 || (dos_save_read_ms && plat_ticks_ms() - dos_save_read_ms < 4000);
+    if (col_grace > 0) col_grace--;
+    int loading = col_grace > 0 || (saves_loaded_ms && plat_ticks_ms() - saves_loaded_ms < 4000);
     if (!col_have || loading || game_mode() == GM_OTHER || ovl_loaded[37] || ovl_loaded[38] || ui_is_open()) { memcpy(col_good, cur, sizeof cur); col_have = 1; return; }
     if (!memcmp(cur, col_good, sizeof cur)) return;
     int size = (s16)g_rw(G_PARTY_SIZE), moved = 1;
@@ -648,6 +649,32 @@ static void offmap_hook(void)                  /* s030 1462:1c76 (f): the overla
     offmap_move();
     hook_call_original();
 }
+/* ---------------------------------------------------------------- westedge */
+static void westedge_hook(void)                /* s030 1462:1c76, right after overland_open placed the view and the marker */
+{
+    int col = (s16)g_rw(GV_map_view_col), mx = (s16)g_rw(GV_map_marker_x);
+    if (col == 0 && mx > 0x82 && mx <= 0x8a) {   /* (only the west clamp gives these: 0x82 - (x - 8), x 0..7) */
+        int x = 0x8a - mx;
+        g_ww(GV_map_marker_x, (u16)(x * 16 + 2));
+        if (getenv("DL_FIX_LOG")) fprintf(stderr, "fix westedge: marker x %d -> %d (column %d)\n", mx, x * 16 + 2, x);
+    }
+    hook_call_original();
+}
+static void westedge_view_hook(void)           /* s030 1462:20d2 (col, row): the view drawn - as from column 1 and row 1 when they are 0
+                                                  ("if (col == 0) col = 1"), while the marker's tile is still counted from 0: the
+                                                  view's first column and row are made 1, the marker moved back by one, the same tile */
+{
+    if ((s16)g_rw(GV_map_view_col) == 0) {
+        int mx = (s16)g_rw(GV_map_marker_x) - 16;
+        g_ww(GV_map_view_col, 1);
+        g_ww(GV_map_marker_x, (u16)(mx < 11 ? 11 : mx));      /* (11: as far left as a step takes it; column 0 is never drawn) */
+    }
+    if ((s16)g_rw(GV_map_view_row) == 0) {
+        g_ww(GV_map_view_row, 1);
+        g_ww(GV_map_marker_y, (u16)((s16)g_rw(GV_map_marker_y) - 4));
+    }
+    hook_call_original();
+}
 /* ---------------------------------------------------------------- itemcount */
 static int clamp_items(int i)              /* combatant i's item count into 0..64 (enemies 0..16) */
 {
@@ -657,6 +684,14 @@ static int clamp_items(int i)              /* combatant i's item count into 0..6
     fprintf(stderr, "fix itemcount: %s %d had %d items: %d\n", i < 5 ? "member" : "combatant", i, n, n < 0 ? 0 : max);
     g_wb(a, (u8)(n < 0 ? 0 : max));
     return 1;
+}
+/* the encounters' robberies (mods/encounters.c loseitems, keepitems): their own counts kept in bounds,
+   whether this fix is on or not - the game's loss routines leave -1 behind, and the crash it brings is
+   no part of the original a script of ours should bring back */
+void fixes_clamp_party_items(void)
+{
+    int size = (s16)g_rw(G_PARTY_SIZE);
+    for (int m = 0; m < size && m < 5; m++) clamp_items(m);
 }
 static void itemcount_frame(void)
 {
@@ -692,6 +727,7 @@ static void useitem_hook(void)             /* use_item_idx(who, idx): one of a s
 static void altar_frame(void);
 static void armourday_frame(void);
 static void greatpower_frame(void);
+static void rkcastle_frame(void);
 void fixes_frame(void)
 {
     colours_frame();
@@ -701,6 +737,7 @@ void fixes_frame(void)
     if (fix_on("altar")) altar_frame();
     if (fix_on("armorday")) armourday_frame();
     if (fix_on("greatpower") || sainttexts_on) greatpower_frame();
+    if (fix_on("rkcastle")) rkcastle_frame();
 }
 
 /* ---------------------------------------------------------------- potions
@@ -931,14 +968,19 @@ static void patrick_hook(void) { saint_armour(2); }
 /* Hardarmor by the manual: "Quality improves by 20 to 30 points, and thickness by one or two levels"
    (the game: thickness 1, 2 or 3, no quality). Grade 1, 2, 3: thickness 1, 2, 2 and quality 20,
    25, 30. A second while one runs keeps the stronger; a saint's armour adds to it. */
-static void hardarmor_give(int m, int *thick, int *qual)
+/* a Hardarmor dose's armour by its grade (1 to 3, from the potion's quality: the manual), for the hit and for
+   the margins' line (ui/effects.cpp) */
+void fixes_hardarmor_grade(int g, int *thick, int *qual)
 {
     static const int T[4] = { 0, 1, 2, 2 }, Q[4] = { 0, 20, 25, 30 };
-    int g = running_potions(m, 0x6d, 1);
     if (g < 0) g = 0; if (g > 3) g = 3;
-    *thick = T[g] + running_potions(m, 0x16d, 0);
+    *thick = T[g]; *qual = Q[g];
+}
+static void hardarmor_give(int m, int *thick, int *qual)
+{
+    fixes_hardarmor_grade(running_potions(m, 0x6d, 1), thick, qual);
+    *thick += running_potions(m, 0x16d, 0);
     if (*thick > 15) *thick = 15;
-    *qual = Q[g];
 }
 /* the quality: added to the target's armour (+0x4f body, +0x50 legs) for the hit alone - Hardarmor's
    everywhere, St. Crispin's on the armour worn (party +0x37 body, +0x38 legs: -1 none) */
@@ -1832,9 +1874,8 @@ static int best_quality_of(int m, u32 flags)
     int best = 0, n = g_rb((u16)(G_MEMBER(m) + G_M_NITEMS));
     for (int i = 0; i < n && i < 64; i++) {
         u16 code = rw(G_FAR2E38, G_ITEM(m, i)) & 0xfff;
-        u32 d = g_itemdef(code);
-        if (!d) continue;
-        u32 f = (u32)rw((u16)(d >> 16), (u16)((u16)d + 0x20)) | (u32)rw((u16)(d >> 16), (u16)((u16)d + 0x22)) << 16;
+        unsigned long cats; if (!gm_itemdef_cats(code, &cats)) continue;
+        u32 f = (u32)cats;
         int q = rb(G_FAR2E38, (u16)(G_ITEM(m, i) + 3));
         if (f == flags && q > best) best = q;
     }
@@ -1987,6 +2028,17 @@ static void templar_hook(void)              /* $Witcd02, the writing desk read (
 }
 static void tatzel_hook(void) { slip_run(SLIP_TATZEL, 29, 0x0e76, 0x2474, slip_away_hook); }   /* $McGuf02's tatzelwurm (s106 19bc:03e8) */
 static void hurt_hook(void) { slip_run(SLIP_HURT, GF_add_attr, slip_attr_hook); }              /* the cavern (s130 190c:033e), the spiders (s134 1838:0550, 0692) */
+static void kingname_hook(void)             /* $MineB03 (s101 18bd:0000): "It is $NamedOneName again", never set there */
+{
+    for (int i = 0; i < G_NEVENTS; i++) {       /* the king's name as $MineB00 and B02 set it: name_to_slot (7, vec_219d (), 0), the f2e of the quest's kind-8 tag-12 event */
+        u32 e = g_event(i);
+        if (!e || g_ev(e, G_EV_KIND) != 8 || g_ev(e, G_EV_TAG) != 12) continue;
+        ns_call(GF_name_to_slot, 3, 7, g_ev(e, G_EV_ITEM), 0);
+        if (ns_unwinding) return;
+        break;
+    }
+    hook_call_original();
+}
 static void spider_man_hook(void)           /* $DPost00 (s134 1838:0000): the warehouse owner's $NamedOneName, never set */
 {
     ns_call(GF_random_name, 3, (s16)g_rw(GV_cur_loc) + 0x9c4, 0, 0);
@@ -2282,8 +2334,7 @@ static void teach_saint_hook(void)
 /* room for one of (id, quality) with member m, or (fullpack passes it on) with anyone */
 static int room_anywhere(int m, int id, int q)
 {
-    u32 d = g_itemdef(id & 0xfff);
-    u8 type = d ? rb((u16)(d >> 16), (u16)((u16)d + 0x1e)) : 0;
+    int t0 = gm_itemdef_type(id); u8 type = t0 < 0 ? 0 : (u8)t0;
     int size = (s16)g_rw(G_PARTY_SIZE);
     for (int k = 0; k < 5 && k < size; k++) {
         if (k != m && (!fix_on("fullpack") || !g_rb(G_MEMBER(k)))) continue;
@@ -2299,7 +2350,7 @@ static void buy_room_hook(void)
     if (k == 0x1950 || k == 0x1970) {
         int i = (s16)g_rw(GV_barter_ware_cur) + (s16)g_rw(GV_barter_ware_top), m = (s16)g_rw(GV_barter_who);
         int id = i >= 0 && i < 100 ? (s16)g_rw((u16)(GV_barter_wares + 2 * i)) : -1;
-        if (id > 0 && m >= 0 && m < 5) {
+        if (id >= 0 && m >= 0 && m < 5) {                                  /* (item 0: the Hand Axe) */
             int q = ns_call(32, 0x1462, 0x0efa, 1, id);
             if (ns_unwinding) return;
             if (!room_anywhere(m, id, q)) {
@@ -2529,11 +2580,381 @@ static void minerelic_hook(void)            /* s009 182c:1146 (struct grp far *g
     hook_call_original();
 }
 
+/* ---------------------------------------------------------------- dwarfrelic
+ * $MineH00 (s101 1957:0004), past an iron door's riddle of its fourth group (prev_screen 0xd8..0xde): "Further beyond
+ * this door, Enemies linger, to Guard with their lives holy Treasure they've stole ... Try to regain it", the dwarfs
+ * "always vulnerable to Christian symbols"; the script then picks a relic the party lacks (vec_207b(0x1000)), gives it
+ * to the leader (add_item, s031 18e7:0128) and notes the mine as despoiled for good (event_new(-2, loc, 0x5a, 0x1c,
+ * 7, 0x63, 0, 9999 h, 0, 0xc), its last argument the note's tag (+0x28); a later visit's text 8: "you've taken their
+ * relic"). Here the relic is held back: the note is made with tag DR_TAG and the relic in its aux (+0x2a) (so loc_fact(0xc,
+ * 7) does not find it, and the save keeps it), and the next loot of a fight at that place (a loot screen in the battle, not a chest's,
+ * s023 1ef8:13d0) has the relic
+ * in its pile; the note then becomes the game's own (tag 0xc). */
+#define DR_TAG 0x7c
+static int dr_pending, dr_chest;
+static int card_named(const char *n) { char nm[16]; g_str(G_DGROUP, GV_card_name, nm, sizeof nm); return !strcasecmp(nm, n); }
+/* the note of a relic waiting at loc in EVENTS.TMP (u16 count, then 0x30-byte records, as cards_shutdown wrote it): its relic,
+   the note made the game's own there (tag 0xc), as cards_startup will read it back after the battle; 0 none */
+static int dr_take_from_file(int loc)
+{
+    char p[1200]; dos_host_path("EVENTS.TMP", p, sizeof p);
+    FILE *f = fopen(p, "r+b");
+    if (!f) return 0;
+    unsigned char c[2], r[0x30]; int code = 0;
+    if (fread(c, 1, 2, f) == 2) {
+        int n = c[0] | c[1] << 8;
+        for (int i = 0; i < n && i < G_NEVENTS && !code; i++) {
+            long at = ftell(f);
+            if (fread(r, 1, 0x30, f) != 0x30) break;
+            int kind = (s16)(r[0x22] | r[0x23] << 8), t0 = (s16)(r[0] | r[1] << 8), tag = (s16)(r[0x28] | r[0x29] << 8), l = (s16)(r[0x1c] | r[0x1d] << 8);
+            if (kind != 0x1c || t0 != 7 || tag != DR_TAG || l != loc) continue;
+            code = r[0x2a] | r[0x2b] << 8;
+            r[0x28] = 0xc; r[0x29] = 0; r[0x2a] = 0; r[0x2b] = 0;
+            fseek(f, at, SEEK_SET); fwrite(r, 1, 0x30, f);
+        }
+    }
+    fclose(f);
+    return code;
+}
+static void dwarfrelic_item_hook(void)      /* add_item_impl (who, code), s031 18e7:0128 */
+{
+    int code = (s16)rw(SS, (u16)(SP + 6));
+    if (code >= 0x96 && code <= 0xab && card_named("$MineH00")) {
+        dr_pending = code;
+        if (getenv("DL_FIX_LOG")) fprintf(stderr, "fix dwarfrelic: relic %#x held back for the guards beyond the door\n", code);
+        hook_return_far(0);
+        return;
+    }
+    hook_call_original();
+}
+static void dwarfrelic_event_hook(void)     /* event_new (owner, loc, c, kind, type, f, g, hours, x, tag), s029 0e76:2c4e */
+{
+    if (dr_pending && (s16)rw(SS, (u16)(SP + 10)) == 0x1c && (s16)rw(SS, (u16)(SP + 12)) == 7 && (s16)rw(SS, (u16)(SP + 22)) == 0xc) {
+        int loc = (s16)rw(SS, (u16)(SP + 6));
+        for (int i = 0; i < G_NEVENTS; i++) {               /* (the door passed again before the fight: the relic already waits) */
+            u32 e = g_event(i);
+            if (e && g_ev(e, G_EV_KIND) == 0x1c && g_ev(e, G_EV_TYPE0) == 7 && g_ev(e, G_EV_TAG) == DR_TAG && g_ev(e, G_EV_LOC) == loc) { dr_pending = 0; AX = (u16)i; hook_return_far(0); return; }
+        }
+        int code = dr_pending; dr_pending = 0;
+        ww(SS, (u16)(SP + 22), DR_TAG);                     /* (the last argument: the note's tag, +0x28) */
+        hook_call_original();
+        u32 e = (s16)AX >= 0 && !unw_active ? g_event((s16)AX) : 0;
+        if (e) ww((u16)(e >> 16), (u16)((u16)e + G_EV_AUX), (u16)code);   /* (the relic waiting, in the note itself: a save keeps it) */
+        return;
+    }
+    hook_call_original();
+}
+static void dwarfrelic_chest_hook(void) { dr_chest++; hook_call_original(); if (dr_chest > 0) dr_chest--; }   /* (chest_open, s023 1ef8:13d0: a chest's things, not a fight's) */
+static void dwarfrelic_screen_hook(void)    /* loot_distribute (items far, u8 *count, cash far), s040 1462:0000: the loot screen's entry; after a
+                                               fight at a place where a relic waits, it is in the pile (the native loot screen reads it from there) */
+{
+    int loc = (s16)g_rw(G_CUR_LOC);
+    u16 off = rw(SS, (u16)(SP + 4)), sg = rw(SS, (u16)(SP + 6)), cp = rw(SS, (u16)(SP + 8));
+    int n = g_rb(cp), code = 0;
+    if (!dr_chest && g_rb(GV_in_battle) == 1 && loc >= 0 && sg && n < 200) {
+        if (fixes_cards_down()) code = dr_take_from_file(loc);       /* (a battle has closed the cards: the party's notes are in EVENTS.TMP) */
+        else for (int i = 0; i < G_NEVENTS && !code; i++) {
+            u32 e = g_event(i);
+            if (!e || g_ev(e, G_EV_KIND) != 0x1c || g_ev(e, G_EV_TYPE0) != 7 || g_ev(e, G_EV_TAG) != DR_TAG || g_ev(e, G_EV_LOC) != loc) continue;
+            code = g_ev(e, G_EV_AUX);
+            ww((u16)(e >> 16), (u16)((u16)e + G_EV_TAG), 0xc); ww((u16)(e >> 16), (u16)((u16)e + G_EV_AUX), 0);
+        }
+    }
+    if (code >= 0x96 && code <= 0xab) {
+        u16 o = (u16)(off + 6 * n);
+        ww(sg, o, (u16)code); wb(sg, (u16)(o + 2), (u8)gm_itemdef_u8(code, 0x1e)); wb(sg, (u16)(o + 3), (u8)gm_itemdef_u8(code, 0x26));
+        wb(sg, (u16)(o + 4), 1); wb(sg, (u16)(o + 5), (u8)gm_itemdef_u8(code, 0x25));
+        g_wb(cp, (u8)(n + 1));
+        fprintf(stderr, "fix dwarfrelic: the guards' relic %#x is in the loot\n", code);
+    }
+    hook_call_original();
+}
+
+/* ---------------------------------------------------------------- minechests
+ * A floor's cells (20a5:0000, 40 x 40 x 4 bytes) hold a furniture piece in their first byte's high nibble; in a mine's
+ * set 5 is a closed chest and 6 an open one: the mine builder draws 5 at each chest it keeps (s009 1432: lv->cell[x6][x7]
+ * |= 0x50, the chest record's +6, +7), and opening one turns it to 6 (chest_open, s023 1ef8:13d0). A layout's chests the
+ * builder did not keep stay drawn, with no record (20a5:300c records of 0x2c bytes from 300e): nothing to open (his
+ * Döfering mine, floor 5). Here, as a mine's floor comes in (level_switch, s024 1ef8:059a), a 5 or 6 that is no
+ * record's picture is cleared. Only in a mine (the place's kind 6): elsewhere 5 and 6 are other furniture (a castle's
+ * set has dozens). */
+static void minechests_hook(void)
+{
+    hook_call_original();
+    if (unw_active) return;
+    int loc = (s16)g_rw(G_CUR_LOC);
+    u32 lr = loc >= 0 && loc < G_NLOC ? g_location(loc) : 0;
+    if (!lr || (s16)rw((u16)(lr >> 16), (u16)lr) != 6) return;
+    static unsigned char pic[40][40];
+    memset(pic, 0, sizeof pic);
+    int nc = (s8)rb(G_FAR20A5, 0x300c);
+    for (int k = 0; k < nc && k < 12; k++) {
+        int x = rb(G_FAR20A5, (u16)(0x300e + 0x2c * k + 6)), y = rb(G_FAR20A5, (u16)(0x300e + 0x2c * k + 7));
+        if (x < 40 && y < 40) pic[x][y] = 1;
+    }
+    int cleared = 0;
+    for (int x = 0; x < 40; x++) for (int y = 0; y < 40; y++) {
+        u16 o = (u16)((x * 40 + y) * 4);
+        int b0 = rb(G_FAR20A5, o), piece = b0 >> 4;
+        if ((piece == 5 || piece == 6) && !pic[x][y]) { wb(G_FAR20A5, o, (u8)(b0 & 0x0f)); cleared++; }
+    }
+    if (cleared && getenv("DL_FIX_LOG")) fprintf(stderr, "fix minechests: %d chest%s with nothing there not drawn\n", cleared, cleared == 1 ? "" : "s");
+}
+
+/* ---------------------------------------------------------------- carditems
+ * A card gives things by kind through add_items (who, code, n), add_item (who, code) and add_item_q (who, code,
+ * quality), s031 18e7:00e0, 0128, 016e, which fill the record's type, quality and weight from item_defs (2e38:0890),
+ * the game's copy of DARKLAND.LST: a battle or a dungeon lays its own data over it, and a card right after one ($MineE00,
+ * the miners' ten sacks once the mine is won: ten ingredients, 10 to 14 each) made records of the wrong type (72 as
+ * type 5, not 109), which the party's lists then did not show. Here the record (add_item_rec_impl, its struct on the
+ * stack: code, type, quality, count, weight) takes them from the list itself; add_item_q's quality stays. */
+static int ci_kind;                         /* 1 a thing of the list's quality, 2 of the caller's */
+static void carditems_n_hook(void)   { ci_kind = 1; hook_call_original(); ci_kind = 0; }
+static void carditems_one_hook(void) { ci_kind = 1; hook_call_original(); ci_kind = 0; }
+static void carditems_q_hook(void)   { ci_kind = 2; hook_call_original(); ci_kind = 0; }
+static void carditems_rec_hook(void)        /* add_item_rec_impl (who, struct item) */
+{
+    if (ci_kind) {
+        int code = rw(SS, (u16)(SP + 6)) & 0xfff, t = gm_itemdef_u8(code, 0x1e), w = gm_itemdef_u8(code, 0x25), q = gm_itemdef_u8(code, 0x26);
+        if (t >= 0 && rb(SS, (u16)(SP + 8)) != (u8)t) {
+            if (getenv("DL_FIX_LOG")) fprintf(stderr, "fix carditems: item %d of type %d, not %d\n", code, t, rb(SS, (u16)(SP + 8)));
+            wb(SS, (u16)(SP + 8), (u8)t);
+            if (w >= 0) wb(SS, (u16)(SP + 11), (u8)w);
+            if (ci_kind == 1 && q >= 0) wb(SS, (u16)(SP + 9), (u8)q);
+        }
+    }
+    hook_call_original();
+}
+
+/* ---------------------------------------------------------------- rkcastle
+ * The givers of robber knights (the councils, lords, merchants, the Hanse, the Fuggers, a village:
+ * s039 1462:10b6 and its ten callers) name the knight of the castle nearest them: nearest_loc_type
+ * (x, y, 2), s030 1462:2842, the nearest place of icon 2 not marked gone (+0x14 bit 2). With none on
+ * the map it answers the place the party is in (cur_loc): a knight in the town itself, never to be
+ * found, asked for again and again ("Robber knight @ Goslar", two at once: GitHub issue 5). The game
+ * brings a new knight into a ruin only every third month (s029 0e76:281c: a place of icon 0x1a, the
+ * burnt-out keep, becomes icon 2 again: +0x14 cleared, +0x0c 0x93, +0x0e 0x92, +8 4); a party killing
+ * them faster runs out. Here, asked for a castle and finding none, a new knight moves into the ruin
+ * nearest the place first, as that rule does. Tasks a game holds already for a town or a village
+ * (kind 8, tag 3, and their facts, kind 0x1c tag 3, at the same place) go to such a keep. */
+static int rk_dist(u32 q, int x, int y)
+{
+    int dx = abs((s16)rw((u16)(q >> 16), (u16)((u16)q + 4)) - x), dy = abs((s16)rw((u16)(q >> 16), (u16)((u16)q + 6)) - y) / 3;
+    return dx >= dy ? dy / 2 + dx : dx / 2 + dy;
+}
+static int rk_icon(int i) { u32 r = i >= 0 && i < 414 ? g_location(i) : 0; return r ? (s16)rw((u16)(r >> 16), (u16)r) : -1; }
+static int rk_nearest(int x, int y, int icon)          /* (as nearest_loc_type_impl: not a place marked gone) */
+{
+    int best = -1, bd = 1 << 30;
+    for (int j = 0; j < 414; j++) {
+        u32 q = g_location(j);
+        if (!q || (s16)rw((u16)(q >> 16), (u16)q) != icon || (rb((u16)(q >> 16), (u16)((u16)q + 0x14)) & 4)) continue;
+        int d = rk_dist(q, x, y);
+        if (d < bd) { bd = d; best = j; }
+    }
+    return best;
+}
+static int rk_fell_lately(int loc)                    /* the game's word that the knight of loc fell (kind 0x1c, type 1, tag 3: 100 days) */
+{
+    for (int k = 0; k < G_NEVENTS; k++) {
+        u32 f = g_event(k);
+        if (f && g_ev(f, G_EV_KIND) == 0x1c && g_ev(f, G_EV_TYPE0) == 1 && g_ev(f, G_EV_TAG) == 3 && g_ev(f, G_EV_LOC) == loc) return 1;
+    }
+    return 0;
+}
+static int rk_new_knight(int x, int y)                 /* the ruin nearest x, y a robber knight's castle again; -1 none */
+{
+    int best = -1, bd = 1 << 30;                       /* (a keep whose knight fell within the last 100 days only when every ruin's did) */
+    for (int j = 0; j < 414; j++) {
+        u32 q = g_location(j);
+        if (!q || (s16)rw((u16)(q >> 16), (u16)q) != 0x1a) continue;
+        int d = rk_dist(q, x, y) + (rk_fell_lately(j) ? 1 << 20 : 0);
+        if (d < bd) { bd = d; best = j; }
+    }
+    if (best < 0) return -1;
+    u32 q = g_location(best); u16 qs = (u16)(q >> 16), qo = (u16)q;
+    ww(qs, qo, 2); wb(qs, (u16)(qo + 0x14), 0); ww(qs, (u16)(qo + 0x0c), 0x93); ww(qs, (u16)(qo + 0x0e), 0x92); ww(qs, (u16)(qo + 8), 4);
+    fprintf(stderr, "fix rkcastle: no robber knight's castle left: one moves into the burnt-out keep %d\n", best);
+    return best;
+}
+static void rkcastle_hook(void)             /* nearest_loc_type_impl (x, y, icon) */
+{
+    int x = (s16)rw(SS, (u16)(SP + 4)), y = (s16)rw(SS, (u16)(SP + 6)), icon = (s16)rw(SS, (u16)(SP + 8));
+    hook_call_original();
+    if (ns_unwinding || icon != 2) return;
+    int r = (s16)AX;
+    if (r >= 0 && rk_icon(r) == 2) return;
+    int c = rk_new_knight(x, y);
+    if (c >= 0) AX = (u16)c;
+}
+static void rkcastle_frame(void)
+{
+    static int tick;
+    if (++tick % 120) return;
+    for (int i = 0; i < G_NEVENTS; i++) {
+        u32 e = g_event(i);
+        if (!e || g_ev(e, G_EV_KIND) != 8 || g_ev(e, G_EV_TAG) != 3) continue;
+        int town = g_ev(e, G_EV_LOC), ic = rk_icon(town);
+        if (ic != 0 && ic != 8) continue;                            /* (a city or a village: never a knight's) */
+        u32 t = g_location(town);
+        int x = (s16)rw((u16)(t >> 16), (u16)((u16)t + 4)), y = (s16)rw((u16)(t >> 16), (u16)((u16)t + 6));
+        int c = rk_nearest(x, y, 2);
+        if (c < 0) c = rk_new_knight(x, y);
+        if (c < 0) continue;
+        for (int k = 0; k < G_NEVENTS; k++) {
+            u32 f = g_event(k);
+            if (f && (g_ev(f, G_EV_KIND) == 8 || g_ev(f, G_EV_KIND) == 0x1c) && g_ev(f, G_EV_TAG) == 3 && g_ev(f, G_EV_LOC) == town) g_ev_set(f, G_EV_LOC, c);
+        }
+        fprintf(stderr, "fix rkcastle: the robber knight asked for in place %d now lives at %d\n", town, c);
+    }
+}
+
+/* ---------------------------------------------------------------- knightdead
+ * The robber knight's tower ($Raubi03, s080 1929:0006, card 0x93) and the cards of sneaking up ($Raubi04,
+ * s081 1838:0000, 0x94) and of a saint's help ($Raubi05, s081 18bb:0004, 0x95) never ask whether the knight
+ * still lives. Each way of killing him burns the keep (the place's icon 0x1a, gone, its own card 0x157, the
+ * burnt-out keep) and sends the party on its way (0x0c), but the tower's card came round again before the
+ * party left the place, knight and all: "Sneak in, set on fire, kill knight in combat, repeat", a bounty
+ * each time (GitHub issue 7). Here those cards, at a keep already burnt, give way to the place's own card. */
+static void knightcard_hook(void)
+{
+    int loc = (s16)g_rw(G_CUR_LOC);
+    u32 r = loc >= 0 && loc < 414 ? g_location(loc) : 0;
+    if (!r || (s16)rw((u16)(r >> 16), (u16)r) != 0x1a) { hook_call_original(); return; }
+    int c = (s16)rw((u16)(r >> 16), (u16)((u16)r + 0x0c));
+    if (c <= 0) c = 0x0c;
+    g_ww(GV_next_card, (u16)c);
+    fprintf(stderr, "fix knightdead: the knight of %d fell and his keep burnt: its own card %#x\n", loc, c);
+    AX = (u16)c;
+    hook_return_far(0);
+}
+
+/* ---------------------------------------------------------------- alertonce
+ * At the robber knight's tower, challenging him, sneaking up and other tries each leave word that the castle
+ * is on its guard (event_here(0x26, 6480 hours): 270 days, "ask politely" greyed), a new event each time
+ * beside the last. Enough tries (the tower's card coming round again, knightdead) filled the game's 300
+ * events, and every new one then failed: "EVENT Failure" (event_slot_free, s029; GitHub issue 8). Here a new
+ * one replaces the place's last, and a saved game's copies, and those of the word that the knight fell (kind
+ * 0x1c type 1 tag 3, one a kill), are dropped as it loads, the one ending last kept. */
+static int alert_same(u32 e, int kind, int type0, int loc, int tag)
+{
+    return e && g_ev(e, G_EV_KIND) == kind && g_ev(e, G_EV_TYPE0) == type0 && g_ev(e, G_EV_OWNER) == -2 && g_ev(e, G_EV_LOC) == loc && g_ev(e, G_EV_TAG) == tag;
+}
+static void alertonce_hook(void)            /* event_here (kind, hours), s029 0e76:2930 */
+{
+    int kind = (s16)rw(SS, (u16)(SP + 4)), loc = (s16)g_rw(G_CUR_LOC);
+    if (kind == 0x26)
+        for (int i = 0; i < G_NEVENTS && !ns_unwinding; i++)
+            if (alert_same(g_event(i), 0x26, 0, loc, 0)) { ns_call(GF_event_free, 1, i); if (getenv("DL_FIX_LOG")) fprintf(stderr, "fix alertonce: the guard at %d renewed (event %d)\n", loc, i); }
+    if (!ns_unwinding) hook_call_original();
+}
+static long ev_end_hours(u32 e)
+{
+    static const int DAYS[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    int h = g_ev(e, G_EV_END), d = g_ev(e, G_EV_END + 2), mo = g_ev(e, G_EV_END + 4), y = g_ev(e, G_EV_END + 6);
+    long days = (long)y * 365;
+    for (int i = 0; i < mo && i < 12; i++) days += DAYS[i];
+    return (days + d) * 24 + h;
+}
+/* ---------------------------------------------------------------- kingdoor
+ * The mine of the dwarf king with the red hat (the quest's way 0, vec_2193 = s039 1462:16b4; its mine
+ * card $MineS00, s055 18c7:02b8, builds battlefield 0x0b) has three iron doors with a riddle each, drawn
+ * when the mine is built (s009 182c:1cb4 (0x0b, section)): section 3's from $MineT00..T11 (cards 0x5c,
+ * 0x71, 0xc5..0xce), section 10's from T12..T23 (0xcf..0xda), section 8's, the king's, from T24..T35
+ * (0xdb..0xe0 with 0xe0 twice, 0xe2, 0x153..0x156; checked by calling it). A riddle solved leads by its
+ * own number: T00..T11 to $MineB00 (0xe3, the dwarf's demands), T12..T25 to $MineB02 (0xe5, "You meet
+ * ... king of the troublesome dwarfs", go away), T26..T35 to $MineB03 (0xe6, "It is ... again", the red
+ * hat). So the king's door brought B02 for T24 and T25, 2 of its 12; brushing past him there (-3) opened
+ * it onto a passage the builder leaves without a section beyond (a ladder back to the same floor) and
+ * turned its trigger off, the king gone; B03 then came only from $MineB01's box when slamming it fails,
+ * never with the treasure taken (kind 0x1c tag 12 type 0xb), which its "offer the king his treasure
+ * back" needs (GitHub issue 9). Here B02 coming straight from T24 or T25 (prev_screen) gives way to B03.
+ * (The other ways' mines lead from those riddles to $MineH00 or $MineR07, never to B02.) */
+static void kingdoor_hook(void)             /* $MineB02, s101 189a:0002 */
+{
+    int prev = (s16)g_rw(GV_prev_screen);
+    if (prev != 0xdb && prev != 0xdc) { hook_call_original(); return; }
+    g_ww(GV_next_card, 0xe6);
+    fprintf(stderr, "fix kingdoor: the riddle %#x of the king's own door: the king again ($MineB03), not the first meeting\n", prev);
+    AX = 0xe6;
+    hook_return_far(0);
+}
+
+static void alertonce_after_load(void)      /* (saves_on_loaded) */
+{
+    if (!fix_on("alertonce")) return;
+    int freed = 0;
+    for (int i = 0; i < G_NEVENTS; i++) {
+        u32 e = g_event(i);
+        int kind = e ? g_ev(e, G_EV_KIND) : 0, type0 = e ? g_ev(e, G_EV_TYPE0) : 0, tag = e ? g_ev(e, G_EV_TAG) : 0;
+        if (!e || !((kind == 0x26 && type0 == 0 && tag == 0) || (kind == 0x1c && type0 == 1 && tag == 3)) || g_ev(e, G_EV_OWNER) != -2) continue;
+        int loc = g_ev(e, G_EV_LOC);
+        for (int k = i + 1; k < G_NEVENTS; k++) {
+            u32 f = g_event(k);
+            if (!alert_same(f, kind, type0, loc, tag)) continue;
+            int drop = ev_end_hours(f) > ev_end_hours(e) ? i : k;       /* (the one ending last stays) */
+            ns_call(GF_event_free, 1, drop); freed++;
+            if (ns_unwinding) return;
+            if (drop == i) break;
+        }
+    }
+    if (freed) fprintf(stderr, "fix alertonce: %d copies of a castle's guard or of a fallen knight dropped from the saved game\n", freed);
+}
+
+/* ---------------------------------------------------------------- dragonhide
+ * $Drago01, the dragon seen in its land (s081 19bc): its first option, "hide, then follow it back to
+ * its lair" (and "hide, wait until the crack cools, and enter its lair"), asks its chance of 19bc:0a40:
+ * (member_attr(-1, 5) + member_skill(-1, 11)) / 2, the leader's Charisma and Speak Latin, clamped 0..99
+ * (AX the chance, DX the leader). No other check pairs them (s076's priest adds Religion, Charisma,
+ * Latin and Virtue); the card's other options use the numbers they mean (Riding 17 for riding away), so
+ * an old numbering is unlikely. Here: the party's average Stealth (party_avg_skill(15)) and its best
+ * Woodwise (party_max_skill(18)), half the sum, clamped as before; the leader still the one named. */
+static void dragonhide_hook(void)           /* s081 19bc:0a40 () -> AX chance, DX who */
+{
+    int st = ns_call(GF_party_avg_skill, 1, 15); if (ns_unwinding) return;
+    int ww_ = ns_call(GF_party_max_skill, 1, 18); if (ns_unwinding) return;
+    int c = (st + ww_) / 2; if (c < 0) c = 0; if (c > 99) c = 99;
+    if (getenv("DL_FIX_LOG")) fprintf(stderr, "fix dragonhide: Stealth %d, Woodwise %d: %d%%\n", st, ww_, c);
+    AX = (u16)c; DX = (u16)(s16)(s8)g_rb(GV_leader);
+    hook_return_far(0);
+}
+
+/* ---------------------------------------------------------------- ownplace
+ * The place a step on the overland map enters (s030 1462:1300 (mx, my), the marker's place on the
+ * screen): the terrain under it from the view buffer (an icon, 50 and up, counts as 28; the
+ * terrain kept in D_d843), then the first location by index within rr tiles of it, rr 4 on terrain
+ * 29 (a town's or village's) and 1 elsewhere: in the game's columns x' (the view's column + the
+ * marker's) the window is x'-rr-1 .. x'+rr, and so on for the rows; a location's own tile is
+ * x'-1, y'-1. Four tiles took in places beside a village that come earlier in the list: Lauf
+ * (197, 48,693), west of Speyer, led into the Rammelsburg mine (178, 52,695). Here, on terrain 29,
+ * a location whose own tile the step is on is entered rather than another one near it. */
+static void ownplace_hook(void)             /* s030 1462:1300 (mx, my): the place entered, or none */
+{
+    int mx = (s16)rw(SS, (u16)(SP + 4)), my = (s16)rw(SS, (u16)(SP + 6));
+    hook_call_original();
+    if (unw_active) return;
+    int r = (s16)AX;
+    if (r < 0 || r >= G_NLOC || (s16)g_rw(0xd843) != 29) return;
+    int row = (my + 11) / 4, y1 = row + (s16)g_rw(GV_map_buf_row) + (s16)g_rw(GV_map_view_row);
+    int col = (((y1 - 1) % 2) ? mx + 16 : mx + 24) / 16, x1 = (s16)g_rw(GV_map_view_col) + col;
+    int tx = x1 - 1, ty = y1 - 1;
+    u32 p = g_location(r);
+    if (!p || ((s16)rw((u16)(p >> 16), (u16)(p + 4)) == tx && (s16)rw((u16)(p >> 16), (u16)(p + 6)) == ty)) return;   /* (the game's is on this tile) */
+    for (int i = 0; i < G_NLOC; i++) {
+        u32 q = g_location(i);
+        if (!q || rw((u16)(q >> 16), (u16)(q + 0x0c)) == 0x62) continue;
+        if ((s16)rw((u16)(q >> 16), (u16)(q + 4)) != tx || (s16)rw((u16)(q >> 16), (u16)(q + 6)) != ty) continue;
+        if (getenv("DL_FIX_LOG")) fprintf(stderr, "fix ownplace: tile %d,%d is location %d's own, not %d's\n", tx, ty, i, r);
+        g_ww(GV_cur_loc, (u16)i); AX = (u16)i;
+        return;
+    }
+}
+
 static const struct { int sect; unsigned seg, off; void (*fn)(void); } HOOKS[] = {
     { 29, 0x0e76, 0x4c04, blessing_hook }, { 14, 0x18bf, 0x0778, hitdamage_hook }, { 31, 0x18e7, 0x01b4, additem_hook },
     { 14, 0x0e76, 0x08fe, castle_hook }, { 80, 0x1870, 0x000c, bounty_hook }, { 33, 0x1462, 0x1630, alchemy_hook },
     { 31, 0x18e7, 0x01b4, additem_hook }, { 36, 0x1462, 0x0082, innsave_hook }, { -2, 0, 0, 0 }, { 41, 0x1462, 0x0000, copyprot_hook },
-    { 14, 0x18bf, 0x0778, hitdamage_hook }, { 30, 0x1462, 0x1c76, offmap_hook }, { 29, 0x0e76, 0x01c0, bestweapon_hook }, { 31, 0x18e7, 0x0406, removeitem_hook },
+    { 14, 0x18bf, 0x0778, hitdamage_hook }, { -2, 0, 0, 0 }, { 30, 0x1462, 0x1c76, offmap_hook }, { 29, 0x0e76, 0x01c0, bestweapon_hook }, { 31, 0x18e7, 0x0406, removeitem_hook },
     { 35, 0x1462, 0x0a46, storeroom_hook }, { 44, 0x1838, 0x0000, testcard_hook },
     { 19, 0x1ef8, 0x0968, armourwear_hook }, { 36, 0x1462, 0x0082, teachers_lodging_hook }, { GF_card_options, cardopts_hook },
     { GF_set_member_bit, patron_hook }, { 108, 0x1925, 0x0438, debtnote_hook }, { 29, 0x0e76, 0x3fb2, alchrisk_hook },
@@ -2547,10 +2968,14 @@ static const struct { int sect; unsigned seg, off; void (*fn)(void); } HOOKS[] =
     { 36, 0x1462, 0x1b80, campguard_hook }, { GF_groups_fixup, enemygroups_hook }, { GF_loc_hostile_impl, cityalert_hook },
     { 36, 0x1462, 0x197e, dayjobs_hook }, { GF_cloud_blocks_line, cloudline_hook }, { GF_party_max_attr_sum, attrsum_hook },
     { 14, 0x19cd, 0x33c0, lootcount_hook }, { 7, 0x15af, 0x0698, corridors_hook }, { GF_party_delete, battledead_hook },
-    { GF_create_draw, createback_hook }, { 129, 0x1942, 0x021c, ruinkeep_hook }, { 39, 0x1462, 0x10b6, rkonce_hook }, { GF_event_find, bestteacher_hook }, { 9, 0x182c, 0x1146, minerelic_hook }, { -2, 0, 0, 0 } };   /* (hitsound: mods/sfx.c) */
-_Static_assert(sizeof HOOKS / sizeof HOOKS[0] == sizeof FIXES / sizeof FIXES[0], "每次修复都配有一个钩子（或{ -2 }），顺序不变");
+    { GF_create_draw, createback_hook }, { 129, 0x1942, 0x021c, ruinkeep_hook }, { 39, 0x1462, 0x10b6, rkonce_hook }, { GF_event_find, bestteacher_hook }, { 9, 0x182c, 0x1146, minerelic_hook }, { 30, 0x1462, 0x1300, ownplace_hook }, { -2, 0, 0, 0 }, { 30, 0x1462, 0x2842, rkcastle_hook }, { 81, 0x19bc, 0x0a40, dragonhide_hook },
+    { 80, 0x1929, 0x0006, knightcard_hook }, { GF_event_here, alertonce_hook }, { 101, 0x189a, 0x0002, kingdoor_hook }, { 31, 0x18e7, 0x0128, dwarfrelic_item_hook }, { GF_level_switch, minechests_hook }, { GF_add_item_rec_impl, carditems_rec_hook }, { GF_saint_finish, prayfor_hook }, { 30, 0x1462, 0x1c76, westedge_hook } };   /* (hitsound: mods/sfx.c) */
+_Static_assert(sizeof HOOKS / sizeof HOOKS[0] == sizeof FIXES / sizeof FIXES[0], "a hook (or { -2 }) for each fix, in the same order");
 /* further hooks that belong to a fix */
 static const struct { const char *fix; int sect; unsigned seg, off; void (*fn)(void); } MORE[] = {
+    { "dwarfrelic", GF_event_new, dwarfrelic_event_hook }, { "dwarfrelic", GF_chest_open, dwarfrelic_chest_hook }, { "dwarfrelic", 40, 0x1462, 0x0000, dwarfrelic_screen_hook },
+    { "carditems", GF_add_items_impl, carditems_n_hook }, { "carditems", 31, 0x18e7, 0x0128, carditems_one_hook }, { "carditems", GF_add_item_q, carditems_q_hook },
+    { "knightdead", 81, 0x1838, 0x0000, knightcard_hook }, { "knightdead", 81, 0x18bb, 0x0004, knightcard_hook },
     { "itemcount", 14, 0x0e76, 0x2324, falls_hook }, { "itemcount", 14, 0x18bf, 0x0fa4, useitem_hook },
     { "teachers", 29, 0x0e76, 0x324c, teachers_next_hook }, { "armorwear", 19, 0x1ef8, 0x0914, wornout_hook },
     { "blessing", 29, 0x0e76, 0x448a, blessing_end_hook },
@@ -2559,6 +2984,7 @@ static const struct { const char *fix; int sect; unsigned seg, off; void (*fn)(v
     { "armorday", GF_hit_damage, armour_hit_hook }, { "armorday", 39, 0x165c, 0x1868, crispin_hook },
     { "armorday", 39, 0x165c, 0x125a, charity_hook }, { "armorday", 39, 0x165c, 0x2628, erasmus_hook },
     { "armorday", 39, 0x165c, 0x5a84, pantaleon_hook }, { "armorday", 39, 0x165c, 0x6122, polycarp_hook },
+    { "prayfor", GF_saint_screen, prayfor_screen_hook },
     { "pauls", 39, 0x165c, 0x5d6c, paul_simple_hook }, { "saintrep", GF_loc_reputation_adj, repadj_hook },
     { "standings", 37, 0x1c7d, 0x0d24, standings_load_hook },
     { "membervalue", 71, 0x1838, 0x02a8, mv_wrap_hook }, { "membervalue", GF_party_max_skill, mv_query_hook },
@@ -2567,7 +2993,7 @@ static const struct { const char *fix; int sect; unsigned seg, off; void (*fn)(v
     { "cardslips", 77, 0x1996, 0x0378, schulz_hook }, { "cardslips", 118, 0x1a2b, 0x02ac, templar_hook },
     { "cardslips", 106, 0x19bc, 0x03e8, tatzel_hook }, { "cardslips", 130, 0x190c, 0x033e, hurt_hook },
     { "nightwall", 47, 0x1a44, 0x03e2, nightwall_rope_hook },
-    { "cardslips", 80, 0x1870, 0x000c, raubi_hook }, { "cardslips", 134, 0x1838, 0x0000, spider_man_hook }, { "cardslips", 134, 0x1838, 0x0550, hurt_hook }, { "cardslips", 134, 0x1838, 0x0692, hurt_hook },
+    { "cardslips", 80, 0x1870, 0x000c, raubi_hook }, { "cardslips", 134, 0x1838, 0x0000, spider_man_hook }, { "cardslips", 101, 0x18bd, 0x0000, kingname_hook }, { "cardslips", 134, 0x1838, 0x0550, hurt_hook }, { "cardslips", 134, 0x1838, 0x0692, hurt_hook },
     { "cardslips", 58, 0x191a, 0x01f4, gate_rep_hook }, { "cardslips", 58, 0x191a, 0x09ba, gate_rep_hook },
     { "cardslips", 51, 0x19f2, 0x0792, docks_hint_hook }, { "cardslips", 51, 0x19f2, 0x09a6, docks_hint_hook },
     { "cardslips", 51, 0x19f2, 0x0bba, docks_hint_hook }, { "cardslips", 51, 0x19f2, 0x0dd0, docks_hint_hook },
@@ -2577,7 +3003,8 @@ static const struct { const char *fix; int sect; unsigned seg, off; void (*fn)(v
     { "cardslips", 65, 0x18fb, 0x0a44, sneak_hook }, { "cardslips", 65, 0x1afe, 0x09cc, sneak_hook },
     { "cardslips", 67, 0x1869, 0x06e6, sneak_hook },
     { "patronsaint", 39, 0x165c, 0x17a4, teach_saint_hook }, { "patronsaint", 39, 0x165c, 0x1988, teach_saint_hook },
-    { "fullpack", GF_barter_key, buy_room_hook }, { "fullpack", 35, 0x1462, 0x0a46, store_get_room_hook } };
+    { "fullpack", GF_barter_key, buy_room_hook }, { "fullpack", 35, 0x1462, 0x0a46, store_get_room_hook },
+    { "westedge", 30, 0x1462, 0x20d2, westedge_view_hook } };
 
 void fix_enable(int i, int on)
 {
@@ -2609,6 +3036,7 @@ static void copy_check_hook(void)
 
 void fixes_init(void)
 {
+    saves_on_loaded(colours_after_load); saves_on_loaded(alertonce_after_load);
     if (getenv("DL_CHECK_COPY")) hook_install(-1, 0x06a1, 0x2eb4, copy_check_hook);
     hook_install(GF_cards_shutdown, cards_down_hook);   /* (the potions kept over a battle: they ask any_potion_fix) */
     hook_install(GF_cards_startup, cards_up_hook);

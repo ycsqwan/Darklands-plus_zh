@@ -1,23 +1,162 @@
 # Darklands+ changelog
 
-## 1.4 (not yet released)
+## 1.4.6
 
-What changed since 1.3.
+What changed since 1.4.5.
 
-- **Camp:** Guard the camp has a picture of its own (the watch's lantern), and under it the chance that the lord's men find the party, before the next day and the day after; Train or study, never possible in the wild, is gone.
-- **Praying:** the favor to spend stops where the chance reaches its best (99% at most); the rest of the bar is hatched, kept.
-- **Saints on the character sheet** can be picked by what they raise: a row of the attributes' and skills' shields and the town's opinion (all saints that raise Perception, say), the saint who gives the most of it first. Each saint's help shows under its name as shields, the most first, with one to three chevrons on each for how much it gives against what the other saints give (red, reversed, for what it costs); the Virtue it asks is a shield and number beside its name, greyed when nobody in the party has as much (the same on the cards' list of saints and the prayer screen). The saint clicked shows each member's best chance of being heard with the least favor it takes, and Pray, and what its help does an effect a line: shields that share a value side by side, the value once.
-- **A relic found deep in a mine** (dwarfs, kobolds, vulcans) is as good as the relic itself: the original made every one quality 35 and not its own kind of thing, so the saints' weapons among them could not be wielded. (61 fixes now.)
-- **World map, a town's panel:** its saints (those the party knows greyed), formulae as potions (known ones greyed) and teachers as the skills' shields, as in the margin; its boats as a dock, a boat and an arrow (leaving, arriving, both ways) before the towns.
-- **Alchemy:** a chart of the chance for every number of batches the ingredients allow (a click sets it), and under it what may come of the brew in pictures: the potions, the ingredients lost, a stink or an explosion at the inn. The chance's parts are shown as shields and signs. Formulae can be starred (first in the list) or put aside (last). The list says how many potions the ingredients make, and the Philosopher's Stone's plaque what its quality adds.
-- **Shields for attributes and skills, in place of their names:** the years' toll and "Lost for good" show each member's age (an hourglass) and each attribute or skill lowered as its shield with what it was and is; the town's teachers show who would learn which skill, by its shield, and from what; the margin's blessings and potions show each raised attribute or skill as its shield and how much; a card's chance names what it rests on beside each shield. In texts too, wherever an attribute or skill is named, changed or asked for: the inn's and camp's days, a weapon's skill and the Strength it needs, the load, the prayer screen, a profession's needs at character creation, the teachers' and audiences' conditions, the potions, the battle log and the skill raised in a battle; the pointer on a shield names it.
-- **The pointer:** the game's armored gauntlet drawn anew, crisp at any size: a fist while something is dragged; on its cuff the pause while a battle is paused, crossed blades over a foe a click would attack (a member chosen), an hourglass while Go to walks (F12 > Settings: the game's own little picture if preferred).
-- **Battle, a foe's tooltip and Enemy Info:** each of your weapons shown as its picture, then whether it pierces the foe's armor, does half damage or is mostly deflected.
-- **A shop's Formulae tab:** each formula's ingredients as pictures, what the party carries against what a batch needs and the price here; a click on one finds it in For sale. The +1 and +5 buttons are gone.
-- **World map:** the quests alone at the left; at the top right, finding a town (by name, the towns with something, where to buy an ingredient or any ware) and, merged, what the map shows (the layers and the kinds of place); each panel folds away. The party's pulsing mark centers the map on it. The ingredient and ware finders sort by a column's head (name, carried or quality, nearest), and the ware finder lists every ware seen until a name narrows it.
-- **Report a problem** (F12 > About): one click makes a zip of what a bug report needs (this session's log and the last one's, the settings, the two newest saves; your own name taken out of the folder paths in them), opens its folder and the GitHub bug form with the version, system and preset filled in; drag the zip into the form (posting takes a free GitHub account).
-- **Aging:** pointing at a member's age on the character sheet tells what the years will take next, and by five years on.
-- **The Philosopher's Stone on sale:** each town's alchemist and university always sell the same quality; the town's row in the margin shows the best (dim when no better than the party's), and the card's option to buy one is dimmed where it would gain nothing (a failed attempt still costs time).
+**Added**
+
+- **Screen effect** (F12 > Settings > Screen): scanlines, a CRT (scanlines, a monitor's red, green and blue mask on a large window, a faint glow) or a curved CRT over the game's picture; what Darklands+ draws over it stays sharp.
+- **Companions stay** (experimental, off; F12 > Settings > The party and its items): a companion taken on through a card, such as a village's Schulz (90 days) or the Hanse's man (360), stays for good, as a knight does.
+- **Specs for replacement art:** F12 > Mods > "Export the original pictures" now also writes README.txt beside the originals (the size and shape to draw at, what a card's frame and the party's panel cover, where the files go) and a guide to lay over a card's picture; the same in the download's README.
+- **Darklands+ watches for faults while you play:** when something that must never happen is seen (memory written past a buffer, as in the "MeetA01" menu below; every step on the map an encounter; the date going backwards without a load; the game's notes nearly full), it makes a report at once with the log and your newest saves and tells you; send it with what you were doing (F12 > About > Report a problem). F12 > About also has "Detailed log, for testing": the log then tells of every journey, encounter, Go to walk and fix at work.
+- **Heads in the battle log:** each party member's head before their name in the battle log (the left margin, the lines over the battlefield and F12 > Journal), and beside their bars in the right margin when the party panel is not shown.
+- **The Divine Favor a 99% chance takes**, on a card's list of saints, after the Virtue the saint asks: greyed when the member has less (their best chance then in its tooltip).
+
+**Fixed**
+
+- **People flickered in battles** (a figure missing or cut in two for a moment, the pointer gone): the window took about a third of a running battle's pictures while the game was drawing the field anew. It now shows only whole pictures.
+- **A notice and the clock over the Darklands+ window** (a "Lost for good" in camp): a notice that came up while the hours went by stood under the clock, its OK hidden, as if the game had stopped; F12 opened under both. The clock and the game's own messages now give way to any window over the game, and a notice waits behind F12 until it closes.
+- **The chronicle put down the wrong choice** with the cards drawn by Darklands+ (the dwarf's price agreed to, "distract him with a potion" written down): it read the words where the game's own card screen would have put them. It now takes the option chosen, and an option with a list of items or saints no longer stands in the card's text.
+- **Leaving a place near the travel map's west edge** (Helmond, Spa, Nancy and six more) put the party 2 to 5 tiles east of it, and wherever the map's view reached that edge, the party was drawn a tile east of where the game had it (fix *Leaving a place by the map's west edge puts the party beside it*). The party now comes out beside the place.
+- **A folding section that opened and shut again** (the world map's Find... and Show on the map, and every other one): a click pressed on its arrow opened it at once, and the release shut it again whenever the title had come under the pointer: the pointer slid onto it, or the section moved (the world map's right panel grew to the left as a section opened). Whether a click is on the arrow is now decided when it is pressed, and that panel is as wide folded as open.
+- **The game stopped answering for about 4 seconds** after a message shown for a while (in a battle or a dungeon, a prayer's "Saint Call Fails" ...), the keys pressed meanwhile acting all at once when it ended. When the window took long to draw (a big screen), the timer's ticks arrived together and the game's pause could miss its end, waiting until its counter came round again (256 ticks). The pause now counts the ticks gone by.
+- **The Game menu became "MeetA01", greyed out, for the rest of the game** (since 1.4.5): the game fills a card's text into a buffer of 900 characters with no limit, and three of 1.4.5's new encounters (The goose-foot track, The swallows under the ice, The salt smugglers) came out longer, over the menus' memory. Those three and two that came close are shortened; the game's filling-in now stops at 899 characters, a new encounter whose text could come out longer is reported as an error, and a mod's card text longer than 899 characters is cut there as it loads (the game copies it onto its own stack, where a longer one could crash it).
+- **Who a prayer helps** (fix *Every prayer asks who it is for*): a prayer a card calls for (calling on a saint in an encounter or a town) never asked who it was for, and what the saint gives one person (a boost, healing) went to the party's leader, though another prayed and spent the Divine Favor; praying with P did the same. Now every prayer asks, the one who prays first, and one made without choosing helps the one who prays.
+- **Stuck after a night in camp** (since 1.4): a night in camp that brought one of the new encounters made every step on the map an encounter until it came, and it came only where the game drew a card a new encounter may replace. After any other card the next step was an encounter again, so the journey went no further (a journey to Graz kept ending in Graz); on a river, where the game draws no card, the step went nowhere and the river stood like a wall. Now the first step on land brings the camp's encounter, whatever card the game drew; where the game has no card for that step, the party walks on and the encounter is tried again from the next tile, six times at most.
+- **A card left without its choices after a save:** a quicksave or autosave made while a card's text was showing, on a card that then comes back to its choices (a failed climb over a city's wall at night), left that card with neither text nor choices, and the party could go nowhere. The game's save wrote over the start of the card's text; Darklands+ now puts it back after every save.
+- **Go to listed places a town's cards never lead to** (Freiberg: "Barracks not found"): Go to now lists exactly what the town's cards offer, checked against each of them. The barracks are offered by no card of the game; Soldiers' Road only while the town is at war (Cities at war, F12 > Settings); the prison only while one of the party is held there; the bowyers only where the town has them. The town square, there in every town, was missing where the town has no town hall.
+- **A prayer crashed the game when the one praying carried a relic** (since 1.4.5): once the prayer screen closed, heard or not, the game stopped with an internal error ("interp: opcode ..."). The relic's saving on the favor put the favor back in the wrong place.
+- A prayer without a chosen member, to a saint whose help is fixed to match its text (fix *Saints do what their texts say*), gave the game's own help instead of the text's.
+- **"EVENT Failure" at every turn** (GitHub issue 8): at a robber knight's tower, each challenge, sneak or other try left a new note that the castle is on its guard, 270 days long, beside the last; enough tries filled the game's 300 notes. Now a new one replaces the last, and a saved game's extra copies are dropped as it loads (fix *A castle on its guard is one note, not hundreds*).
+- **A robber knight killed came back at once** (GitHub issues 6 and 7): his tower's card could come round again before the party left, the knight alive, a bounty each time (fix *A robber knight killed stays dead*); and with no knight's castle left, 1.4.5's new knight moved straight back into the keep just burnt. He now takes the nearest ruin whose knight did not fall within the last 100 days.
+- **The dwarf king's door brought the wrong meeting** (GitHub issue 9): in the mine of the dwarf king with the red hat, 2 of the 12 riddles of the door to the king led not to the king with his red hat but to the card where he tells the party to go away, which another door of the mine always brings; brushing past him there opened the door, but he was gone for good, and his treasure could no longer be offered back. Every riddle of that door now brings the king with his hat (fix *The dwarf king waits behind his own door*), and that card names him ("It is  again" before).
+- In a fight that began while the party walked in single file (a walk chosen on the level map puts it in single file), our way of fighting sent the followers at the enemy and the game put them back in the line, over and over, the whole fight; both reports of figures drawn wrong in a fight came from such fights. A follower in single file is now left to the game until real combat breaks the line; the leader still fights in its way.
+- A battle saved while the party walked loaded with the members marked as walking but going nowhere, and none of them fought on their own until given an order (the game clears the orders when a battle loads, but not the walking).
+- **The Saving options window** (the Save page) took no clicks: its switches could not be changed, nor the window moved or closed (GitHub issue 11). It now takes the pointer and keys while it is open (Esc closes it), and fits the screen. Its "Save now" button is gone: the page's own Save is beside it.
+- **"Lost for good" after a battle** while a saint's boost to a skill was at work: the boost, still running, was taken for a loss ("Artifice 58 (was 99)"). Nothing had been lost.
+- A member whose foe fell while it was on its way to it stood where it was for the rest of the fight, a foe hitting it or not.
+- **The miners' ten sacks of minerals** (a mine won) never reached the party: a card right after a battle made things from a copy of the item list the battle's own data lies over, and they came out as the wrong kind. Every thing a card gives now takes its kind from the item list (fix *Things a card gives after a battle are the things it names*).
+- **The dwarf's relic past a mine's iron door:** he tells of a relic its guards hold, which dwarfs cannot touch, and bids the party regain it, yet the game put a relic in the leader's hands at once. The relic is now in the loot of the next fight the party wins in that mine (fix *The dwarf's relic is won from its guards*).
+- **Chests in a mine that could not be opened:** some chests drawn on a mine's floors were only pictures, with nothing there to open. They are no longer drawn (fix *A chest in a mine is one the party can open*).
+- Foes on a mine's ninth floor (the demons of the deepest mines) were listed as "Enemy" in the battle margin and log: only eight floors' foes were read.
+- The battle margin's "The fight is won. To go on, walk the party out of this place" is gone: a street fight ends by itself once its foes are down, and in a castle, mine or dungeon the party explores on.
+- Fast forward showed twice in a battle: a badge over the field and the margin's button. The badge shows only where the margin does not.
+- **The level map showed a castle, mine or dungeon floor as seen to its edges** on entering it, at times. Until the game has put the floor in place, the floor in memory is the last battle's, or the last one the dungeon's builder made, with every cell revealed, and Darklands+ could take that for what the party saw. It now waits for the game's floor, and a floor kept as seen to its edges is forgotten.
+- In the battle log, a trap's dart showed as a shot by the member walking behind the one hit (in single file each member follows the one ahead, and the log took that for aiming). A trap's harm is now told as such ("Dietrich is hit by a dart from a trap"), and a shot is put down only to the other side.
+- **What came of it** missed the Hand Axe a card gives (the raftsmen's gift: the item numbered 0 was skipped), and the new encounters' town opinion: their texts say the town hears of it ("he will tell every market in Kuttenberg"), but the game makes such a change only by chance (100 less the town's opinion, in %). It is now made every time, and an opinion some cards have taken past 99 is kept.
+- "Speak Common changed from 99 to 99": practice in a skill already at 99 no longer reports a change.
+- The village of Putten, listed twice in the game's places two rows apart, was marked and named twice on the maps.
+- "Lost for good" notices stopped for the rest of the session after a save was loaded during a battle or in a castle, dungeon or mine.
+- The Saints page and the potions' texts counted the encounters that ask for each from the game's own cards alone: the new encounters were not counted, nor five of the game's own cards.
+- **The pointer's fingertip and the click** were 5 pixels apart on the map (as in the original) and on the screens opened from it (a camp, its alchemy). The gauntlet now points where the click lands, on every screen.
+- A save loaded during a journey kept the old game's camp at 20:00 (that night's camp counted as made, or one due) and could set off on the old game's next trip.
+- An autosave before a battle could keep the options of an earlier visit to the same card, which a load then offered again.
+- The margin called the blacksmith's wares "weapons" and the world map's finder the swordsmith's "Swords": the blacksmith sells weapons, armor and shields, the swordsmith every hand weapon.
+- With a data mod's own DARKLAND.MAP, auto-travel and the world map used the game's map, and a mod's items, towns and saints ticked or unticked during play were shown only after a restart.
+- Wrong texts: under a heavy load blows hand to hand come at the usual pace, not slower (the original's oversight); armor that a weapon does not pierce halves or cuts to an eighth the weapon's extra damage, not the whole blow; the alchemy risk fix's description now says that only half the failed batches end in a mishap.
+
+**Changed**
+
+- **Ammunition** (F12 > Settings > The party and its items) is a choice of three: endless (as before, the default; the setting says what the original's losses come to), given back after a battle (the original's rules, but what each member shot or threw that can be found again goes back to them when the loot screen opens: arrows and quarrels now too), or the original's. It takes the place of the endless-ammunition switch and "Thrown weapons picked up after a battle".
+- **The alchemy screen lists each potion once:** its three formulae are seals under its name, each marked with its grade as the flasks are (one to three chevrons, or dots with that look chosen), green where the party's ingredients make a batch, red where they fall short, faint where the alchemist does not know it; a click on a seal chooses that formula. A star or a mark aside is for the potion, all three formulae (one set on a formula before is kept for its potion).
+- **The game's messages over the screens of Darklands+** (Alchemy Success, Saint Call Fails): a box as wide as its words, everything centred, the heading green for a success and red for a failure beside the shield of what it took. It was a wide box with the words at its top left.
+- **The journey's line on the maps:** straight lines between the places where the way turns, which keep their shape as the party walks. 1.4.5's smoothed line was worked out again at every step from where the party stood, and its bends moved about.
+- **The new encounters give no use to what the original leaves without one:** 33 of them called on saints (St. Michael in 20 of them) or asked for potions (Ironarm, Trueflight) or things (a torch, candle or lantern; a grappling hook) that none of the game's own cards asks for. They now call on saints and ask for potions and things that the game's own cards ask for too; the two that needed a light no longer do.
+- A ladder that leads nowhere says so (GitHub issue 9: the one past the door in the dwarf king's mine; the mine's builder makes it a dead end that brings the party back where it stands). The way on is the floor just past it: the iron door's riddle, then the king.
+- **Stop to camp at 20:00, "when someone needs rest"** now means short of Strength, or of more Divine Favor than a night brings back by itself (Religious Training / 20, 1 to 5 a day). Endurance alone no longer stops the party: on the road it comes back by itself, each hour, to 2 short of full.
+- **The inn and camp screen sets each member's day by what they need:** Regain Strength when short of it, else Pray when short of Divine Favor, else Just Relax when short of Endurance; one who needs nothing Earns a little money at an inn or Guards the camp in the wild, and Just Relax is then not offered. The game set everyone to Just Relax, which refills only Endurance. Also after each day for one the game sets back to relaxing; a day you choose stands (switch: Each member's day set by what they need, F12 > Settings).
+- The load's tooltip on the character sheet: one short text instead of two that said the same twice.
+- Learning a saint (a library, a teacher): each saint shows the Virtue it asks of the one who prays, greyed for a member whose Virtue is lower.
+- Texts that left a rule vague now state it: the camp's risk after breaking camp (12 to 60 hours), how guards slow it, the shops' prices below 0 reputation, the cities at war, a teacher's refusal, the cathedral's relic gift, the chance of a trader's job, and nine fix titles, which now say what changed (seven said only "properly", "correctly" or "the right ...").
+
+## 1.4.5
+
+What changed since 1.4.
+
+**Added**
+
+- **80 more new encounters**, 160 in all: 40 more in the wild, 22 in the towns' streets, 10 at camp and 8 on the river boats. All 160 were checked for balance and tone.
+- **Doors:** out of a fight, clicking a shut door walks the party to it and opens it.
+- **Stop to camp at 20:00:** a campfire under the clock in the overland view (or F12 > Settings > Travel): off, at 20:00 when someone is short of Endurance, Strength or Divine Favor, or every night. From 20:00 a day in camp lasts 9 hours, from 21:00 it lasts 32; the camp and inn screen now says how long a day will be. Auto-travel goes on after the camp. Its small arrow hides it under the clock; pointing at the clock brings it back.
+- **Weapon relics can be equipped** from the character sheet (St. George's Greatsword and eight more), and a relic's quality is shown unless it is 25 or 99.
+- **What came of it** on the game's own cards too: under the text that follows a choice, what that text does not tell (a skill or attribute changed, things, money, fame, a town's opinion). Part of the card helpers (F12 > Settings > Cards and towns).
+- **Level map (Tab)** shows every room the party has entered, walls on each side of the floor, and the openings not yet explored.
+- **MT-32 or CM-32L:** with the ROM files of both found, F12 > Settings > Sound chooses which one plays (the MT-32 unless you pick the CM-32L).
+
+**Changed**
+
+- **Saints page:** each member's line gives the Divine Favor a 99% chance takes, or the best chance their favor gives now, or the least favor the saint hears; a saint's effects are listed largest first, as in the list. A crossed-out Virtue shield marks a saint that asks more Virtue than those who know it have. Fire protection, faster travel, armor and weapon quality and "no death from wounds" are shown with the same round pictures as the margin's Blessings and potions, here and in the potions' descriptions.
+- **New encounters never replace a unique one:** the witch's sod hut, the hermit, the travelling alchemist, the merchant caravan, the knight riding to a tournament and the cave in the pass come up as often as without the mod.
+- **The Huntsman's Horn:** the New encounters' night ride was called The Wild Hunt, like the game's own quest.
+
+**Fixed**
+
+- **Loading a save made in a battle or a mine set nearly everything the party carried to quality 25** (weapons, armor, potions, relics) while Ingredients of one quality was on, since 1.4: in a battle the game's own item list is not in memory, and nearly everything was taken for an ingredient. Darklands+ now reads DARKLAND.LST instead. Worn or wielded gear gets its real quality back when such a save is loaded (the game kept it), and shows again under Equipped. Spares and potions cannot be told: a save made before 1.4 still has them (the folder Darklands+ save backups keeps copies, a folder for each build).
+- Loading a save during play could crash the game: at once while a card from a castle, mine or dungeon was showing (the riddle of the dwarves' iron door), or a little later, often in the next battle.
+- **Relics now do what the manual says** (a borderline fix: the manual promises it and the game never did it, so how it works is our good-faith reading of the manual's two sentences, which speak of prayers to the relic's own saint and give no numbers): a relic takes Divine Favor off every prayer of its bearer, to any saint, when the bearer has the Virtue it asks, by the two numbers DARKLAND.LST keeps for each relic and nothing read (of several relics the best counts; no prayer drops below 5). A weapon relic counts while wielded, and only a member with its Virtue can equip it; any other relic counts for the member carrying it and is listed under its own Relics heading on the character sheet. A crossed-out Virtue shield marks a relic its bearer lacks the Virtue for. Relics are immune from any quality degradation. At a cathedral you choose which relic to give, and the box says what giving does. Switch: F12 > Settings > The party and its items.
+- Once no robber knight's castle was left, a town or village asked the party to kill a robber knight in the town itself, who could never be found (original bug, GitHub issue 5). A new knight now moves into the nearest burnt-out keep, and tasks already given go there.
+- The window telling of a permanent loss hid the pointer; Enter or Space now close it too.
+- What came of it listed blessings and potions wearing off as the card's doing (Endurance +63).
+- A walk chosen on the level map during a fight put the party in single file, which the game itself never does in a fight; members could then go back and forth between their foe and the friend they followed.
+- Hiding from a dragon was checked against the leader's Charisma and Speak Latin, a pair nothing else uses (original bug). It now takes the party's Stealth and Woodwise, our best guess at what was meant.
+- Some of 1.4's encounters punished a fight forced on the party as hard as one it chose (the flagellants: Divine Favor -20), and fleeing the lost child's wolves could lose a member for good without warning.
+- On the level map, a click beside a wall could walk the party to the far side of it.
+- The level map could forget rooms the party had seen, after a save was loaded or the place was entered again.
+- A walk chosen on the level map just after loading a battle stood still.
+- Auto-travel routes due north or south were drawn as a zigzag (GitHub issue 3).
+- F12 > Mods showed the New encounters' description from the middle of a word.
+
+## 1.4
+
+What changed since 1.3.1.
+
+**Added**
+
+- **Ways of fighting:** each member has one (Skirmisher, Archer, Charger or Manual), set on their box in the party panel and kept between battles. It decides what they do between your orders, and replaces the bow-or-sword switch.
+- **64 new encounters**, 80 in all (F12 > Mods): more in the wild, and new ones on the river boats, in town streets and in camp, each showing what came of your choice.
+- **Level map (Tab)** remembers what the party has seen. Click anywhere seen to walk there, or a floor to walk to its stairs.
+- **Ingredients of one quality:** all are quality 25, so each kind is one stack (quality only ever changed the price). F12 > Settings > The party and its items turns it off.
+- **Report a problem** (F12 > About) zips the logs, settings and newest saves, and opens a prefilled GitHub bug form.
+- **Alchemy:** a chart of the chance for each number of batches, the possible outcomes, starred formulae. Each town sells the Philosopher's Stone at one fixed quality.
+- **Saints** can be picked by what they raise; praying spends no more favor than the best chance needs.
+- **World map:** Find... looks up places, ingredients and wares; a town's panel shows its saints, formulae, teachers and boats.
+- **Battle order buttons** are larger pictures with their keys, in fixed places; potions have their own grid.
+- **Blessings and potions at work** are listed compactly in the margin, in battles too.
+- **Camp** shows the chance of the lord's men finding the party; Train or study, never possible in the wild, is gone.
+- **Aging forecast:** point at a member's age on the character sheet.
+- **Save and Load** show each save's file name.
+- **Beasts** have their own death sound in sound packs.
+- **Various UI legibility improvements.**
+- **For modders:** encounters can be placed on boats, in streets or in camp; `port/tools/enccheck.c` checks scripts.
+
+**Fixed**
+
+- Loading a save made during a new encounter crashed the game.
+- Save 100 did not appear on the Load page, and every later save overwrote it.
+- Lauf, west of Speyer, could not be entered: stepping onto it led into the Rammelsburg mine (original bug).
+- Party members could box each other in at a corner in a castle, mine or dungeon, leaving all but the leader stuck.
+- U beside a door walked the party to the stairs in single file instead of opening the door.
+- After a Darklands+ screen, the pointer could be drawn a little left of the spot a click takes.
+- Relics found deep in mines were always quality 35 and not the real item (original bug).
+- Near Basel, Zürich and Konstanz the party jumped two to four rows north on the travel map (original bug); journeys along Zürich's road got stuck at the map's edge.
+- Fast travel could walk in place without end; it now stops when 150 steps bring it no nearer.
+- Loading a save did not stop a journey under way or end an open encounter.
+- A battle loaded from a save stayed black until someone moved.
+- Battle saves made in a castle, mine or dungeon got garbled names.
+- Windows reporting a permanent loss could be closed by a stray key or click before being read.
+- City politics counted February 29s the game never has.
+- "Can't walk there" hints showed over the order buttons and panels.
+
+## 1.3.1
+
+Fixes to 1.3, nothing else. The first start makes the game's code again (a minute or two), as after installing.
+
+- **A door or passage a card opens now opens** (GitHub issue 2): in the mines, after the dwarves' riddle and the talk, the party stood again before the same shut iron door and could not reach the next floor. The translated program compared the game's routines without the place the program sits in memory, so the card's "the door slides open" never reached the floor; the translation is fixed.
+- **Saving inside a castle, mine or dungeon** kept the level's traps, secret doors, alarms and such doors as they are: through the same fault, a battle save turned every one into a trapdoor the whole party had to stand on, and after loading it the dwarves' door showed no riddle. Battle saves made by earlier versions are put right as they load.
+- **Enemies spring the dart and spell traps they walk into**, as in the original game (the same fault kept them from it).
+- **Fighters find their way around obstacles:** party members no longer get stuck for good. One who had waited a while behind a friend or a corner was told from then on that there was no way from where it stood: the three behind the leader stayed put, and in a group that one member made every order of the group fail. It lasted until the next fight, or until the switch was turned off.
+- **Scrolling a battle or dungeon by resting the pointer on an edge** (or with Shift) no longer flickers: each step showed the field without its people for a moment, and at the edge of the field, where the view no longer moves, at every step.
 
 ## 1.3
 
@@ -139,7 +278,9 @@ Every change can be switched off. **F12 > Settings > Helpers** offers presets: *
 
 ## Per version
 
-- **1.3 (to come):** Improved combat and one-click orders, cards that show who tries an option and what it rests on, the restored city politics, cities at war, Ironman, the soundtrack and sound previews, the world map's finders, and more of the original's bugs fixed.
+- **1.4:** ways of fighting, 64 new encounters, a level map that remembers and walks the party anywhere seen, ingredients of one quality, Report a problem.
+- **1.3.1:** doors opened by a card open again, dungeon battle saves keep their traps, party members no longer stuck for good.
+- **1.3:** Improved combat and one-click orders, cards that show who tries an option and what it rests on, the restored city politics, cities at war, Ironman, the soundtrack and sound previews, the world map's finders, and more of the original's bugs fixed.
 - **1.2 (previews):** the rebuilt screens, the best member, the shared pack and store room, quests at a glance, endless ammunition, potion pictures, the Guide, the card fixes and hints.
 - **1.1.1:** fixed a crash on loading with the side margins on. Smoother battle-map scrolling, thrown weapons returned after battles, and missed shots in the battle log.
 - **1.1:** cards drawn by Darklands+ with clickable options, chances and an illuminated initial.

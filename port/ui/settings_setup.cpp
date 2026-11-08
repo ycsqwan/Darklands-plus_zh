@@ -141,6 +141,16 @@ void setup_screen(void)
               : cur == 1 ? "对角线边缘的阶梯状效果被圆滑处理，不会出现模糊。但在没有合适显卡的电脑上，启用此选项会使游戏运行变慢。"
                          : "有些许模糊，如同老式显示器一般。");
     }
+    {   /* a screen effect over the game's picture (runtime/crt.c): what an old monitor did to it */
+        static const char *CE[4] = { "None", "Scanlines", "CRT", "Curved CRT" };
+        int ce = config_get_int("display.crt", 0); if (ce < 0 || ce > 3) ce = 0;
+        ImGui::SetNextItemWidth(UIS(200));
+        if (ImGui::Combo("Screen effect", &ce, CE, 4)) { config_set_int("display.crt", ce); ui_dirty_config = 1; }
+        ui_hint(ce == 0 ? "The game's picture as it is."
+              : ce == 1 ? "Dark lines between the game's rows of pixels, as on a monitor of the time (from twice the game's size up)."
+              : ce == 2 ? "Scanlines, the red, green and blue columns of a monitor's mask (on a large window) and a faint glow round bright pixels."
+                        : "The CRT look on a screen bowed outwards, darker towards its corners.");
+    }
     { extern int ui_margins_on; bool mg = ui_margins_on != 0, click = false;   /* (a long line: the words wrapped beside the box, not one line wider than the page) */
       ImGui::PushID("margins");
       if (ImGui::Checkbox("##mg", &mg)) click = true;
@@ -159,9 +169,6 @@ void setup_screen(void)
             ImGui::EndCombo();
         }
     }
-    { bool pd = config_get_int("display.pointer_drawn", 1) != 0;
-      if (ImGui::Checkbox("游戏重新绘制的手套式光标，无论尺寸如何都保持清晰锐利。", &pd)) { config_set_int("display.pointer_drawn", pd); ui_dirty_config = 1; }
-      if (ImGui::IsItemHovered()) ImGui::SetTooltip("拖动物体时显示拳头；袖口处显示暂停状态——暂停中的战斗、敌对双方剑刃交叉、以及“前往”时的沙漏。关闭时：显示游戏的小图标。"); }
     { bool sc = ui_sys_cursor != 0;
       if (ImGui::Checkbox("同时在游戏内显示系统鼠标指针", &sc)) { ui_sys_cursor = sc; config_set_int("display.system_cursor", sc); ui_dirty_config = 1; } }
     {   /* the menus' size (fonts are baked at start-up) */
@@ -238,7 +245,7 @@ void setup_sound(void)
     };
     auto tier = [&](const char *t) { ImGui::Spacing(); ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(120, 52, 20, 255)); ImGui::TextUnformatted(t); ImGui::PopStyleColor(); };
     tier("最佳");
-    device("mt32", "罗兰 MT-32", "罗兰在1987年推出的合成器，正是《Darklands》所适配的型号。游戏中的音乐与战斗音效皆由它奏出：音乐按原作编排，而打击声则尽可能贴近钢铁之感。",
+    device("mt32", "罗兰 MT-32 / CM-32L", "罗兰在1987年推出的合成器（CM-32L 是其后来的孪生型号），正是《Darklands》所适配的型号。音乐与战斗音效皆由它奏出：音乐按原作编排，而打击声则尽可能贴近合成器所能呈现的钢铁之感。",
            !strcmp(cur, "mt32") || !strcmp(cur, "auto"));
     {
         ImGui::Indent(UIS(30));
@@ -265,6 +272,16 @@ void setup_sound(void)
             ImGui::SameLine();
             if (ImGui::Button("Look again##mt32")) { mt32_rescan(); mt32_switch(); }
             ui_hint("《Darklands+》会根据文件内容自动查找，无论文件名为何：在该文件夹、游戏主文件夹及其“roms”子文件夹，以及Munt和DOSBox存放它们的位置。");
+            if (mt32_families() == 3) {                /* both pairs found: which one plays (sound.mt32_model; mt32.c) */
+                const char *m = config_get("sound.mt32_model", "mt32");
+                bool cm = !strcmp(m, "cm32l");
+                ImGui::TextUnformatted("演奏为");
+                ImGui::SameLine();
+                if (ImGui::RadioButton("MT-32", !cm) && cm) { config_set("sound.mt32_model", "mt32"); mt32_rescan(); mt32_switch(); ui_dirty_config = 1; }
+                ImGui::SameLine();
+                if (ImGui::RadioButton("CM-32L", cm) && !cm) { config_set("sound.mt32_model", "cm32l"); mt32_rescan(); mt32_switch(); ui_dirty_config = 1; }
+                ui_hint("两对 ROM 都在这里。它们听起来非常相似；CM-32L 上有少数战斗音效听起来不同（《Darklands》是为 MT-32 编写的）。");
+            }
             {   bool lcd = config_get_int("sound.mt32_lcd", 1), click = false;
                 ImGui::PushID("lcd");
                 if (ImGui::Checkbox("##lcd", &lcd)) click = true;

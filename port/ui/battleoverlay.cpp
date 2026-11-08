@@ -10,6 +10,7 @@
 #include <string>
 #include "alerts.h"
 #include "../mods/losaim.h"
+#include "../mods/styles.h"
 #include <vector>
 #include "imgui.h"
 #include "richtext.h"
@@ -48,8 +49,12 @@ std::string ui_enemy_name(int floor, u16 b);
 static std::string enemy_name(int floor, u16 b) { return ui_enemy_name(floor, b); }
 std::string ui_enemy_name(int floor, u16 b)
 {
-    static std::vector<EnmRec> recs[8]; static long sizes[8] = { -1, -1, -1, -1, -1, -1, -1, -1 }; static long long stamps[8];
-    if (floor < 0 || floor > 7) return "";
+    /* (a floor's file, level<floor>.enm: a mine goes as deep as 9 floors, and the 9th's foes - demons, in
+       the dwarves' mines - were "Enemy" while only 8 were read) */
+    enum { NF = 16 };
+    static std::vector<EnmRec> recs[NF]; static long sizes[NF]; static long long stamps[NF]; static bool init;
+    if (!init) { init = true; for (int k = 0; k < NF; k++) sizes[k] = -1; }
+    if (floor < 0 || floor >= NF) return "";
     char dn[16]; snprintf(dn, sizeof dn, "level%d.enm", floor);
     char p[1300]; dos_host_path(dn, p, sizeof p);
     struct stat stt; long long mt = stat(p, &stt) == 0 ? (long long)stt.st_mtime : 0;
@@ -238,6 +243,8 @@ void ui_draw_battle_bars(void)
 /* what a click there would do, while a member is given orders (battle.click_hint, mods/orders.c):
    "Click: attack", or why not ("No clear shot"), the first line of the info, or alone by the pointer */
 extern "C" const char *orders_hint(void);
+extern "C" int ui_pointer_on_cover(void);
+extern "C" int levelwalk_door_at(int gx, int gy), levelwalk_door_open(int n);   /* (mods/levelwalk.c) */          /* (ui/margins.cpp) */
 extern "C" int plat_pointer_outside(void);
 static void hint_line(const char *h)
 {
@@ -260,19 +267,35 @@ static void place_by_pointer(ImVec2 p)
 static const ImGuiWindowFlags INFO_FLAGS = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
                                            ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoSavedSettings;
 
+extern "C" int combat_improved(void);
+/* the first battle with the members' ways of fighting (1.4), for one who saw the intro below in an earlier
+   version: what they are, once (battle.ways_seen) */
+static void ways_intro(void)
+{
+    if (config_get_int("battle.ways_seen", 0) || !config_get_int("battle.intro_seen", 0) || !combat_improved() || !config_get_int("battle.volley_toggle", 1)) return;
+    config_set_int("battle.ways_seen", 1); config_save();
+    std::string t = "The picture at the lower left of each member's box is their way of fighting: what they do until you give them an order. "
+                    "Click it to choose another. ";
+    t += STYLE_NOTE;
+    t += "\n\n";
+    for (int k = 0; k < STYLE_CHOICES; k++) { t += style_name(STYLE_ORDER[k]); t += ": "; t += style_brief(STYLE_ORDER[k]); t += "\n"; }
+    t += "\nEveryone starts as a Skirmisher. Each character keeps the way you choose, battle to battle.";
+    ui_alert("Each member's way of fighting", t.c_str(), "Darklands+; F12 > Settings > Battles > Improved combat.");
+}
 /* the first battle with the easier controls: what changed, once (battle.intro_seen) */
 static void battle_intro(void)
 {
+    ways_intro();
     if (config_get_int("battle.intro_seen", 0) || !config_get_int("battle.quick_orders", 1)) return;
+    config_set_int("battle.ways_seen", 1);
     config_set_int("battle.intro_seen", 1); config_save();
     ui_alert("战斗需要更少的点击",
-             "点击一名队员（在战场上或左侧的栏位），再点击一名敌人进行攻击，或点击一处地点移动：该次点击即下达指令。"
-             "空格键可暂停并恢复战斗；暂停时，系统会自动选择下一位尚未下达指令的队员。"
-             "持有弓、弩、枪或投掷武器的队员，在点击敌人后会持续射击：当其目标敌人倒下时，"
-             "若前方有墙、树或他人阻挡，则会调整位置以确保射线畅通，并仅在敌人近身时才拔出近战武器。"
-             "点击左侧栏位上的弓或剑，即可切换为近战模式。"
-             "面对无法穿透的盔甲，队员会在能够突破时自行选择“易伤”（瞄准盔甲缝隙）。"
-             "选中某名队员后，其指令将显示在战场底部，按功能分组；指向其中一项即可查看其作用。",
+             "点击一名队员（在战场上，或左侧的栏位），再点击一名敌人进行攻击，或点击一处地点移动：该次点击即下达指令。"
+             "空格键可暂停并恢复战斗；暂停时，系统会自动选择下一位尚未下达指令的队员。\n\n"
+             "在你下达指令之前，每位队员都按自己的方式作战：即其栏位左下角的图标。点击它可另选一种"
+             "（散兵、弓箭手、冲锋者或手动）。你下达的指令会被执行，然后他们回归自己的方式。\n\n"
+             "面对武器无法穿透的护甲，队员会在能够穿透时自行选择“易伤”（瞄准护甲缝隙）。\n\n"
+             "选中某名队员后，其指令会显示在战场底部，按功能分组；指向其中一项即可查看其作用。",
              "以上均为Darklands+功能；各部分均可通过F12 > 设置 > 战斗选项单独关闭。F11则列出战斗相关的按键与操作。");
 }
 
@@ -345,10 +368,15 @@ void ui_draw_battle_info(void)
     if (game_mode() != GM_BATTLE || config_get_int("original", 0) || ns_showing()) return;
     battle_intro();
     foe_arrow();
+    if (ui_pointer_on_cover()) return;                  /* (on the order strip or a chooser: not the field's) */
     int gx, gy; plat_mouse_game(&gx, &gy);
     { int cx, cy, cw, ch; if (hdtext_game_cursor(&cx, &cy, &cw, &ch)) { gx = cx; gy = cy; } }
     int mx = gx - 60, my = gy, n = (s8)g_rb(GV_hotspot_count), best = -1, by = -32768;
     const char *hint = mx >= 0 && mx < 0x104 && !plat_pointer_outside() ? orders_hint() : nullptr;
+    {   /* a door under the pointer, out of a fight: that it can be used, and how (mods/levelwalk.c) */
+        int d = mx >= 0 && mx < 0x104 && !plat_pointer_outside() ? levelwalk_door_at(gx, gy) : -1;
+        if (d >= 0) hint = levelwalk_door_open(d) ? "Door: click to walk there and close it" : "Door: click to walk there and open it";
+    }
     if (hint && (!ui_battle_info || n <= 0 || n > 40)) n = 0;          /* (the hint alone) */
     else if (!ui_battle_info || mx < 0 || n <= 0 || n > 40) return;
     for (int k = n - 1; k >= 0; k--) {
@@ -417,9 +445,8 @@ void ui_draw_battle_info(void)
                 for (int m = 0; m < size; m++) {
                     u16 mb = (u16)(0x9c55 + m * 0x80);
                     if (g_rb((u16)(mb + CB_STATUS)) != 1) continue;
-                    char nm[16]; g_str(G_DGROUP, (u16)(G_MEMBER(m) + G_M_SHORTNAME), nm, sizeof nm);
-                    /* each weapon in hand as its picture, then what it does in its colour: green pierces, amber
-                       half damage, red mostly deflected */
+                    /* the member's head, then each weapon in hand as its picture, then what it does in its colour: green pierces, amber
+                       its extra damage halved, red cut to an eighth */
                     struct Seg { int id; const char *word; ImVec4 col; };
                     std::vector<Seg> seg;
                     for (int k = 0; k < 2; k++) {
@@ -427,12 +454,12 @@ void ui_draw_battle_info(void)
                         int id = wid(mw);
                         if (id < 0) continue;
                         int pen = rb(G_FAR20A5, (u16)(0x76a8 + mw)) & 15, r = pen > h ? 0 : pen == h ? 1 : 2;
-                        seg.push_back({ id, r == 0 ? "pierces" : r == 1 ? "减半伤害" : "大部分被弹开",
+                        seg.push_back({ id, r == 0 ? "穿透" : r == 1 ? "额外伤害减半" : "额外伤害减至八分之一",
                                         r == 0 ? ImVec4(0.18f, 0.40f, 0.16f, 1) : r == 1 ? ImVec4(0.69f, 0.49f, 0.0f, 1) : ImVec4(0.62f, 0.20f, 0.12f, 1) });
                     }
                     if (seg.empty()) continue;
-                    ImGui::TextUnformatted((game_text(nm, sizeof nm) + ":").c_str());
                     float fsz = ImGui::GetFontSize();
+                    { ImVec2 q = ImGui::GetCursorScreenPos(); ImGui::Dummy(ImVec2(fsz * 1.05f / 1.2f, fsz)); ui_member_head(ImGui::GetWindowDrawList(), m, ImVec2(q.x, q.y), fsz * 1.05f); }
                     for (size_t g = 0; g < seg.size(); g++) {
                         ImGui::SameLine(0, fsz * (g ? 0.9f : 0.4f));
                         ImVec2 q = ImGui::GetCursorScreenPos();
@@ -451,10 +478,13 @@ void ui_draw_battle_info(void)
 
 /* character creation: what the step on screen asks for and what the numbers on the right mean,
  * in the empty column at the left of the creation screen (s037 18c8, state D_8c1e) */
-/* fast forward in a battle (Z, mods/pathfix.c): a badge at the field's top right */
+/* fast forward in a battle (Z, mods/pathfix.c): a badge at the field's top right, where the right margin
+   does not show its own button for it ("Back to the chosen speed (Z)": two signs of one thing) */
+int ui_fast_button_frame = -100;
 void ui_draw_battle_fast(void)
 {
     if (!battle_fast || game_mode() != GM_BATTLE || ns_showing()) return;
+    if (ImGui::GetFrameCount() - ui_fast_button_frame <= 2) return;
     ImDrawList *dl = ovl_list();
     const char *t = "\xe2\x96\xb6\xe2\x96\xb6 快进  (Z)";
     ImFont *f = ImGui::GetFont(); float fs = ImGui::GetFontSize();

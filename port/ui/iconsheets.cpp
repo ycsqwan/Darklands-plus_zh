@@ -13,7 +13,6 @@
 #include "townicons.h"
 #include "quests.h"
 #include "marks.h"
-#include "pointer.h"
 
 extern int ui_icon_disc;
 void ui_icon_style_preview(int st);
@@ -21,7 +20,7 @@ void ui_page_icon(ImDrawList *dl, ImVec2 c, float s, int page); void ui_section_
 static int sheet_on;
 extern "C" void ui_icon_styles_sheet(int on) { sheet_on = on; }
 extern "C" const char *gm_skill_name(int k); extern "C" const char *gm_attr_name(int a);
-void ui_lodge_act_icon(ImDrawList *, ImVec2, float, int); void ui_campfire_icon(ImDrawList *, ImVec2, float);   /* (the other sets, for the sheet) */
+void ui_lodge_act_icon(ImDrawList *, ImVec2, float, int);   /* (the other sets, for the sheet) */
 void draw_icon_seal(ImDrawList *, ImVec2, float, int); void layer_glyph(ImDrawList *, ImVec2, float, int, ImU32);
 void ui_compass_icon(ImDrawList *, ImVec2, float, float); void ui_boot_icon(ImDrawList *, ImVec2, float, unsigned int);
 void ui_draw_teach_mark(ImDrawList *, ImVec2, float, unsigned, unsigned); void ui_item_icon(ImDrawList *, ImVec2, float, int);
@@ -58,10 +57,8 @@ extern "C" void ui_icon_styles_draw(void)
           ui_mark_stink(dl, at(n++), r, th);
           ui_mark_blast(dl, at(n++), r);
           ui_age_icon(dl, at(n++), sz * 0.8f); }
-        n = (n + 13) / 14 * 14;                                                          /* the pointer drawn anew (ui/pointer.h): its hands and badges */
-        { float pk = cell / 30.0f;
-          for (int b = 0; b < 4; b++) { ImVec2 c = at(n++); ui_pointer_draw(dl, ImVec2(c.x - 13 * pk, c.y - 7 * pk), pk, PTR_POINT, b); }
-          ImVec2 c = at(n++); ui_pointer_draw(dl, ImVec2(c.x - 13 * pk, c.y - 7 * pk), pk, PTR_GRAB, PTR_PLAIN); }
+        n = (n + 13) / 14 * 14;                                                          /* what is at work (ui/effects.h EI_*): a saint's, then a potion's */
+        for (int i = 0; i < 11; i++) ui_effect_icon(dl, at(n++), sz * 0.8f, i, i < 5 ? 2 : i < 7 ? 1 : 0);
         return;
     }
     if (sheet_on >= 1000) {   /* one ingredient's sign as large as the window allows (uiconstyles:1000+id) */
@@ -123,6 +120,7 @@ extern "C" void ui_icon_styles_draw(void)
         float cell = ds.x / 14, sz = cell * 0.5f; int n = 0;
         auto at = [&](int k) { return ImVec2(cell * 0.5f + (k % 14) * cell, cell * 0.45f + (k / 14) * cell * 0.9f); };
         for (int i = 0; i < OI_N; i++) ui_draw_order_icon(dl, at(n++), sz * 0.8f, i);
+        for (int i : { 0, 1, 2, 4 }) ui_draw_style_icon(dl, at(n++), sz * 0.8f, i);   /* (the members' ways of fighting: mods/styles.h) */
         n = (n + 13) / 14 * 14;                                                          /* the alchemists' ingredients (72-94) and potions (95-116) */
         for (int i = 72; i <= 116; i++) { if (i == 95) n = (n + 13) / 14 * 14; ui_item_icon(dl, at(n++), sz * 0.95f, i); }
         n = (n + 13) / 14 * 14;                                                          /* the world map: its places, its layers, a quest's way */
