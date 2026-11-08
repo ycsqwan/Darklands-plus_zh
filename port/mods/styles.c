@@ -15,15 +15,15 @@
 
 const int STYLE_ORDER[STYLE_CHOICES] = { ST_SKIRMISHER, ST_ARCHER, ST_CHARGER, ST_OFF };
 
-static const char *NAMES[ST_N] = { "Manual", "Archer", "Skirmisher", "Skirmisher, hand to hand", "Charger" };
+static const char *NAMES[ST_N] = { "手动", "弓箭手", "散兵", "散兵，步战", "冲锋者" };
 static const char *BRIEF[ST_N] = {
-    "As in the original game: they wait for your orders.",
-    "Shoots throughout the fight, each archer at a different enemy; fights hand to hand only when reached, then shoots again.",
-    "Shoots while the enemy approaches (if they have a missile weapon); once the enemy is close, fights hand to hand to the end of the fight.",
-    "Fights hand to hand to the end of the fight.",
-    "Goes straight for the enemy, their archers first.",
+    "与原版游戏相同：他们等待你的指令。",
+    "整场战斗中持续射击，每名弓箭手对付不同的敌人；只在被近身后才步战，之后又继续射击。",
+    "在敌人逼近时射击（如果持有远程武器）；一旦敌人靠近，便步战到战斗结束。",
+    "步战到战斗结束。",
+    "直接扑向敌人，优先对付他们的弓箭手。",
 };
-const char *STYLE_NOTE = "This only sets what they do when you haven't given an order. No bonus, no penalty: an order you give is carried out, then they go back to this.";
+const char *STYLE_NOTE = "这仅设定你在未下达指令时他们的行为。无加成，也无惩罚：你下达的指令会被执行，然后他们回归该方式。";
 const char *style_name(int st) { return st >= 0 && st < ST_N ? NAMES[st] : ""; }
 const char *style_brief(int st) { return st >= 0 && st < ST_N ? BRIEF[st] : ""; }
 

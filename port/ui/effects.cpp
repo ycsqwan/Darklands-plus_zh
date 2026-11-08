@@ -69,7 +69,7 @@ static std::vector<Eff> effects_table(int size, const std::vector<EvRec> &recs)
         if (kind == 0x43) {                                 /* a companion's stay (add_member: type0 the slot; its end, the day they leave) */
             int m = W(0);
             long left = abs_hours(W(0x18), W(0x16), W(0x14), W(0x12)) - now;
-            if (m >= 0 && m < size && left > 0 && left < 24L * 365 * 50) { Eff e = { m, "stays with the party", left, kind }; e.icon = EI_STAYS; v.push_back(e); }
+            if (m >= 0 && m < size && left > 0 && left < 24L * 365 * 50) { Eff e = { m, "随队伍同行", left, kind }; e.icon = EI_STAYS; v.push_back(e); }
             continue;
         }
         if (kind < 0x48 || kind > 0x4a) continue;
@@ -92,33 +92,33 @@ static std::vector<Eff> effects_table(int size, const std::vector<EvRec> &recs)
             /* (a saint's, mods/sainttexts.c: 0x16f-0x173 armour and weapon quality, 0x175 armour against
                missiles, 0x177 / 0x178 the party's travel faster) */
             static const struct { int k; const char *f; int icon; const char *v; } SAINTLY[] = {
-                { 0x16d, "%+d armor (from a saint)", EI_ARMOR, "%+d" }, { 0x16e, "worn armor %+d quality (from a saint)", EI_ARMOR_Q, "%+dq" },
-                { 0x16f, "metal armor %+d quality (from a saint)", EI_ARMOR_Q, "%+dq" }, { 0x170, "leather and cloth armor %+d quality (from a saint)", EI_ARMOR_Q, "%+dq" },
-                { 0x171, "weapon %+d quality (from a saint)", EI_WEAPON_Q, "%+dq" }, { 0x172, "edged weapon %+d quality (from a saint)", EI_WEAPON_Q, "%+dq" },
-                { 0x173, "blades, maces, polearms, crossbows and guns %+d quality (from a saint)", EI_WEAPON_Q, "%+dq" },
-                { 0x174, "fire protection %d (from a saint)", EI_FIRE, "%d" }, { 0x175, "%+d armor against missiles (from a saint)", EI_MISSILE_ARMOR, "%+d" },
-                { 0x177, "the party travels %d%% faster (from a saint)", EI_TRAVEL, "+%d%%" }, { 0x178, "the party travels %d%% faster in woods (from a saint)", EI_TRAVEL_WOODS, "+%d%%" },
-                { 0x179, "no death from wounds (from a saint)", EI_NO_DEATH, "" } };
+                { 0x16d, "%+d 护甲（来自圣人）", EI_ARMOR, "%+d" }, { 0x16e, "穿着的护甲 %+d 品质（来自圣人）", EI_ARMOR_Q, "%+dq" },
+                { 0x16f, "金属盔甲 %+d 品质（来自圣人）", EI_ARMOR_Q, "%+dq" }, { 0x170, "皮革与布制护甲 %+d 品质（来自圣人）", EI_ARMOR_Q, "%+dq" },
+                { 0x171, "武器 %+d 品质（来自圣人）", EI_WEAPON_Q, "%+dq" }, { 0x172, "锋利武器 %+d 品质（来自圣人）", EI_WEAPON_Q, "%+dq" },
+                { 0x173, "刀剑、狼牙棒、长柄武器、弩和枪 %+d 品质（来自圣人）", EI_WEAPON_Q, "%+dq" },
+                { 0x174, "防火保护 %d（来自圣人）", EI_FIRE, "%d" }, { 0x175, "%+d 护甲对投射物的防护（来自圣人）", EI_MISSILE_ARMOR, "%+d" },
+                { 0x177, "队伍行进速度提升 %d%%（来自圣人）", EI_TRAVEL, "+%d%%" }, { 0x178, "队伍在树林中的行进速度提升 %d%%（来自圣人）", EI_TRAVEL_WOODS, "+%d%%" },
+                { 0x179, "伤口不会致死（来自圣人）", EI_NO_DEATH, "" } };
             bool done = false;
             for (const auto &x : SAINTLY) if (k == x.k) {
                 char vb[16]; snprintf(vb, sizeof vb, x.v, t);
                 if ((k == 0x177 || k == 0x178) && (t == 50 || t == 100)) {   /* (the speed in words) */
-                    snprintf(b, sizeof b, "the party travels %s%s (from a saint)", t == 100 ? "twice as fast" : "half again as fast", k == 0x178 ? " in woods" : "");
+                    snprintf(b, sizeof b, "队伍行进%s%s（来自圣人）", t == 100 ? "速度提升一倍" : "速度提升一半", k == 0x178 ? "在树林中" : "");
                     snprintf(vb, sizeof vb, "%s", t == 100 ? "x2" : "x1.5");
                 } else snprintf(b, sizeof b, x.f, t);
                 Eff e = { m, b, left, kind }; e.k = k; e.amount = t; e.icon = x.icon; e.src = 2; e.val = vb; v.push_back(e); done = true; break; }
             if (done) continue;
             int item = k == 0x69 || k == 0x6b || k == 0x6d || k == 0x74 ? k : t <= 5 ? 0x6a : 0x6b;
-            std::string n = item < (int)gamedata.items.size() ? game_text(gamedata.items[item].name.c_str(), 64) : "Potion";
+            std::string n = item < (int)gamedata.items.size() ? game_text(gamedata.items[item].name.c_str(), 64) : "药剂";
             char vb[24] = ""; int icon = EI_DAMAGE;
-            if (item == 0x69) { snprintf(b, sizeof b, "%s: %+d damage", n.c_str(), t); snprintf(vb, sizeof vb, "%+d", t); }
-            else if (item == 0x6a) { snprintf(b, sizeof b, "%s: %+d penetration", n.c_str(), t); snprintf(vb, sizeof vb, "%+d", t); icon = EI_PENETRATION; }
+            if (item == 0x69) { snprintf(b, sizeof b, "%s：%+d伤害", n.c_str(), t); snprintf(vb, sizeof vb, "%+d", t); }
+            else if (item == 0x6a) { snprintf(b, sizeof b, "%s：%+d穿透力", n.c_str(), t); snprintf(vb, sizeof vb, "%+d", t); icon = EI_PENETRATION; }
             else if (item == 0x6d) { int th, q; fixes_hardarmor_grade(t < 1 ? 1 : t, &th, &q);   /* (the fix's own rule: mods/fixes.c) */
-                snprintf(b, sizeof b, "%s: armor %+d thickness, %+d quality", n.c_str(), th, q); snprintf(vb, sizeof vb, "%+d, %+dq", th, q); icon = EI_ARMOR; }
-            else if (item == 0x74) { snprintf(b, sizeof b, "%s: fire protection %d", n.c_str(), t); snprintf(vb, sizeof vb, "%d", t); icon = EI_FIRE; }
-            else if (fix_is_on("greatpower")) { snprintf(b, sizeof b, "%s: weapon quality %+d", n.c_str(), t); snprintf(vb, sizeof vb, "%+dq", t); icon = EI_WEAPON_Q; }
-            else if (!(t >> 4)) { snprintf(b, sizeof b, "%s: %+d penetration", n.c_str(), t & 15); snprintf(vb, sizeof vb, "%+d", t & 15); icon = EI_PENETRATION; }
-            else { snprintf(b, sizeof b, "%s: %+d damage, %+d penetration", n.c_str(), t >> 4, t & 15); snprintf(vb, sizeof vb, "%+d, %+d", t >> 4, t & 15); }
+                snprintf(b, sizeof b, "%s：护甲 %+d 厚度，%+d 品质", n.c_str(), th, q); snprintf(vb, sizeof vb, "%+d, %+dq", th, q); icon = EI_ARMOR; }
+            else if (item == 0x74) { snprintf(b, sizeof b, "%s：防火保护 %d", n.c_str(), t); snprintf(vb, sizeof vb, "%d", t); icon = EI_FIRE; }
+            else if (fix_is_on("greatpower")) { snprintf(b, sizeof b, "%s：武器品质 %+d", n.c_str(), t); snprintf(vb, sizeof vb, "%+dq", t); icon = EI_WEAPON_Q; }
+            else if (!(t >> 4)) { snprintf(b, sizeof b, "%s：%+d穿透力", n.c_str(), t & 15); snprintf(vb, sizeof vb, "%+d", t & 15); icon = EI_PENETRATION; }
+            else { snprintf(b, sizeof b, "%s：%+d伤害，%+d穿透力", n.c_str(), t >> 4, t & 15); snprintf(vb, sizeof vb, "%+d, %+d", t >> 4, t & 15); }
             Eff e = { m, b, left, kind }; e.k = k; e.amount = t; e.icon = icon; e.src = 1; e.val = vb;
             v.push_back(e);
             continue;
@@ -166,8 +166,8 @@ std::vector<Eff> effects_now(int size)
 
 /* the roundels' names: in a text ({*Fire}: ui/richtext.h) and under the pointer, in the order of EI_* */
 static const char *const EFFECT_NAME[] = { "Fire", "Armor", "Armor Quality", "Missile Armor", "Weapon Quality", "Damage", "Penetration", "Travel", "Woods Travel", "No Death", "Stays" };
-static const char *const EFFECT_SAY[] = { "Fire protection", "Armor", "Armor quality", "Armor against missiles", "Weapon quality", "Damage", "Penetration",
-                                          "Faster travel", "Faster travel in woods", "No death from wounds", "A companion's stay" };
+static const char *const EFFECT_SAY[] = { "防火保护", "护甲", "护甲品质", "对投射物的护甲", "武器品质", "伤害", "穿透力",
+                                          "更快行进", "林中更快行进", "伤口不会致死", "同伴的同行" };
 static_assert(sizeof EFFECT_NAME / sizeof *EFFECT_NAME == EI_STAYS + 1 && sizeof EFFECT_SAY / sizeof *EFFECT_SAY == EI_STAYS + 1, "a name for each EI_*");
 const char *ui_effect_name(int ei) { return ei >= 0 && ei <= EI_STAYS ? EFFECT_NAME[ei] : ""; }
 const char *ui_effect_say(int ei) { return ei >= 0 && ei <= EI_STAYS ? EFFECT_SAY[ei] : ""; }
