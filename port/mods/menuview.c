@@ -100,13 +100,40 @@ static void key_text(u16 p, int maxn, char *out, int n)
         strncat(out, b, (size_t)n - strlen(out) - 1);
     }
 }
+/* the menus' names, in the Chinese fork: the game's own words for them */
+static const struct { const char *en, *zh; } MENU_ZH[] = {
+    { "Game", "游戏" }, { "Orders", "指令" }, { "Attack", "攻击" }, { "Party", "队伍" },
+    { "Save Game", "保存游戏" }, { "Load Saved Game", "载入存档" }, { "Difficulty", "难度" },
+    { "Show Changes", "显示变化" }, { "Music", "音乐" }, { "Sound FX", "音效" },
+    { "Pause", "暂停" }, { "Quit to DOS", "退出到 DOS" },
+    { "Basic", "基础" }, { "Standard", "标准" }, { "Expert", "专家" },
+    { "Resume", "继续" }, { "Enemy Info", "敌人信息" },
+    { "Walk towards       ", "走向……" }, { "Flee towards       ", "逃离……" }, { "Halt", "停止" },
+    { "Travel As Group", "结队行进" }, { "Travel Single File", "单列行进" },
+    { "Use Door(Ldr)", "使用门（队长）" }, { "Use Stairs(Ldr)", "使用楼梯（队长）" },
+    { "Open Chest(Ldr)", "打开箱子（队长）" }, { "Pick Lock(Ldr)", "撬锁（队长）" },
+    { "Dissolve Lock(Ldr)", "溶解锁（队长）" }, { "Disarm moderate trap (Ldr)", "拆除中等陷阱（队长）" },
+    { "Surrender (All)", "投降（全体）" }, { "Loot Bodies", "搜刮尸体" },
+    { "Exit Battlefield(Ldr)", "离开战场（队长）" }, { "Cancel Giving Order", "取消下达指令" },
+    { "Throw", "投掷" }, { "Std Attack ", "标准攻击" }, { "Vulnerable", "易伤" },
+    { "Berserk", "狂暴" }, { "Parry", "招架" }, { "Use Missile", "使用投射武器" },
+    { "Party Info", "队伍信息" }, { "Change Marching Order", "更改行军顺序" },
+    { "? finished", "已完成" },
+};
+static const char *menu_zh(const char *en)
+{
+    for (size_t i = 0; i < sizeof MENU_ZH / sizeof MENU_ZH[0]; i++)
+        if (!strcmp(en, MENU_ZH[i].en)) return MENU_ZH[i].zh;
+    return en;
+}
+
 static void item_name(u16 p, MvItem *it)
 {
     char s[64]; int n = str_at(p, s, sizeof s);
     const char *t = s;
     it->tick = 0;
     if (n && (s[0] == 1 || s[0] == 2)) { it->tick = s[0] == 1; t++; }
-    snprintf(it->name, sizeof it->name, "%s", t);
+    snprintf(it->name, sizeof it->name, "%s", menu_zh(t));
     for (int k = (int)strlen(it->name) - 1; k >= 0 && it->name[k] == ' '; k--) it->name[k] = 0;
 }
 
@@ -118,7 +145,7 @@ static void build_into(u16 mp, MenuModel *M, MvFn *fn)
         char nm[24];
         if (!str_at(g_rw(e), nm, sizeof nm)) break;
         MvMenu *m = &M->menu[M->nmenus++];
-        snprintf(m->name, sizeof m->name, "%s", nm);
+        snprintf(m->name, sizeof m->name, "%s", menu_zh(nm));
         m->enabled = g_rb((u16)(e + 6)) == 1;
         m->first = M->nitems; m->n = 0;
         u16 items = g_rw((u16)(e + 8));
@@ -187,6 +214,7 @@ static void build_into(u16 mp, MenuModel *M, MvFn *fn)
     }
 }
 static void build(u16 mp) { build_into(mp, &menu_model, fn); }
+
 
 /* the menus' entries for buttons elsewhere (the battle margin's orders): read now; a choice is
    carried out at the next round of the game's loop (menu_bar_run), if still allowed then */
